@@ -56,6 +56,13 @@ export interface AppState {
   dethroneTarget: ChampionRecord | null;
 }
 
+const K = {
+  profile: 'ia_profile',
+  history: 'ia_history',
+  champion: 'ia_champion',
+  telemetry: 'ia_telemetry',
+};
+
 export const state: AppState = {
   screen: 'home',
   mode: 'solo',
@@ -88,13 +95,6 @@ export function go(screen: Screen) {
 // ---------------------------------------------------------------------------
 // Persistence (guest-local; account upgrade is a later phase)
 // ---------------------------------------------------------------------------
-
-const K = {
-  profile: 'ia_profile',
-  history: 'ia_history',
-  champion: 'ia_champion',
-  telemetry: 'ia_telemetry',
-};
 
 function loadProfileName(): string {
   try {

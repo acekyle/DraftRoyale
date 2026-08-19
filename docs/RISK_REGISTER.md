@@ -1,0 +1,17 @@
+# Risk Register
+
+> Living document — updated 2026-08-19. Ordered by (impact × likelihood).
+
+| ID | Risk | Impact | Likelihood | Mitigation / trigger | Owner |
+|----|------|--------|------------|----------------------|-------|
+| R-1 | **No online multiplayer yet** — the 10-friend-group acceptance test cannot run on local modes alone; the product thesis (social replay) is unproven until rooms exist | Critical | Certain (current state) | Online-rooms milestone is next: control-plane bake-off (ADR-0002) → guest rooms → deploy gate. Hotseat + dethrone links exercise parts of the loop early | Backend Lead |
+| R-2 | **Engine bake-off half-complete** — Unity side unmeasured; a late Unity win would strand client work | High | Medium | Renderer-independent event contract bounds rework to the client package; revisit wired to Phase 4 perf gate (ADR-0001) | Tech Architect |
+| R-3 | **Deployment & hosting are Founder-gated** — no alpha link can exist until approved; testing stalls at the gate | High | Certain until approved | Founder Gate raised in Executive Digest with free-tier options and exact costs | EP |
+| R-4 | **Price compression** — Season 0 prices cluster ~$29–40M, weakening draft-economy expression (cheap-depth vs stars tension) | Medium | High | Widen formula spread or attribute variance next balance pass; draft-order sim shows fairness holds regardless | Draft Designer |
+| R-5 | **Cross-platform float determinism unproven** — replays verified same-engine only | Medium | Medium | Browser conformance matrix in QA plan; server-authoritative outcomes once online; fixed-point fallback (ADR-0004) | QA Lead |
+| R-6 | **LLM compiler unbuilt** — "type any character" is the core expandability promise and is entirely Founder-gated on API spend; accuracy pipeline unproven against real prompts | High | Certain until approved | Schema/validation/eligibility pipeline already enforces bounds; provider-adapter design ready; gate raised in Digest | Compiler Lead |
+| R-7 | **Balance validated only by self-play heuristics** — AI-vs-AI win rates ≠ human meta | Medium | High | Treat harness as smoke-test only; human playtests are the real gate; outliers >68%/<32% blocked from ranked | QA Lead |
+| R-8 | **Single arena, 8 wildcards, 12 fighters** — variety ceiling for repeated friend-group sessions | Medium | Medium | Content pipeline is validated + cheap to extend; second arena is pure content work | Product Director |
+| R-9 | **Moderation/reporting systems absent** — fine for private alpha, blocking for any public stage | High | Low (while private) | SECURITY_AND_MODERATION plan; moderation is a hard gate before Stage 3 waitlist | IP Reviewer |
+| R-10 | **Dev-server reloads mid-session lose local match state** (no resume without a server) | Low | High (dev only) | Known limitation; resolved by server rooms; not shipped behavior | Client Lead |
+| R-11 | **Solo-operator bus factor** — all agents share one workspace/session; docs + ledgers are the continuity mechanism | Medium | Medium | Everything material lives in-repo (docs/, ADRs, manifests); weekly Digest snapshots state | EP |
