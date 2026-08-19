@@ -1,0 +1,14 @@
+{
+  "name": "@arena/character-compiler",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@arena/combat-sim": "*",
+    "@arena/contracts": "*"
+  }
+}

@@ -75,6 +75,8 @@ export interface BattlePublicState {
   teams: TeamSetup[];
   /** Highest tick clients are authorized to step to. */
   authorizedTick: number;
+  /** Full validated input timeline so far — reconnecting clients fast-forward with it. */
+  inputs: BattleInput[];
   startedAtIso: string;
 }
 

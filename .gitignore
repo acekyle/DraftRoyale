@@ -1,5 +1,8 @@
 node_modules/
 dist/
+services/control-plane/data/
+playwright-report/
+test-results/
 build/
 *.log
 .DS_Store
