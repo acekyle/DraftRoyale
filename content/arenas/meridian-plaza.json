@@ -1,0 +1,28 @@
+{
+  "arenaId": "meridian-plaza",
+  "version": "1.0.0",
+  "name": "Meridian Plaza",
+  "description": "A sun-drenched downtown plaza sealed off for sanctioned arena combat: shattered storefronts, a flooded fountain channel, and structural pillars that will not survive the afternoon.",
+  "sizeX": 60,
+  "sizeZ": 40,
+  "contextTags": ["urban", "daylight", "open_sky", "metal_structures"],
+  "features": [
+    { "id": "pillar-nw", "type": "pillar", "x": -12, "z": 10, "radius": 2, "destructible": true, "hp": 60, "description": "Structural support pillar — blocks ranged fire until destroyed." },
+    { "id": "pillar-ne", "type": "pillar", "x": 12, "z": 10, "radius": 2, "destructible": true, "hp": 60, "description": "Structural support pillar — blocks ranged fire until destroyed." },
+    { "id": "pillar-sw", "type": "pillar", "x": -12, "z": -10, "radius": 2, "destructible": true, "hp": 60, "description": "Structural support pillar — blocks ranged fire until destroyed." },
+    { "id": "pillar-se", "type": "pillar", "x": 12, "z": -10, "radius": 2, "destructible": true, "hp": 60, "description": "Structural support pillar — blocks ranged fire until destroyed." },
+    { "id": "wreck-center-n", "type": "cover", "x": 0, "z": 14, "radius": 2.5, "destructible": true, "hp": 40, "description": "Overturned transit wreck — usable cover against ranged attacks." },
+    { "id": "wreck-center-s", "type": "cover", "x": 0, "z": -14, "radius": 2.5, "destructible": true, "hp": 40, "description": "Overturned transit wreck — usable cover against ranged attacks." },
+    { "id": "fountain-channel", "type": "water", "x": 0, "z": 0, "radius": 7, "destructible": false, "hp": 0, "grantsContext": "water_present", "description": "Flooded fountain channel — slows ground fighters, empowers hydrokinetics." }
+  ],
+  "disclosures": [
+    "Open sky and full daylight: solar-powered fighters recharge at accelerated rates.",
+    "Four destructible structural pillars and two wrecks provide ranged cover (25% ranged damage reduction near intact cover) until destroyed.",
+    "Central flooded channel: ground fighters without aquatic affinity move 35% slower inside it; hydrokinetic abilities gain access to water-context abilities near it.",
+    "Large metal structures throughout: magnetic abilities are usable here.",
+    "No movement restrictions or visibility conditions at match start.",
+    "Wildcards may be placed anywhere within the arena bounds.",
+    "Known synergy: solar and light-based kits benefit from the daylight tags.",
+    "Known disadvantage: slow ground-only fighters can be kited in the long east–west sightlines."
+  ]
+}

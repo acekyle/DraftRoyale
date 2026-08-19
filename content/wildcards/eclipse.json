@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "0.1.0",
+  "wildcardId": "eclipse",
+  "version": "1.0.0",
+  "creator": "Infinite Arena Studio",
+  "inputDescription": "A solar eclipse blots out the sun over the whole arena",
+  "normalizedName": "Total Eclipse",
+  "class": "condition",
+  "radius": 0,
+  "durationTicks": 240,
+  "objectHp": 0,
+  "deployment": "global",
+  "effects": [
+    { "kind": "remove_context_tags", "tags": ["daylight"], "affects": "both" },
+    { "kind": "add_context_tags", "tags": ["darkness"], "affects": "both" }
+  ],
+  "environmentalInteractions": [
+    "Removes the arena's daylight tag for 60 seconds: solar recharge stops arena-wide.",
+    "Adds darkness: fighters with darkness-triggered weaknesses take amplified damage; shadow-affine kits benefit."
+  ],
+  "sideEffects": [
+    "Affects BOTH teams equally — drafting your own solar fighter into your own eclipse is on you.",
+    "Daylight-gated contextual abilities are unusable while it lasts."
+  ],
+  "counterplay": [
+    "Wait out the 60-second duration — stored charge bridges the gap for disciplined fighters.",
+    "It is symmetrical: exploit the darkness harder than your opponent does.",
+    "Teams without light-dependency simply ignore it."
+  ],
+  "visualManifestation": "A false moon slides across the sun; the arena falls into deep blue twilight ringed by a corona.",
+  "audioManifestation": "A hush, then a low wind as the light dies.",
+  "confidence": "high",
+  "provenance": "Curated Season 0 template: lighting/solar condition archetype.",
+  "moderation": "approved",
+  "eligibility": "ranked_eligible"
+}

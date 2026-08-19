@@ -1,0 +1,28 @@
+{
+  "name": "infinite-arena",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Social competitive 3D draft-battle simulator (working codename: Infinite Arena)",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace apps/web",
+    "test": "vitest run",
+    "simulate": "tsx tools/simulate.ts",
+    "price": "tsx tools/price.ts",
+    "draft-order": "tsx tools/draft-order.ts",
+    "validate": "tsx tools/validate-content.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

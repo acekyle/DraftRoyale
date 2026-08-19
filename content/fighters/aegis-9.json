@@ -1,0 +1,332 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "aegis-9",
+      "displayName": "AEGIS-9",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "heavy"
+    },
+    "canon": {
+      "summary": "The ninth Autonomous Escort Guardian Intercept System — a decommissioned disaster-response walker refitted for arena duty. AEGIS-9 exists to stand between danger and the people behind it. Immense, patient, and utterly dependent on its powered systems.",
+      "primarySources": [
+        { "id": "aegis-lore-01", "kind": "creator_lore", "note": "Studio origin document: rescue-walker lineage, escort protocols, suit-power dependency." },
+        { "id": "aegis-design-01", "kind": "design_document", "note": "Kit design: defender role, taunt/aegis-dome protection loop, EMP as defining counter." }
+      ],
+      "selectedInterpretation": "Season 0 baseline AEGIS-9 — powered guardian walker, not an unstoppable juggernaut.",
+      "disputedClaims": [],
+      "assumptions": ["Backup hydraulics keep it moving (slowly) even when suit power fails; only powered systems shut down."]
+    },
+    "powerSources": [
+      {
+        "name": "suit_power",
+        "origin": "Onboard fusion cell driving weapons, barriers, and servos",
+        "dependencies": ["intact power systems"],
+        "interruptionConditions": ["EMP and magnetic disruption suppress tech systems", "power depletion disables tech abilities until the cell recovers"]
+      }
+    ],
+    "capabilitySummary": {
+      "core": ["Crushing servo strikes", "Projected barrier dome", "Threat-designation taunts"],
+      "conditional": ["Magnetic anchor lock near large metal structures"],
+      "defensive": ["Massive armor plating", "Guard mastery", "Kinetic dampeners"],
+      "movement": ["Heavy ground locomotion"],
+      "signature": ["Bulwark Slam", "Aegis Dome", "Taunt Protocol", "Missile Barrage"]
+    },
+    "limitations": [
+      { "description": "Slow and easily kited; almost no answer to sustained long-range harassment while closing distance.", "severity": "serious", "condition": "open terrain", "evidence": "aegis-design-01" },
+      { "description": "All signature systems draw from one fusion cell; overspending leaves it a walking shield with fists.", "severity": "defining", "condition": "suit_power depleted", "evidence": "aegis-lore-01" }
+    ],
+    "weaknessSummary": [
+      { "description": "EMP and magnetic attacks suppress its technology outright.", "severity": "defining", "exposureMethod": "EMP wildcards, magnetic abilities", "evidence": "aegis-lore-01" },
+      { "description": "Energy weapons overload its capacitor shielding for amplified damage.", "severity": "minor", "exposureMethod": "Sustained energy fire", "evidence": "aegis-design-01" }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "Runs continuous threat-assessment; prioritizes protecting designated charges.",
+      "tacticalStyle": "Anchors the front line, absorbs attention, punishes overextension.",
+      "riskTolerance": "Low for itself, zero for its allies.",
+      "allyProtection": "Defining trait — escort protocols override self-preservation.",
+      "moralConstraints": ["Prefers disabling over destroying when a foe is helpless"],
+      "commandConstraints": ["Will refuse orders that abandon an endangered ally"]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "defenses.armor.rating",
+          "selectedValue": "withstands sustained heavy kinetic fire",
+          "portrayalType": "repeatable",
+          "conditions": ["armor intact"],
+          "evidence": ["aegis-lore-01"],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.emp",
+          "selectedValue": "full tech suppression under EMP",
+          "portrayalType": "repeatable",
+          "conditions": ["unshielded systems"],
+          "evidence": ["aegis-lore-01"],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": ["Rescue-walker origin", "Escort protocols", "Fusion-cell dependency"],
+      "aiAssumptions": ["Backup hydraulics allow 80% movement speed under EMP rather than full shutdown"],
+      "mechanicalNormalizations": ["Taunt modeled as a vulnerability designation rather than mind control"]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "aegis-9",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "defender",
+      "chassis": "heavy",
+      "scale": 1.4
+    },
+    "attributes": {
+      "forceOutput": 7,
+      "durability": 9,
+      "combatSpeed": 4,
+      "reactionSpeed": 5,
+      "travelSpeed": 4,
+      "precision": 6,
+      "mobility": 3,
+      "recovery": 6,
+      "perception": 6,
+      "combatSkill": 7,
+      "tacticalIntelligence": 8,
+      "teamwork": 8,
+      "resolve": 8
+    },
+    "resources": {
+      "vitality": 420,
+      "stability": 130,
+      "stamina": 90,
+      "staminaRegenPerTick": 1.2,
+      "primary": {
+        "name": "suit_power",
+        "max": 100,
+        "start": 100,
+        "regenPerTick": 0.5,
+        "onDepletedSuppressTags": ["tech"]
+      }
+    },
+    "movementModes": ["ground"],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "servo-fist",
+          "name": "Servo Fist",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3,
+          "power": 12,
+          "damageType": "kinetic",
+          "cost": { "resource": "stamina", "amount": 4 },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": ["kinetic"],
+          "animationIntent": "heavy_punch",
+          "description": "A piston-driven haymaker. Works even with the reactor dark."
+        }
+      ],
+      "signature": [
+        {
+          "id": "bulwark-slam",
+          "name": "Bulwark Slam",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3.2,
+          "power": 26,
+          "damageType": "kinetic",
+          "cost": { "resource": "suit_power", "amount": 15 },
+          "cooldownTicks": 30,
+          "windupTicks": 2,
+          "effects": [{ "kind": "slow", "magnitude": 0.3, "durationTicks": 8 }],
+          "tags": ["tech", "kinetic", "seismic"],
+          "animationIntent": "ground_slam",
+          "description": "Both fists down through the target — the shockwave staggers footing."
+        },
+        {
+          "id": "aegis-dome",
+          "name": "Aegis Dome",
+          "kind": "support",
+          "targeting": "ally",
+          "range": 10,
+          "power": 0,
+          "cost": { "resource": "suit_power", "amount": 20 },
+          "cooldownTicks": 44,
+          "windupTicks": 1,
+          "effects": [{ "kind": "shield", "magnitude": 50, "durationTicks": 40 }],
+          "tags": ["tech", "barrier"],
+          "animationIntent": "projected_dome",
+          "description": "Projects a hard-shell barrier over the most endangered ally."
+        },
+        {
+          "id": "taunt-protocol",
+          "name": "Taunt Protocol",
+          "kind": "control",
+          "targeting": "enemy",
+          "range": 12,
+          "power": 6,
+          "damageType": "energy",
+          "cost": { "resource": "suit_power", "amount": 10 },
+          "cooldownTicks": 32,
+          "windupTicks": 0,
+          "effects": [{ "kind": "vulnerable", "magnitude": 0.15, "durationTicks": 16 }],
+          "tags": ["tech"],
+          "animationIntent": "threat_designation",
+          "description": "Designates a threat with targeting lasers, marking its defenses for the team."
+        },
+        {
+          "id": "missile-barrage",
+          "name": "Missile Barrage",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 20,
+          "radius": 5,
+          "power": 22,
+          "damageType": "kinetic",
+          "cost": { "resource": "suit_power", "amount": 20 },
+          "cooldownTicks": 40,
+          "windupTicks": 2,
+          "tags": ["tech", "explosive", "projectile"],
+          "animationIntent": "shoulder_missiles",
+          "description": "Shoulder pods answer the kiting problem — briefly."
+        }
+      ],
+      "contextual": [
+        {
+          "id": "magnet-anchor",
+          "name": "Magnet Anchor",
+          "kind": "control",
+          "targeting": "enemy",
+          "range": 14,
+          "power": 8,
+          "damageType": "energy",
+          "cost": { "resource": "suit_power", "amount": 15 },
+          "cooldownTicks": 48,
+          "windupTicks": 1,
+          "effects": [{ "kind": "root", "magnitude": 0, "durationTicks": 10 }],
+          "requiresContext": ["metal_structures"],
+          "tags": ["tech", "magnetic"],
+          "animationIntent": "magnetic_lock",
+          "description": "Near large metal structures it can pin a target with an induced magnetic field."
+        }
+      ],
+      "escalation": {
+        "id": "orbital-hammer",
+        "name": "Orbital Hammer",
+        "kind": "melee",
+        "targeting": "enemy",
+        "range": 3.5,
+        "power": 58,
+        "damageType": "kinetic",
+        "cost": { "resource": "suit_power", "amount": 35 },
+        "cooldownTicks": 240,
+        "windupTicks": 5,
+        "effects": [{ "kind": "stun", "magnitude": 0, "durationTicks": 4 }],
+        "tags": ["tech", "kinetic", "seismic"],
+        "animationIntent": "finisher_hammer",
+        "description": "Overcharges every servo for one leaping, arena-shaking hammer blow."
+      },
+      "passives": [
+        {
+          "id": "guard-mastery",
+          "name": "Bulwark Doctrine",
+          "kind": "guard_mastery",
+          "magnitude": 0.15,
+          "tags": ["kinetic"],
+          "description": "Decades of shield-arm firmware — guarding is an art form."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [{ "damageType": "kinetic", "pct": 0.3 }],
+      "immunities": ["stealth"]
+    },
+    "weaknesses": [
+      {
+        "id": "emp-shutdown",
+        "description": "EMP and magnetic disruption suppress every tech system and strike its unshielded core hard.",
+        "severity": 3,
+        "trigger": { "abilityTags": ["emp", "magnetic"] },
+        "effect": { "suppressTags": ["tech"] },
+        "evidence": "aegis-lore-01"
+      },
+      {
+        "id": "capacitor-overload",
+        "description": "Sustained energy fire overloads its capacitor shielding.",
+        "severity": 1,
+        "trigger": { "damageTypes": ["energy"] },
+        "effect": {},
+        "evidence": "aegis-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Patient, protective, immovable.",
+      "riskTolerance": 0.4,
+      "allyProtection": 0.95,
+      "targetPreference": "highest_threat",
+      "commandCompliance": 0.9,
+      "constraints": ["protects_captain", "never_abandons_allies", "avoids_lethal_force"],
+      "repetitionAvoidance": 0.5
+    },
+    "interactions": {
+      "environmental": [
+        {
+          "contextTag": "emp_field",
+          "effect": { "suppressTags": ["tech"], "speedMult": 0.8 },
+          "description": "EMP fields suppress its powered systems; backup hydraulics limp along at reduced speed."
+        }
+      ],
+      "synergies": [
+        {
+          "allyTag": "tech",
+          "effect": { "damageMult": 1.06 },
+          "description": "Networks fire-control data with other tech fighters."
+        }
+      ],
+      "powerTags": ["tech", "kinetic", "seismic", "explosive", "barrier", "projectile", "magnetic"]
+    },
+    "balance": {
+      "capabilityScore": 0,
+      "versatilityScore": 0,
+      "reliabilityScore": 0,
+      "counterabilityScore": 0,
+      "draftPrice": 34000000,
+      "priceVersion": "S0",
+      "priceRationale": "pending pricing tool run",
+      "_generated": "run `npm run price` to stamp final scores"
+    },
+    "presentation": {
+      "primaryColor": "#4a7bd0",
+      "secondaryColor": "#c8d6ef",
+      "energyColor": "#6fd4ff",
+      "silhouette": "Broad-shouldered rescue walker with a vault-door chest and one oversized shield arm",
+      "animationIntents": ["heavy_idle", "ground_slam", "projected_dome", "threat_designation", "shoulder_missiles", "finisher_hammer"]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": ["schema"],
+      "knownIssues": []
+    }
+  }
+}
