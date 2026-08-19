@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "0.1.0",
+  "wildcardId": "mirage-veil",
+  "version": "1.0.0",
+  "creator": "Infinite Arena Studio",
+  "inputDescription": "A shimmering fog of illusions that hides my team and makes enemies swing at ghosts",
+  "normalizedName": "Mirage Veil",
+  "class": "field",
+  "radius": 12,
+  "durationTicks": 240,
+  "objectHp": 0,
+  "deployment": "placed",
+  "effects": [
+    { "kind": "accuracy_delta", "magnitude": -0.15, "affects": "enemies" },
+    { "kind": "stealth_bonus", "magnitude": 0.15, "affects": "allies" }
+  ],
+  "environmentalInteractions": [
+    "Stealth-field fighters compound with the veil: their opening strikes come from targets that are doubly hard to pin.",
+    "Enemies inside swing at afterimages — a 15% accuracy penalty on everything they attempt within the fog.",
+    "Anchoring the veil over your own backline lets fragile supports and artillery work behind moving false silhouettes."
+  ],
+  "sideEffects": [
+    "The stealth bonus only helps allies who are actually stealthed — a team with no stealth kits gets only the accuracy denial.",
+    "Asymmetric by design and priced accordingly: it is a field, so there is nothing for the enemy to destroy — but also nothing stopping them walking out."
+  ],
+  "counterplay": [
+    "Step outside the 12 m fog and force the fight in clear air — the illusions do not follow.",
+    "Wait out its 60-second duration before committing your heaviest cooldowns.",
+    "Use area abilities: blast radii do not care which silhouette was real."
+  ],
+  "visualManifestation": "A knee-to-shoulder bank of opaline fog in which half-real duplicates of everyone inside walk half a step out of sync.",
+  "audioManifestation": "Soft glassy chimes and doubled footsteps arriving a half-beat after the real ones.",
+  "confidence": "high",
+  "provenance": "Curated Season 0 template: concealment/illusion field archetype.",
+  "moderation": "approved",
+  "eligibility": "ranked_eligible"
+}

@@ -1,0 +1,444 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "whisper",
+      "displayName": "Whisper",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "humanoid"
+    },
+    "canon": {
+      "summary": "A soft-spoken combat medic who never raises her voice because her drones do the talking. Whisper fields a halo of palm-sized medical drones: they mend, they shield, and — when a walking tank needs humbling — they deliver a precisely aimed EMP dart. She is the cheapest contract on the season sheet and the first name good captains write down.",
+      "primarySources": [
+        {
+          "id": "whisper-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: field-hospital service, self-built drone halo, the EMP dart improvised during the walker incident."
+        },
+        {
+          "id": "whisper-design-01",
+          "kind": "design_document",
+          "note": "Kit design: support role, budget-priced roster glue, anti-tech utility dart, unaugmented-body fragility."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Whisper — a drone medic with one clever anti-tech trick, not a combat engineer.",
+      "disputedClaims": [],
+      "assumptions": [
+        "Her drones run on swappable cells; sustained output is limited by her own stamina directing them."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "drone_halo",
+        "origin": "Self-built ring of medical microdrones slaved to a neural band",
+        "dependencies": [
+          "intact drones",
+          "her own concentration"
+        ],
+        "interruptionConditions": [
+          "arcane fields scramble the nanite-level machinery",
+          "she herself is an ordinary, unarmored human",
+          "drained power cells silence the whole halo until they trickle back"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Drone-delivered healing",
+        "Projected shield matrices",
+        "Deployable med-drone stations"
+      ],
+      "conditional": [],
+      "defensive": [
+        "Shield matrix",
+        "Staying out of the way"
+      ],
+      "movement": [
+        "Ordinary ground movement"
+      ],
+      "signature": [
+        "Med-Drone",
+        "Nano-Mend",
+        "Shield Matrix",
+        "EMP Dart"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "Negligible offense: the EMP dart stings machines, but she cannot meaningfully hurt anything herself.",
+        "severity": "defining",
+        "condition": "always",
+        "evidence": "whisper-design-01"
+      },
+      {
+        "description": "An unaugmented body in a division of enhanced fighters — she survives by positioning and teammates.",
+        "severity": "serious",
+        "condition": "always",
+        "evidence": "whisper-lore-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "Ordinary flesh and bone — kinetic trauma has nothing to overcome.",
+        "severity": "minor",
+        "exposureMethod": "Kinetic damage",
+        "evidence": "whisper-design-01"
+      },
+      {
+        "description": "Arcane energies scramble her nanite machinery and bite her hard through the neural band.",
+        "severity": "serious",
+        "exposureMethod": "Magic damage or hex-tagged abilities",
+        "evidence": "whisper-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "Triage under fire — she tracks every teammate's vitals and is already moving before they call.",
+      "tacticalStyle": "Hangs behind the line, keeps the drones cycling, spends the EMP dart on whatever machine is winning.",
+      "riskTolerance": "Very low — a dead medic saves no one.",
+      "allyProtection": "Absolute — she has carried people out of worse than this.",
+      "moralConstraints": [
+        "Heals first, always",
+        "Will not leave a wounded teammate"
+      ],
+      "commandConstraints": [
+        "Refuses disengage orders while an ally is critical"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.drones.healing",
+          "selectedValue": "sustained squad healing via drone halo and deployed stations",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "drones intact"
+          ],
+          "evidence": [
+            "whisper-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "capabilities.emp_dart",
+          "selectedValue": "single-target EMP sting effective against tech-dependent fighters",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "clear line of fire"
+          ],
+          "evidence": [
+            "whisper-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Field-medic service record",
+        "Self-built drone halo",
+        "Improvised EMP dart"
+      ],
+      "aiAssumptions": [
+        "Drone station output normalized to the engine's summon healing formula"
+      ],
+      "mechanicalNormalizations": [
+        "EMP dart kept at low power — its value is the tag interaction, not the damage"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "whisper",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "support",
+      "chassis": "humanoid",
+      "scale": 1
+    },
+    "attributes": {
+      "forceOutput": 3,
+      "durability": 3,
+      "combatSpeed": 4,
+      "reactionSpeed": 5,
+      "travelSpeed": 5,
+      "precision": 5,
+      "mobility": 4,
+      "recovery": 6,
+      "perception": 8,
+      "combatSkill": 3,
+      "tacticalIntelligence": 8,
+      "teamwork": 10,
+      "resolve": 3
+    },
+    "resources": {
+      "vitality": 210,
+      "stability": 55,
+      "stamina": 110,
+      "staminaRegenPerTick": 1.8,
+      "primary": {
+        "name": "drone_power",
+        "max": 100,
+        "start": 100,
+        "regenPerTick": 0.6,
+        "onDepletedSuppressTags": [
+          "tech"
+        ]
+      }
+    },
+    "movementModes": [
+      "ground"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "triage-zap",
+          "name": "Triage Zap",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 12,
+          "power": 10,
+          "damageType": "energy",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "tech"
+          ],
+          "animationIntent": "drone_zap",
+          "description": "A drone breaks formation to deliver a discouraging shock. It is a warning, not a weapon."
+        }
+      ],
+      "signature": [
+        {
+          "id": "med-drone",
+          "name": "Med-Drone",
+          "kind": "summon",
+          "targeting": "ally",
+          "range": 8,
+          "power": 25,
+          "cost": {
+            "resource": "drone_power",
+            "amount": 22
+          },
+          "cooldownTicks": 48,
+          "windupTicks": 1,
+          "radius": 6,
+          "tags": [
+            "tech",
+            "drone",
+            "medic"
+          ],
+          "animationIntent": "deploy_med_drone",
+          "description": "She anchors a drone station over the fight — it hums quietly and keeps everyone near it breathing."
+        },
+        {
+          "id": "nano-mend",
+          "name": "Nano-Mend",
+          "kind": "support",
+          "targeting": "ally",
+          "range": 12,
+          "power": 26,
+          "cost": {
+            "resource": "drone_power",
+            "amount": 15
+          },
+          "cooldownTicks": 30,
+          "windupTicks": 0,
+          "tags": [
+            "tech",
+            "medic"
+          ],
+          "animationIntent": "nano_stream",
+          "description": "A stream of nanites closes wounds from the inside out — field surgery at the speed of flight."
+        },
+        {
+          "id": "shield-matrix",
+          "name": "Shield Matrix",
+          "kind": "support",
+          "targeting": "ally",
+          "range": 12,
+          "power": 8,
+          "cost": {
+            "resource": "drone_power",
+            "amount": 18
+          },
+          "cooldownTicks": 36,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "shield",
+              "magnitude": 40,
+              "durationTicks": 40
+            }
+          ],
+          "tags": [
+            "tech",
+            "barrier"
+          ],
+          "animationIntent": "matrix_weave",
+          "description": "Four drones weave a lattice of deflection film around whoever is about to be hit hardest."
+        },
+        {
+          "id": "emp-dart",
+          "name": "EMP Dart",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 14,
+          "power": 10,
+          "damageType": "energy",
+          "cost": {
+            "resource": "drone_power",
+            "amount": 8
+          },
+          "cooldownTicks": 24,
+          "windupTicks": 0,
+          "tags": [
+            "tech",
+            "emp"
+          ],
+          "animationIntent": "emp_dart_shot",
+          "description": "A needle of packaged lightning. It barely bruises flesh — but machines remember it for a long time."
+        }
+      ],
+      "contextual": [],
+      "escalation": {
+        "id": "overclock-swarm",
+        "name": "Overclock Swarm",
+        "kind": "summon",
+        "targeting": "enemy",
+        "range": 10,
+        "power": 45,
+        "cost": {
+          "resource": "drone_power",
+          "amount": 30
+        },
+        "cooldownTicks": 220,
+        "windupTicks": 2,
+        "radius": 8,
+        "tags": [
+          "tech",
+          "drone"
+        ],
+        "animationIntent": "finisher_swarm",
+        "description": "She overrides every safety and lets the halo hunt — a stinging cloud that harries the enemy until its cells burn out."
+      },
+      "passives": []
+    },
+    "defenses": {
+      "resistances": [],
+      "immunities": []
+    },
+    "weaknesses": [
+      {
+        "id": "unarmored-medic",
+        "description": "There is nothing enhanced about her body — kinetic trauma lands exactly as hard as physics says it should.",
+        "severity": 1,
+        "trigger": {
+          "damageTypes": [
+            "kinetic"
+          ]
+        },
+        "effect": {},
+        "evidence": "whisper-design-01"
+      },
+      {
+        "id": "nanite-scramble",
+        "description": "Arcane energies scramble her nanites and feed back through the neural band — magic hurts her twice.",
+        "severity": 2,
+        "trigger": {
+          "damageTypes": [
+            "magic"
+          ],
+          "abilityTags": [
+            "magic",
+            "hex",
+            "spirit"
+          ]
+        },
+        "effect": {},
+        "evidence": "whisper-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Soft-spoken, unhurried, impossible to rattle — the calm at the center of every emergency.",
+      "riskTolerance": 0.2,
+      "allyProtection": 0.95,
+      "targetPreference": "nearest",
+      "commandCompliance": 0.9,
+      "constraints": [
+        "never_abandons_allies"
+      ],
+      "repetitionAvoidance": 0.5
+    },
+    "interactions": {
+      "environmental": [],
+      "synergies": [
+        {
+          "allyTag": "tech",
+          "effect": {
+            "damageMult": 1.04
+          },
+          "description": "Tech-fighter telemetry gives her drones cleaner firing and mending solutions."
+        }
+      ],
+      "powerTags": [
+        "tech",
+        "emp",
+        "drone",
+        "medic",
+        "barrier"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 47,
+      "versatilityScore": 52,
+      "reliabilityScore": 60,
+      "counterabilityScore": 54,
+      "draftPrice": 16500000,
+      "priceVersion": "S0",
+      "priceRationale": "Balanced profile. Scores — capability 47, versatility 52, reliability 60, counterability 54."
+    },
+    "presentation": {
+      "primaryColor": "#8fd6c5",
+      "secondaryColor": "#f4f9f7",
+      "energyColor": "#aef3e0",
+      "silhouette": "Small figure in a field-medic coat beneath a slow halo of seven palm-sized drones",
+      "animationIntents": [
+        "halo_idle",
+        "drone_zap",
+        "deploy_med_drone",
+        "nano_stream",
+        "matrix_weave",
+        "emp_dart_shot",
+        "finisher_swarm"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": []
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "0.1.0",
+  "wildcardId": "hex-dampener",
+  "version": "1.0.0",
+  "creator": "Infinite Arena Studio",
+  "inputDescription": "A ring of runes on the ground that eats enchantment and spirit-work inside it",
+  "normalizedName": "Hex Dampener",
+  "class": "field",
+  "radius": 10,
+  "durationTicks": 280,
+  "objectHp": 0,
+  "deployment": "placed",
+  "effects": [
+    { "kind": "suppress_tags", "tags": ["magic", "spirit"], "affects": "both" }
+  ],
+  "environmentalInteractions": [
+    "Turns the warded circle into dead ground for enchanters and spirit-workers — fights inside it are settled by muscle, steel, and aim.",
+    "Layered over a choke point it forces arcane kits to route around or fight hollow."
+  ],
+  "sideEffects": [
+    "Suppresses BOTH teams' magic and spirit expression inside the ring — your own mystics go quiet too.",
+    "It is a field, not an object: it cannot be destroyed, only waited out or walked out of."
+  ],
+  "counterplay": [
+    "Step outside the 10 m ring — the runes do not follow.",
+    "Wait out its 70-second duration; the circle burns itself out.",
+    "Draft fighters whose kits carry neither magic nor spirit tags and claim the warded ground for free."
+  ],
+  "visualManifestation": "A ring of ash-white runes seared into the ground, a faint grey shimmer standing knee-high above them; spell-light entering the ring simply goes out.",
+  "audioManifestation": "A low choral drone that swallows the usual chime of spellwork into silence.",
+  "confidence": "high",
+  "provenance": "Curated Season 0 template: anti-arcane suppression field archetype.",
+  "moderation": "approved",
+  "eligibility": "ranked_eligible"
+}

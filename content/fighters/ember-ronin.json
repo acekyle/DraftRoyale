@@ -1,0 +1,493 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "ember-ronin",
+      "displayName": "Ember Ronin",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "humanoid"
+    },
+    "canon": {
+      "summary": "A wandering swordmaster who survived a foundry collapse by learning to pull its heat into his own body \u2014 and has been letting it back out through a blade ever since. The Ember Ronin fights alone by preference and duels the strongest opponent on the field by code. Water is the one enemy his edge cannot answer.",
+      "primarySources": [
+        {
+          "id": "ronin-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: foundry collapse, heat-channeling physiology, dueling code, wandering years."
+        },
+        {
+          "id": "ronin-design-01",
+          "kind": "design_document",
+          "note": "Kit design: skirmisher role, heat-meter management, burn pressure, hydro/water as the defining counter."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Ember Ronin \u2014 a heat-channeling duelist, not a fire elemental.",
+      "disputedClaims": [],
+      "assumptions": [
+        "His body banks heat continuously between exchanges; standing water bleeds it away faster than he can bank it."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "heat",
+        "origin": "Metabolic heat-banking learned in the foundry collapse, vented through a folded-steel blade",
+        "dependencies": [
+          "banked body heat"
+        ],
+        "interruptionConditions": [
+          "standing water drains the bank continuously",
+          "a cold blade is just a sword \u2014 fire techniques fall silent at zero heat"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Heat-channeled swordsmanship",
+        "Burning slashes at blade and half-field range",
+        "Duelist footwork"
+      ],
+      "conditional": [],
+      "defensive": [
+        "Ember stance",
+        "Reflexive counter-cuts",
+        "High thermal tolerance"
+      ],
+      "movement": [
+        "Ground sprints between engagements"
+      ],
+      "signature": [
+        "Cinder Slash",
+        "Flame Arc",
+        "Ember Stance",
+        "Scorching Riposte"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "Fire techniques spend banked heat; the bank refills slowly and drains outright in standing water.",
+        "severity": "defining",
+        "condition": "water_present context",
+        "evidence": "ronin-lore-01"
+      },
+      {
+        "description": "His code demands the strongest opponent \u2014 he will refuse orders to pile onto a weakened one.",
+        "severity": "serious",
+        "condition": "always",
+        "evidence": "ronin-lore-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "Hydrokinetic attacks quench the blade and the bank both.",
+        "severity": "serious",
+        "exposureMethod": "Hydro-tagged abilities",
+        "evidence": "ronin-design-01"
+      },
+      {
+        "description": "Fighting in standing water saps him \u2014 every hit lands on a colder, slower duelist.",
+        "severity": "minor",
+        "exposureMethod": "Engaging inside water_present zones",
+        "evidence": "ronin-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "A duelist's read: distance, tempo, and the half-second where an opponent overcommits.",
+      "tacticalStyle": "Singles out the strongest enemy, controls spacing with flame arcs, finishes exchanges with the riposte.",
+      "riskTolerance": "High \u2014 he has bet his life on his edge for twenty years.",
+      "allyProtection": "Low \u2014 he fights beside people, not for them.",
+      "moralConstraints": [
+        "Duels the strongest; refuses to execute the helpless"
+      ],
+      "commandConstraints": [
+        "Rejects focus orders aimed at the weakest enemy"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.heat.banking",
+          "selectedValue": "continuous slow heat regeneration, drained by standing water",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "not submerged"
+          ],
+          "evidence": [
+            "ronin-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.hydro",
+          "selectedValue": "amplified damage from hydrokinetic attacks",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "ronin-design-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Foundry-collapse origin",
+        "Heat-banking physiology",
+        "Duelist code"
+      ],
+      "aiAssumptions": [
+        "Water drain rate (0.5 heat/tick) chosen for pacing against the fountain and flood wildcard"
+      ],
+      "mechanicalNormalizations": [
+        "'Cuts through anything while burning' normalized to bounded thermal power values"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "ember-ronin",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "skirmisher",
+      "chassis": "humanoid",
+      "scale": 1
+    },
+    "attributes": {
+      "forceOutput": 7,
+      "durability": 6,
+      "combatSpeed": 7,
+      "reactionSpeed": 7,
+      "travelSpeed": 6,
+      "precision": 8,
+      "mobility": 7,
+      "recovery": 5,
+      "perception": 6,
+      "combatSkill": 8,
+      "tacticalIntelligence": 6,
+      "teamwork": 4,
+      "resolve": 7
+    },
+    "resources": {
+      "vitality": 320,
+      "stability": 80,
+      "stamina": 100,
+      "staminaRegenPerTick": 1.5,
+      "primary": {
+        "name": "heat",
+        "max": 100,
+        "start": 70,
+        "regenPerTick": 0.7,
+        "drainInContext": {
+          "tags": [
+            "water_present"
+          ],
+          "amount": 0.5
+        },
+        "onDepletedSuppressTags": [
+          "fire"
+        ]
+      }
+    },
+    "movementModes": [
+      "ground",
+      "sprint"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "drawing-cut",
+          "name": "Drawing Cut",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3,
+          "power": 12,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "blade",
+            "kinetic"
+          ],
+          "animationIntent": "iai_cut",
+          "description": "A clean draw-and-cut that needs no heat at all \u2014 the foundation everything else burns on."
+        }
+      ],
+      "signature": [
+        {
+          "id": "cinder-slash",
+          "name": "Cinder Slash",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3.2,
+          "power": 24,
+          "damageType": "thermal",
+          "cost": {
+            "resource": "heat",
+            "amount": 15
+          },
+          "cooldownTicks": 26,
+          "windupTicks": 0,
+          "effects": [
+            {
+              "kind": "burn",
+              "magnitude": 1.5,
+              "durationTicks": 8
+            }
+          ],
+          "tags": [
+            "fire",
+            "thermal",
+            "blade"
+          ],
+          "animationIntent": "burning_slash",
+          "description": "The blade exits the cut glowing \u2014 what it touches keeps burning."
+        },
+        {
+          "id": "flame-arc",
+          "name": "Flame Arc",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 16,
+          "power": 23,
+          "damageType": "thermal",
+          "cost": {
+            "resource": "heat",
+            "amount": 15
+          },
+          "cooldownTicks": 26,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "burn",
+              "magnitude": 1,
+              "durationTicks": 8
+            }
+          ],
+          "tags": [
+            "fire",
+            "thermal",
+            "projectile"
+          ],
+          "animationIntent": "flame_crescent",
+          "description": "A crescent of vented heat thrown off the swing \u2014 his answer to anything that stays out of reach."
+        },
+        {
+          "id": "ember-stance",
+          "name": "Ember Stance",
+          "kind": "support",
+          "targeting": "self",
+          "range": 0,
+          "power": 10,
+          "cost": {
+            "resource": "heat",
+            "amount": 12
+          },
+          "cooldownTicks": 44,
+          "windupTicks": 0,
+          "effects": [
+            {
+              "kind": "empower",
+              "magnitude": 0.2,
+              "durationTicks": 16
+            }
+          ],
+          "tags": [
+            "fire",
+            "stance"
+          ],
+          "animationIntent": "stance_ignite",
+          "description": "He banks the fire inward: wounds cauterize, and the next exchanges land like forge hammers."
+        },
+        {
+          "id": "scorching-riposte",
+          "name": "Scorching Riposte",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3,
+          "power": 27,
+          "damageType": "thermal",
+          "cost": {
+            "resource": "heat",
+            "amount": 18
+          },
+          "cooldownTicks": 34,
+          "windupTicks": 1,
+          "tags": [
+            "fire",
+            "thermal",
+            "blade"
+          ],
+          "animationIntent": "riposte_flare",
+          "description": "The counter-cut he is famous for \u2014 the parry and the burn arrive as one motion."
+        }
+      ],
+      "contextual": [],
+      "escalation": {
+        "id": "ashfall-finale",
+        "name": "Ashfall Finale",
+        "kind": "area",
+        "targeting": "enemy",
+        "range": 5,
+        "radius": 6,
+        "power": 50,
+        "damageType": "thermal",
+        "cost": {
+          "resource": "heat",
+          "amount": 30
+        },
+        "cooldownTicks": 230,
+        "windupTicks": 4,
+        "effects": [
+          {
+            "kind": "burn",
+            "magnitude": 2,
+            "durationTicks": 12
+          }
+        ],
+        "tags": [
+          "fire",
+          "thermal",
+          "blade"
+        ],
+        "animationIntent": "finisher_ashfall",
+        "description": "Every degree he has banked leaves through one full-circle cut \u2014 the air itself catches, and ash falls after."
+      },
+      "passives": [
+        {
+          "id": "duelists-answer",
+          "name": "Duelist's Answer",
+          "kind": "counter_attack",
+          "magnitude": 0.25,
+          "tags": [
+            "blade"
+          ],
+          "description": "Strike at a swordmaster and the sword answers on its own."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [
+        {
+          "damageType": "thermal",
+          "pct": 0.35
+        }
+      ],
+      "immunities": [
+        "burn"
+      ]
+    },
+    "weaknesses": [
+      {
+        "id": "quenched-edge",
+        "description": "Hydrokinetic attacks quench blade and bank alike \u2014 steam scalds where his fire should be.",
+        "severity": 2,
+        "trigger": {
+          "abilityTags": [
+            "hydro",
+            "water"
+          ]
+        },
+        "effect": {},
+        "evidence": "ronin-design-01"
+      },
+      {
+        "id": "cold-water-duel",
+        "description": "In standing water he is a colder, slower duelist \u2014 everything hits him harder there.",
+        "severity": 1,
+        "trigger": {
+          "envTags": [
+            "water_present"
+          ]
+        },
+        "effect": {},
+        "evidence": "ronin-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Laconic, courteous, absolutely certain \u2014 a duelist who bows before he burns you down.",
+      "riskTolerance": 0.65,
+      "allyProtection": 0.3,
+      "targetPreference": "highest_threat",
+      "commandCompliance": 0.55,
+      "constraints": [
+        "hunts_strongest"
+      ],
+      "repetitionAvoidance": 0.7
+    },
+    "interactions": {
+      "environmental": [],
+      "synergies": [
+        {
+          "allyTag": "fire",
+          "effect": {
+            "damageMult": 1.07
+          },
+          "description": "Another flame on the field keeps the ambient heat high \u2014 his bank vents hotter."
+        }
+      ],
+      "powerTags": [
+        "fire",
+        "thermal",
+        "blade",
+        "kinetic",
+        "projectile",
+        "stance"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 69,
+      "versatilityScore": 88,
+      "reliabilityScore": 61,
+      "counterabilityScore": 37,
+      "draftPrice": 37500000,
+      "priceVersion": "S0",
+      "priceRationale": "elite raw combat output, broad kit versatility increased the price. Scores \u2014 capability 69, versatility 88, reliability 61, counterability 37."
+    },
+    "presentation": {
+      "primaryColor": "#b3382c",
+      "secondaryColor": "#2b2320",
+      "energyColor": "#ff8c42",
+      "silhouette": "Lean swordsman in a scorched traveling cloak, single blade glowing ember-orange along its edge",
+      "animationIntents": [
+        "sheathed_idle",
+        "iai_cut",
+        "burning_slash",
+        "flame_crescent",
+        "stance_ignite",
+        "riposte_flare",
+        "finisher_ashfall"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": [
+        "Balance: below-band self-play win rate; melee approach tax under investigation (systemic, shared with razorback)."
+      ]
+    }
+  }
+}

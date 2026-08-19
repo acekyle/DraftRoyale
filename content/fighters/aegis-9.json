@@ -17,43 +17,99 @@
     "canon": {
       "summary": "The ninth Autonomous Escort Guardian Intercept System — a decommissioned disaster-response walker refitted for arena duty. AEGIS-9 exists to stand between danger and the people behind it. Immense, patient, and utterly dependent on its powered systems.",
       "primarySources": [
-        { "id": "aegis-lore-01", "kind": "creator_lore", "note": "Studio origin document: rescue-walker lineage, escort protocols, suit-power dependency." },
-        { "id": "aegis-design-01", "kind": "design_document", "note": "Kit design: defender role, taunt/aegis-dome protection loop, EMP as defining counter." }
+        {
+          "id": "aegis-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: rescue-walker lineage, escort protocols, suit-power dependency."
+        },
+        {
+          "id": "aegis-design-01",
+          "kind": "design_document",
+          "note": "Kit design: defender role, taunt/aegis-dome protection loop, EMP as defining counter."
+        }
       ],
       "selectedInterpretation": "Season 0 baseline AEGIS-9 — powered guardian walker, not an unstoppable juggernaut.",
       "disputedClaims": [],
-      "assumptions": ["Backup hydraulics keep it moving (slowly) even when suit power fails; only powered systems shut down."]
+      "assumptions": [
+        "Backup hydraulics keep it moving (slowly) even when suit power fails; only powered systems shut down."
+      ]
     },
     "powerSources": [
       {
         "name": "suit_power",
         "origin": "Onboard fusion cell driving weapons, barriers, and servos",
-        "dependencies": ["intact power systems"],
-        "interruptionConditions": ["EMP and magnetic disruption suppress tech systems", "power depletion disables tech abilities until the cell recovers"]
+        "dependencies": [
+          "intact power systems"
+        ],
+        "interruptionConditions": [
+          "EMP and magnetic disruption suppress tech systems",
+          "power depletion disables tech abilities until the cell recovers"
+        ]
       }
     ],
     "capabilitySummary": {
-      "core": ["Crushing servo strikes", "Projected barrier dome", "Threat-designation taunts"],
-      "conditional": ["Magnetic anchor lock near large metal structures"],
-      "defensive": ["Massive armor plating", "Guard mastery", "Kinetic dampeners"],
-      "movement": ["Heavy ground locomotion"],
-      "signature": ["Bulwark Slam", "Aegis Dome", "Taunt Protocol", "Missile Barrage"]
+      "core": [
+        "Crushing servo strikes",
+        "Projected barrier dome",
+        "Threat-designation taunts"
+      ],
+      "conditional": [
+        "Magnetic anchor lock near large metal structures"
+      ],
+      "defensive": [
+        "Massive armor plating",
+        "Guard mastery",
+        "Kinetic dampeners"
+      ],
+      "movement": [
+        "Heavy ground locomotion"
+      ],
+      "signature": [
+        "Bulwark Slam",
+        "Aegis Dome",
+        "Taunt Protocol",
+        "Missile Barrage"
+      ]
     },
     "limitations": [
-      { "description": "Slow and easily kited; almost no answer to sustained long-range harassment while closing distance.", "severity": "serious", "condition": "open terrain", "evidence": "aegis-design-01" },
-      { "description": "All signature systems draw from one fusion cell; overspending leaves it a walking shield with fists.", "severity": "defining", "condition": "suit_power depleted", "evidence": "aegis-lore-01" }
+      {
+        "description": "Slow and easily kited; almost no answer to sustained long-range harassment while closing distance.",
+        "severity": "serious",
+        "condition": "open terrain",
+        "evidence": "aegis-design-01"
+      },
+      {
+        "description": "All signature systems draw from one fusion cell; overspending leaves it a walking shield with fists.",
+        "severity": "defining",
+        "condition": "suit_power depleted",
+        "evidence": "aegis-lore-01"
+      }
     ],
     "weaknessSummary": [
-      { "description": "EMP and magnetic attacks suppress its technology outright.", "severity": "defining", "exposureMethod": "EMP wildcards, magnetic abilities", "evidence": "aegis-lore-01" },
-      { "description": "Energy weapons overload its capacitor shielding for amplified damage.", "severity": "minor", "exposureMethod": "Sustained energy fire", "evidence": "aegis-design-01" }
+      {
+        "description": "EMP and magnetic attacks suppress its technology outright.",
+        "severity": "defining",
+        "exposureMethod": "EMP wildcards, magnetic abilities",
+        "evidence": "aegis-lore-01"
+      },
+      {
+        "description": "Energy weapons overload its capacitor shielding for amplified damage.",
+        "severity": "minor",
+        "exposureMethod": "Sustained energy fire",
+        "evidence": "aegis-design-01"
+      }
     ],
     "behaviorSummary": {
       "combatIntelligence": "Runs continuous threat-assessment; prioritizes protecting designated charges.",
       "tacticalStyle": "Anchors the front line, absorbs attention, punishes overextension.",
       "riskTolerance": "Low for itself, zero for its allies.",
       "allyProtection": "Defining trait — escort protocols override self-preservation.",
-      "moralConstraints": ["Prefers disabling over destroying when a foe is helpless"],
-      "commandConstraints": ["Will refuse orders that abandon an endangered ally"]
+      "moralConstraints": [
+        "Prefers disabling over destroying when a foe is helpless"
+      ],
+      "commandConstraints": [
+        "Will refuse orders that abandon an endangered ally"
+      ]
     },
     "provenance": {
       "claims": [
@@ -61,8 +117,12 @@
           "path": "defenses.armor.rating",
           "selectedValue": "withstands sustained heavy kinetic fire",
           "portrayalType": "repeatable",
-          "conditions": ["armor intact"],
-          "evidence": ["aegis-lore-01"],
+          "conditions": [
+            "armor intact"
+          ],
+          "evidence": [
+            "aegis-lore-01"
+          ],
           "conflicts": [],
           "confidence": "high"
         },
@@ -70,17 +130,29 @@
           "path": "weaknesses.emp",
           "selectedValue": "full tech suppression under EMP",
           "portrayalType": "repeatable",
-          "conditions": ["unshielded systems"],
-          "evidence": ["aegis-lore-01"],
+          "conditions": [
+            "unshielded systems"
+          ],
+          "evidence": [
+            "aegis-lore-01"
+          ],
           "conflicts": [],
           "confidence": "high"
         }
       ],
       "conflicts": [],
       "confidence": "high",
-      "creatorFacts": ["Rescue-walker origin", "Escort protocols", "Fusion-cell dependency"],
-      "aiAssumptions": ["Backup hydraulics allow 80% movement speed under EMP rather than full shutdown"],
-      "mechanicalNormalizations": ["Taunt modeled as a vulnerability designation rather than mind control"]
+      "creatorFacts": [
+        "Rescue-walker origin",
+        "Escort protocols",
+        "Fusion-cell dependency"
+      ],
+      "aiAssumptions": [
+        "Backup hydraulics allow 80% movement speed under EMP rather than full shutdown"
+      ],
+      "mechanicalNormalizations": [
+        "Taunt modeled as a vulnerability designation rather than mind control"
+      ]
     },
     "approval": {
       "creatorApproved": true,
@@ -125,10 +197,14 @@
         "max": 100,
         "start": 100,
         "regenPerTick": 0.5,
-        "onDepletedSuppressTags": ["tech"]
+        "onDepletedSuppressTags": [
+          "tech"
+        ]
       }
     },
-    "movementModes": ["ground"],
+    "movementModes": [
+      "ground"
+    ],
     "capabilities": {
       "foundational": [
         {
@@ -139,10 +215,15 @@
           "range": 3,
           "power": 12,
           "damageType": "kinetic",
-          "cost": { "resource": "stamina", "amount": 4 },
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
           "cooldownTicks": 4,
           "windupTicks": 0,
-          "tags": ["kinetic"],
+          "tags": [
+            "kinetic"
+          ],
           "animationIntent": "heavy_punch",
           "description": "A piston-driven haymaker. Works even with the reactor dark."
         }
@@ -156,11 +237,24 @@
           "range": 3.2,
           "power": 26,
           "damageType": "kinetic",
-          "cost": { "resource": "suit_power", "amount": 15 },
+          "cost": {
+            "resource": "suit_power",
+            "amount": 15
+          },
           "cooldownTicks": 30,
           "windupTicks": 2,
-          "effects": [{ "kind": "slow", "magnitude": 0.3, "durationTicks": 8 }],
-          "tags": ["tech", "kinetic", "seismic"],
+          "effects": [
+            {
+              "kind": "slow",
+              "magnitude": 0.3,
+              "durationTicks": 8
+            }
+          ],
+          "tags": [
+            "tech",
+            "kinetic",
+            "seismic"
+          ],
           "animationIntent": "ground_slam",
           "description": "Both fists down through the target — the shockwave staggers footing."
         },
@@ -171,11 +265,23 @@
           "targeting": "ally",
           "range": 10,
           "power": 0,
-          "cost": { "resource": "suit_power", "amount": 20 },
+          "cost": {
+            "resource": "suit_power",
+            "amount": 20
+          },
           "cooldownTicks": 44,
           "windupTicks": 1,
-          "effects": [{ "kind": "shield", "magnitude": 50, "durationTicks": 40 }],
-          "tags": ["tech", "barrier"],
+          "effects": [
+            {
+              "kind": "shield",
+              "magnitude": 50,
+              "durationTicks": 40
+            }
+          ],
+          "tags": [
+            "tech",
+            "barrier"
+          ],
           "animationIntent": "projected_dome",
           "description": "Projects a hard-shell barrier over the most endangered ally."
         },
@@ -187,11 +293,22 @@
           "range": 12,
           "power": 6,
           "damageType": "energy",
-          "cost": { "resource": "suit_power", "amount": 10 },
+          "cost": {
+            "resource": "suit_power",
+            "amount": 10
+          },
           "cooldownTicks": 32,
           "windupTicks": 0,
-          "effects": [{ "kind": "vulnerable", "magnitude": 0.15, "durationTicks": 16 }],
-          "tags": ["tech"],
+          "effects": [
+            {
+              "kind": "vulnerable",
+              "magnitude": 0.2,
+              "durationTicks": 16
+            }
+          ],
+          "tags": [
+            "tech"
+          ],
           "animationIntent": "threat_designation",
           "description": "Designates a threat with targeting lasers, marking its defenses for the team."
         },
@@ -202,12 +319,19 @@
           "targeting": "enemy",
           "range": 20,
           "radius": 5,
-          "power": 22,
+          "power": 25,
           "damageType": "kinetic",
-          "cost": { "resource": "suit_power", "amount": 20 },
+          "cost": {
+            "resource": "suit_power",
+            "amount": 20
+          },
           "cooldownTicks": 40,
           "windupTicks": 2,
-          "tags": ["tech", "explosive", "projectile"],
+          "tags": [
+            "tech",
+            "explosive",
+            "projectile"
+          ],
           "animationIntent": "shoulder_missiles",
           "description": "Shoulder pods answer the kiting problem — briefly."
         }
@@ -221,12 +345,26 @@
           "range": 14,
           "power": 8,
           "damageType": "energy",
-          "cost": { "resource": "suit_power", "amount": 15 },
+          "cost": {
+            "resource": "suit_power",
+            "amount": 15
+          },
           "cooldownTicks": 48,
           "windupTicks": 1,
-          "effects": [{ "kind": "root", "magnitude": 0, "durationTicks": 10 }],
-          "requiresContext": ["metal_structures"],
-          "tags": ["tech", "magnetic"],
+          "effects": [
+            {
+              "kind": "root",
+              "magnitude": 0,
+              "durationTicks": 10
+            }
+          ],
+          "requiresContext": [
+            "metal_structures"
+          ],
+          "tags": [
+            "tech",
+            "magnetic"
+          ],
           "animationIntent": "magnetic_lock",
           "description": "Near large metal structures it can pin a target with an induced magnetic field."
         }
@@ -239,11 +377,24 @@
         "range": 3.5,
         "power": 58,
         "damageType": "kinetic",
-        "cost": { "resource": "suit_power", "amount": 35 },
+        "cost": {
+          "resource": "suit_power",
+          "amount": 35
+        },
         "cooldownTicks": 240,
         "windupTicks": 5,
-        "effects": [{ "kind": "stun", "magnitude": 0, "durationTicks": 4 }],
-        "tags": ["tech", "kinetic", "seismic"],
+        "effects": [
+          {
+            "kind": "stun",
+            "magnitude": 0,
+            "durationTicks": 4
+          }
+        ],
+        "tags": [
+          "tech",
+          "kinetic",
+          "seismic"
+        ],
         "animationIntent": "finisher_hammer",
         "description": "Overcharges every servo for one leaping, arena-shaking hammer blow."
       },
@@ -253,29 +404,51 @@
           "name": "Bulwark Doctrine",
           "kind": "guard_mastery",
           "magnitude": 0.15,
-          "tags": ["kinetic"],
+          "tags": [
+            "kinetic"
+          ],
           "description": "Decades of shield-arm firmware — guarding is an art form."
         }
       ]
     },
     "defenses": {
-      "resistances": [{ "damageType": "kinetic", "pct": 0.3 }],
-      "immunities": ["stealth"]
+      "resistances": [
+        {
+          "damageType": "kinetic",
+          "pct": 0.3
+        }
+      ],
+      "immunities": [
+        "stealth"
+      ]
     },
     "weaknesses": [
       {
         "id": "emp-shutdown",
         "description": "EMP and magnetic disruption suppress every tech system and strike its unshielded core hard.",
         "severity": 3,
-        "trigger": { "abilityTags": ["emp", "magnetic"] },
-        "effect": { "suppressTags": ["tech"] },
+        "trigger": {
+          "abilityTags": [
+            "emp",
+            "magnetic"
+          ]
+        },
+        "effect": {
+          "suppressTags": [
+            "tech"
+          ]
+        },
         "evidence": "aegis-lore-01"
       },
       {
         "id": "capacitor-overload",
         "description": "Sustained energy fire overloads its capacitor shielding.",
         "severity": 1,
-        "trigger": { "damageTypes": ["energy"] },
+        "trigger": {
+          "damageTypes": [
+            "energy"
+          ]
+        },
         "effect": {},
         "evidence": "aegis-design-01"
       }
@@ -286,46 +459,73 @@
       "allyProtection": 0.95,
       "targetPreference": "highest_threat",
       "commandCompliance": 0.9,
-      "constraints": ["protects_captain", "never_abandons_allies", "avoids_lethal_force"],
+      "constraints": [
+        "protects_captain",
+        "never_abandons_allies",
+        "avoids_lethal_force"
+      ],
       "repetitionAvoidance": 0.5
     },
     "interactions": {
       "environmental": [
         {
           "contextTag": "emp_field",
-          "effect": { "suppressTags": ["tech"], "speedMult": 0.8 },
+          "effect": {
+            "suppressTags": [
+              "tech"
+            ],
+            "speedMult": 0.8
+          },
           "description": "EMP fields suppress its powered systems; backup hydraulics limp along at reduced speed."
         }
       ],
       "synergies": [
         {
           "allyTag": "tech",
-          "effect": { "damageMult": 1.06 },
+          "effect": {
+            "damageMult": 1.06
+          },
           "description": "Networks fire-control data with other tech fighters."
         }
       ],
-      "powerTags": ["tech", "kinetic", "seismic", "explosive", "barrier", "projectile", "magnetic"]
+      "powerTags": [
+        "tech",
+        "kinetic",
+        "seismic",
+        "explosive",
+        "barrier",
+        "projectile",
+        "magnetic"
+      ]
     },
     "balance": {
-      "capabilityScore": 0,
-      "versatilityScore": 0,
-      "reliabilityScore": 0,
-      "counterabilityScore": 0,
-      "draftPrice": 34000000,
+      "capabilityScore": 68,
+      "versatilityScore": 87,
+      "reliabilityScore": 60,
+      "counterabilityScore": 45,
+      "draftPrice": 35500000,
       "priceVersion": "S0",
-      "priceRationale": "pending pricing tool run",
-      "_generated": "run `npm run price` to stamp final scores"
+      "priceRationale": "elite raw combat output, broad kit versatility increased the price; serious exploitable weaknesses reduced it. Scores — capability 68, versatility 87, reliability 60, counterability 45."
     },
     "presentation": {
       "primaryColor": "#4a7bd0",
       "secondaryColor": "#c8d6ef",
       "energyColor": "#6fd4ff",
       "silhouette": "Broad-shouldered rescue walker with a vault-door chest and one oversized shield arm",
-      "animationIntents": ["heavy_idle", "ground_slam", "projected_dome", "threat_designation", "shoulder_missiles", "finisher_hammer"]
+      "animationIntents": [
+        "heavy_idle",
+        "ground_slam",
+        "projected_dome",
+        "threat_designation",
+        "shoulder_missiles",
+        "finisher_hammer"
+      ]
     },
     "validation": {
       "eligibility": "ranked_eligible",
-      "passedSuites": ["schema"],
+      "passedSuites": [
+        "schema"
+      ],
       "knownIssues": []
     }
   }

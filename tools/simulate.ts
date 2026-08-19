@@ -48,17 +48,39 @@ function makeTeam(playerId: string, roster: string[]): TeamSetup {
 }
 
 const combos = teamsOf3();
-// Sample matchups deterministically: pair combo[i] vs combo[(i + offset) % n]
+// Deterministic matchup schedule with guaranteed coverage: sample disjoint pairs,
+// then top up any fighter that landed zero appearances.
 const wins: Record<string, number> = {};
 const games: Record<string, number> = {};
 let stalemates = 0, decisions = 0, eliminations = 0, totalTicks = 0, matches = 0, determinismFailures = 0;
 const durations: number[] = [];
 
-const MATCHUPS = Math.min(120, combos.length);
-for (let m = 0; m < MATCHUPS; m++) {
-  const a = combos[m % combos.length];
-  const b = combos[(m * 7 + 3) % combos.length];
-  if (a.some((x) => b.includes(x))) continue; // exact-version uniqueness across a draft
+const MATCHUPS = Math.min(60, combos.length);
+const schedule: [string[], string[]][] = [];
+const appearances: Record<string, number> = Object.fromEntries(ids.map((id) => [id, 0]));
+const addMatchup = (a: string[], b: string[]) => {
+  schedule.push([a, b]);
+  for (const id of [...a, ...b]) appearances[id]++;
+};
+for (let i = 0; i < combos.length && schedule.length < MATCHUPS; i++) {
+  const a = combos[(i * 11) % combos.length];
+  for (let j = 1; j < combos.length; j++) {
+    const b = combos[(i * 11 + j * 7 + 3) % combos.length];
+    if (a.some((x) => b.includes(x))) continue;
+    addMatchup(a, b);
+    break;
+  }
+}
+for (const id of ids) {
+  while ((appearances[id] ?? 0) < 2) {
+    const a = combos.find((c) => c.includes(id));
+    const b = a && combos.find((c) => !c.some((x) => a.includes(x)));
+    if (!a || !b) break;
+    addMatchup(a, b);
+  }
+}
+
+for (const [m, [a, b]] of schedule.entries()) {
   for (let s = 0; s < SEEDS; s++) {
     const manifest = buildManifest({
       matchId: `sim-${m}-${s}`,

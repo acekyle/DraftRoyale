@@ -1,0 +1,477 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "sable-howl",
+      "displayName": "Sable Howl",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "quadruped"
+    },
+    "canon": {
+      "summary": "A wolf that walked out of a lightless research annex with the dark still clinging to her coat and a voice that breaks stone. Sable Howl hunts from shadow, opens throats with surgical lunges, and carries the roster's loudest weapon: a resonant howl that finds the crack in anything rigid. Bright light burns the shadow off her, and with it, most of what keeps her alive.",
+      "primarySources": [
+        {
+          "id": "sable-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: annex escape, shadow-bonded coat, resonant howl, aversion to hard light."
+        },
+        {
+          "id": "sable-design-01",
+          "kind": "design_document",
+          "note": "Kit design: stealth skirmisher, sonic area answer to heavy cores, darkness scaling, light as the counter."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Sable Howl — a stealth pack-hunter with one sonic trump card, not a living eclipse.",
+      "disputedClaims": [],
+      "assumptions": [
+        "Her shadow-coat re-forms after about five quiet seconds out of combat; it cannot re-form under fire."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "shadow_coat",
+        "origin": "A film of bonded darkness that drinks light and muffles sound around her",
+        "dependencies": [
+          "ambient shadow"
+        ],
+        "interruptionConditions": [
+          "hard light burns the coat away and scalds what is underneath",
+          "open flame reads her silhouette through the dark"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Stealth approaches",
+        "Precision lunges",
+        "Resonant stone-cracking howl"
+      ],
+      "conditional": [],
+      "defensive": [
+        "Shadow-coat concealment",
+        "Predator's reflexes"
+      ],
+      "movement": [
+        "Silent gallop",
+        "Burst sprints"
+      ],
+      "signature": [
+        "Rending Lunge",
+        "Banshee Howl",
+        "Gloom Veil",
+        "Throat Snap"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "The coat only re-forms out of combat — once revealed, she fights exposed until she can slip away.",
+        "severity": "serious",
+        "condition": "while engaged",
+        "evidence": "sable-lore-01"
+      },
+      {
+        "description": "Light strips her advantage entirely; she is an ordinary predator under a spotlight.",
+        "severity": "serious",
+        "condition": "against light-wielders",
+        "evidence": "sable-design-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "Hard light burns the shadow-coat away and scalds her badly through it.",
+        "severity": "serious",
+        "exposureMethod": "Light-tagged abilities",
+        "evidence": "sable-design-01"
+      },
+      {
+        "description": "Heat reads through the dark — thermal attacks track and hurt her more than they should.",
+        "severity": "minor",
+        "exposureMethod": "Thermal damage",
+        "evidence": "sable-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "A pack hunter's patience — she circles, waits for separation, and takes the straggler.",
+      "tacticalStyle": "Opens from stealth on isolated prey, howls when enemies clump or when stone walks the field, vanishes to reset.",
+      "riskTolerance": "Selective — fearless in shadow, careful in the open.",
+      "allyProtection": "Low-moderate — teammates are pack, but the hunt comes first.",
+      "moralConstraints": [
+        "Does not savage a downed opponent"
+      ],
+      "commandConstraints": [
+        "Resists orders to hold ground in bright open space"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.howl.resonance",
+          "selectedValue": "area sonic howl that resonates through rigid material",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "sable-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.light",
+          "selectedValue": "amplified damage from light-tagged abilities",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "sable-design-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Shadow-bonded coat",
+        "Resonant howl",
+        "Annex escape"
+      ],
+      "aiAssumptions": [
+        "Darkness damage bonus set to 1.2x to reward eclipse-wildcard drafting without requiring it"
+      ],
+      "mechanicalNormalizations": [
+        "Howl bounded to a 6 m radius sonic area rather than an arena-wide shockwave"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "sable-howl",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "skirmisher",
+      "chassis": "quadruped",
+      "scale": 1.1
+    },
+    "attributes": {
+      "forceOutput": 5,
+      "durability": 4,
+      "combatSpeed": 7,
+      "reactionSpeed": 8,
+      "travelSpeed": 8,
+      "precision": 7,
+      "mobility": 7,
+      "recovery": 5,
+      "perception": 9,
+      "combatSkill": 7,
+      "tacticalIntelligence": 6,
+      "teamwork": 6,
+      "resolve": 3
+    },
+    "resources": {
+      "vitality": 220,
+      "stability": 75,
+      "stamina": 105,
+      "staminaRegenPerTick": 1.6
+    },
+    "movementModes": [
+      "ground",
+      "sprint"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "shadow-fang",
+          "name": "Shadow Fang",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3,
+          "power": 12,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "beast",
+            "shadow",
+            "kinetic"
+          ],
+          "animationIntent": "quick_bite",
+          "description": "A snapping bite from an angle the dark keeps ambiguous."
+        }
+      ],
+      "signature": [
+        {
+          "id": "rending-lunge",
+          "name": "Rending Lunge",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3.5,
+          "power": 18,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 13
+          },
+          "cooldownTicks": 26,
+          "windupTicks": 0,
+          "tags": [
+            "beast",
+            "shadow",
+            "kinetic"
+          ],
+          "animationIntent": "shadow_lunge",
+          "description": "She covers the last three meters as a smear of dark and arrives claws-first."
+        },
+        {
+          "id": "banshee-howl",
+          "name": "Banshee Howl",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 8,
+          "radius": 6,
+          "power": 18,
+          "damageType": "sonic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 16
+          },
+          "cooldownTicks": 36,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "slow",
+              "magnitude": 0.2,
+              "durationTicks": 8
+            }
+          ],
+          "tags": [
+            "sonic",
+            "shadow"
+          ],
+          "animationIntent": "resonant_howl",
+          "description": "A howl pitched to find the crack in anything rigid — granite cores, capacitor stacks, and nerve alike."
+        },
+        {
+          "id": "gloom-veil",
+          "name": "Gloom Veil",
+          "kind": "support",
+          "targeting": "self",
+          "range": 0,
+          "power": 8,
+          "cost": {
+            "resource": "stamina",
+            "amount": 12
+          },
+          "cooldownTicks": 44,
+          "windupTicks": 0,
+          "effects": [
+            {
+              "kind": "haste",
+              "magnitude": 0.25,
+              "durationTicks": 16
+            }
+          ],
+          "tags": [
+            "shadow",
+            "beast"
+          ],
+          "animationIntent": "veil_wrap",
+          "description": "She pulls the dark tighter around herself and flows — a shadow with the throttle open."
+        },
+        {
+          "id": "throat-snap",
+          "name": "Throat Snap",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3,
+          "power": 20,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 15
+          },
+          "cooldownTicks": 32,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "vulnerable",
+              "magnitude": 0.12,
+              "durationTicks": 10
+            }
+          ],
+          "tags": [
+            "beast",
+            "kinetic"
+          ],
+          "animationIntent": "throat_snap",
+          "description": "The finishing hold of a practiced hunter — precise, brief, and demoralizing."
+        }
+      ],
+      "contextual": [],
+      "escalation": {
+        "id": "worldsplitter-howl",
+        "name": "Worldsplitter Howl",
+        "kind": "area",
+        "targeting": "enemy",
+        "range": 8,
+        "radius": 8,
+        "power": 45,
+        "damageType": "sonic",
+        "cost": {
+          "resource": "stamina",
+          "amount": 30
+        },
+        "cooldownTicks": 220,
+        "windupTicks": 3,
+        "effects": [
+          {
+            "kind": "vulnerable",
+            "magnitude": 0.15,
+            "durationTicks": 12
+          }
+        ],
+        "tags": [
+          "sonic",
+          "shadow"
+        ],
+        "animationIntent": "finisher_worldsplitter",
+        "description": "The howl she brought out of the annex — the one that emptied it. Everything rigid remembers where its seams are."
+      },
+      "passives": [
+        {
+          "id": "annex-shadow",
+          "name": "Annex Shadow",
+          "kind": "stealth_field",
+          "magnitude": 0.35,
+          "tags": [
+            "shadow"
+          ],
+          "description": "The dark she escaped with still hides her — until she strikes, and re-forms when the fight looks away."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [],
+      "immunities": []
+    },
+    "weaknesses": [
+      {
+        "id": "burned-coat",
+        "description": "Hard light burns the shadow-coat off and scalds the wolf beneath — light-wielders are the one hunt she fears.",
+        "severity": 2,
+        "trigger": {
+          "abilityTags": [
+            "light",
+            "solar"
+          ]
+        },
+        "effect": {},
+        "evidence": "sable-design-01"
+      },
+      {
+        "id": "heat-signature",
+        "description": "The dark hides her outline, not her warmth — thermal attacks find her and bite deep.",
+        "severity": 1,
+        "trigger": {
+          "damageTypes": [
+            "thermal"
+          ],
+          "abilityTags": [
+            "fire",
+            "thermal"
+          ]
+        },
+        "effect": {},
+        "evidence": "sable-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Silent, deliberate, faintly amused — a predator who has already picked the exit and the entree.",
+      "riskTolerance": 0.6,
+      "allyProtection": 0.4,
+      "targetPreference": "isolated",
+      "commandCompliance": 0.65,
+      "constraints": [],
+      "repetitionAvoidance": 0.7
+    },
+    "interactions": {
+      "environmental": [
+        {
+          "contextTag": "darkness",
+          "effect": {
+            "damageMult": 1.2
+          },
+          "description": "In darkness the coat thickens and every strike lands from nowhere."
+        }
+      ],
+      "synergies": [
+        {
+          "allyTag": "shadow",
+          "effect": {
+            "damageMult": 1.06
+          },
+          "description": "Hunting beside another shadow doubles the angles the prey must watch."
+        }
+      ],
+      "powerTags": [
+        "shadow",
+        "sonic",
+        "beast",
+        "kinetic"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 58,
+      "versatilityScore": 70,
+      "reliabilityScore": 78,
+      "counterabilityScore": 54,
+      "draftPrice": 29000000,
+      "priceVersion": "S0",
+      "priceRationale": "broad kit versatility, dependable in any conditions increased the price. Scores — capability 58, versatility 70, reliability 78, counterability 54."
+    },
+    "presentation": {
+      "primaryColor": "#23202b",
+      "secondaryColor": "#4b4560",
+      "energyColor": "#8f7bd8",
+      "silhouette": "Long-limbed wolf wrapped in drifting darkness, twin violet eyes the only fixed points",
+      "animationIntents": [
+        "prowl_idle",
+        "quick_bite",
+        "shadow_lunge",
+        "resonant_howl",
+        "veil_wrap",
+        "throat_snap",
+        "midnight_pounce",
+        "finisher_worldsplitter"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": []
+    }
+  }
+}

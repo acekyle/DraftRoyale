@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "0.1.0",
+  "wildcardId": "emp-spire",
+  "version": "1.0.0",
+  "creator": "Infinite Arena Studio",
+  "inputDescription": "A crackling electromagnetic pylon that shuts down technology around it",
+  "normalizedName": "EMP Spire",
+  "class": "object",
+  "radius": 8,
+  "durationTicks": 320,
+  "objectHp": 55,
+  "deployment": "placed",
+  "effects": [
+    { "kind": "suppress_tags", "tags": ["tech"], "affects": "both" },
+    { "kind": "add_context_tags", "tags": ["emp_field"], "affects": "both" }
+  ],
+  "environmentalInteractions": [
+    "Fighters with emp_field environment rules feel it immediately — powered walkers limp on backup hydraulics inside the radius.",
+    "Grants the emp_field context locally, which can also trigger env-tagged weaknesses on tech-dependent fighters standing inside it."
+  ],
+  "sideEffects": [
+    "Suppresses BOTH teams' tech-tagged systems inside its 8 m radius — your own drones and armor die with theirs.",
+    "The spire itself is a priority target: enemy AI with tactical sense will focus it down."
+  ],
+  "counterplay": [
+    "Destroy the pylon — 55 integrity does not survive concentrated fire for long.",
+    "Fight outside its 8 m radius; the field does not chase.",
+    "Draft low-tech fighters — beasts, elementals, and monks walk through the static untouched."
+  ],
+  "visualManifestation": "A skeletal steel pylon wrapped in a crawling web of blue-white arcs; loose bolts and dropped blades twitch on the ground around it.",
+  "audioManifestation": "A rising capacitor whine under constant crackling static; suppressed systems die with a descending power-down chord.",
+  "confidence": "high",
+  "provenance": "Curated Season 0 template: anti-tech suppression object archetype.",
+  "moderation": "approved",
+  "eligibility": "ranked_eligible"
+}

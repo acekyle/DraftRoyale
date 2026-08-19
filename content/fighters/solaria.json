@@ -17,43 +17,100 @@
     "canon": {
       "summary": "A former orbital-station engineer whose body metabolizes and stores raw sunlight. Solaria fights as living artillery: she rains focused light from the air, but every shot spends a finite solar reserve that only daylight refills.",
       "primarySources": [
-        { "id": "solaria-lore-01", "kind": "creator_lore", "note": "Studio origin document: solar metabolism, stored-charge limit, station-engineer discipline." },
-        { "id": "solaria-design-01", "kind": "design_document", "note": "Kit design: artillery role, air superiority, charge-management tension." }
+        {
+          "id": "solaria-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: solar metabolism, stored-charge limit, station-engineer discipline."
+        },
+        {
+          "id": "solaria-design-01",
+          "kind": "design_document",
+          "note": "Kit design: artillery role, air superiority, charge-management tension."
+        }
       ],
       "selectedInterpretation": "Season 0 baseline Solaria — stored-charge artillery, not an unlimited sun goddess.",
       "disputedClaims": [],
-      "assumptions": ["Her reserve drains slowly in total darkness because her cells keep feeding her flight systems."]
+      "assumptions": [
+        "Her reserve drains slowly in total darkness because her cells keep feeding her flight systems."
+      ]
     },
     "powerSources": [
       {
         "name": "solar_charge",
         "origin": "Photovoltaic metabolism storing stellar radiation",
-        "dependencies": ["daylight for recharge"],
-        "interruptionConditions": ["darkness halts recharge and slowly drains reserves", "nullification fields suppress solar expression"]
+        "dependencies": [
+          "daylight for recharge"
+        ],
+        "interruptionConditions": [
+          "darkness halts recharge and slowly drains reserves",
+          "nullification fields suppress solar expression"
+        ]
       }
     ],
     "capabilitySummary": {
-      "core": ["Focused photon bolts", "Sustained flight", "High-precision targeting"],
-      "conditional": ["Overcharge nova in direct daylight"],
-      "defensive": ["Hard-light barrier", "Thermal resistance", "Aerial evasion"],
-      "movement": ["Flight", "Rapid ground dashes"],
-      "signature": ["Solar Lance", "Flare Burst", "Sun Dive", "Radiant Guard"]
+      "core": [
+        "Focused photon bolts",
+        "Sustained flight",
+        "High-precision targeting"
+      ],
+      "conditional": [
+        "Overcharge nova in direct daylight"
+      ],
+      "defensive": [
+        "Hard-light barrier",
+        "Thermal resistance",
+        "Aerial evasion"
+      ],
+      "movement": [
+        "Flight",
+        "Rapid ground dashes"
+      ],
+      "signature": [
+        "Solar Lance",
+        "Flare Burst",
+        "Sun Dive",
+        "Radiant Guard"
+      ]
     },
     "limitations": [
-      { "description": "Every major ability spends stored solar charge; she cannot sustain maximum output indefinitely.", "severity": "defining", "condition": "always", "evidence": "solaria-lore-01" },
-      { "description": "In darkness her reserve slowly drains and cannot recharge.", "severity": "serious", "condition": "darkness", "evidence": "solaria-lore-01" }
+      {
+        "description": "Every major ability spends stored solar charge; she cannot sustain maximum output indefinitely.",
+        "severity": "defining",
+        "condition": "always",
+        "evidence": "solaria-lore-01"
+      },
+      {
+        "description": "In darkness her reserve slowly drains and cannot recharge.",
+        "severity": "serious",
+        "condition": "darkness",
+        "evidence": "solaria-lore-01"
+      }
     ],
     "weaknessSummary": [
-      { "description": "Darkness starves her power source and leaves her physically vulnerable.", "severity": "serious", "exposureMethod": "Eclipse conditions, deep shadow, light-devouring effects", "evidence": "solaria-lore-01" },
-      { "description": "Nullification fields disrupt her solar expression entirely.", "severity": "defining", "exposureMethod": "Anti-power minerals and nullifying wildcards", "evidence": "solaria-design-01" }
+      {
+        "description": "Darkness starves her power source and leaves her physically vulnerable.",
+        "severity": "serious",
+        "exposureMethod": "Eclipse conditions, deep shadow, light-devouring effects",
+        "evidence": "solaria-lore-01"
+      },
+      {
+        "description": "Nullification fields disrupt her solar expression entirely.",
+        "severity": "defining",
+        "exposureMethod": "Anti-power minerals and nullifying wildcards",
+        "evidence": "solaria-design-01"
+      }
     ],
     "behaviorSummary": {
       "combatIntelligence": "Disciplined engineer — manages charge like ammunition.",
       "tacticalStyle": "Keeps altitude and range; dives only for finishing windows.",
       "riskTolerance": "Moderate — will not brawl unless her charge advantage is decisive.",
       "allyProtection": "Supports from above but is not a bodyguard.",
-      "moralConstraints": ["Avoids collateral damage to arena spectator zones"],
-      "commandConstraints": ["Complies readily with ranged-focus orders; resists prolonged melee commitments"]
+      "moralConstraints": [
+        "Avoids collateral damage to arena spectator zones"
+      ],
+      "commandConstraints": [
+        "Complies readily with ranged-focus orders; resists prolonged melee commitments"
+      ]
     },
     "provenance": {
       "claims": [
@@ -61,8 +118,12 @@
           "path": "capabilities.flight.sustained",
           "selectedValue": "sustained powered flight while charge remains",
           "portrayalType": "repeatable",
-          "conditions": ["solar_charge above zero"],
-          "evidence": ["solaria-lore-01"],
+          "conditions": [
+            "solar_charge above zero"
+          ],
+          "evidence": [
+            "solaria-lore-01"
+          ],
           "conflicts": [],
           "confidence": "high"
         },
@@ -70,17 +131,29 @@
           "path": "weaknesses.darkness",
           "selectedValue": "no recharge plus slow drain in darkness",
           "portrayalType": "repeatable",
-          "conditions": ["darkness context active"],
-          "evidence": ["solaria-lore-01"],
+          "conditions": [
+            "darkness context active"
+          ],
+          "evidence": [
+            "solaria-lore-01"
+          ],
           "conflicts": [],
           "confidence": "high"
         }
       ],
       "conflicts": [],
       "confidence": "high",
-      "creatorFacts": ["Solar metabolism", "Finite stored charge", "Engineer discipline"],
-      "aiAssumptions": ["Exact drain rate in darkness chosen for pacing (0.4 charge/tick)"],
-      "mechanicalNormalizations": ["Supernova bounded to a 10 m radius escalation ability rather than a battle-ending blast"]
+      "creatorFacts": [
+        "Solar metabolism",
+        "Finite stored charge",
+        "Engineer discipline"
+      ],
+      "aiAssumptions": [
+        "Exact drain rate in darkness chosen for pacing (0.4 charge/tick)"
+      ],
+      "mechanicalNormalizations": [
+        "Supernova bounded to a 10 m radius escalation ability rather than a battle-ending blast"
+      ]
     },
     "approval": {
       "creatorApproved": true,
@@ -98,7 +171,7 @@
       "division": "enhanced",
       "role": "artillery",
       "chassis": "humanoid",
-      "scale": 1.0
+      "scale": 1
     },
     "attributes": {
       "forceOutput": 7,
@@ -125,12 +198,24 @@
         "max": 100,
         "start": 80,
         "regenPerTick": 0.6,
-        "regenRequiresContext": ["daylight"],
-        "drainInContext": { "tags": ["darkness"], "amount": 0.4 },
-        "onDepletedSuppressTags": ["solar"]
+        "regenRequiresContext": [
+          "daylight"
+        ],
+        "drainInContext": {
+          "tags": [
+            "darkness"
+          ],
+          "amount": 0.4
+        },
+        "onDepletedSuppressTags": [
+          "solar"
+        ]
       }
     },
-    "movementModes": ["ground", "flight"],
+    "movementModes": [
+      "ground",
+      "flight"
+    ],
     "capabilities": {
       "foundational": [
         {
@@ -141,10 +226,17 @@
           "range": 18,
           "power": 11,
           "damageType": "energy",
-          "cost": { "resource": "stamina", "amount": 4 },
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
           "cooldownTicks": 4,
           "windupTicks": 0,
-          "tags": ["solar", "energy", "projectile"],
+          "tags": [
+            "solar",
+            "energy",
+            "projectile"
+          ],
           "animationIntent": "quick_ranged_bolt",
           "description": "A snapped-off dart of condensed light."
         }
@@ -156,12 +248,19 @@
           "kind": "ranged",
           "targeting": "enemy",
           "range": 26,
-          "power": 30,
+          "power": 27,
           "damageType": "energy",
-          "cost": { "resource": "solar_charge", "amount": 22 },
+          "cost": {
+            "resource": "solar_charge",
+            "amount": 22
+          },
           "cooldownTicks": 28,
           "windupTicks": 3,
-          "tags": ["solar", "energy", "beam"],
+          "tags": [
+            "solar",
+            "energy",
+            "beam"
+          ],
           "animationIntent": "charged_beam",
           "description": "A held beam of fused sunlight that punches across the arena."
         },
@@ -174,11 +273,24 @@
           "radius": 6,
           "power": 20,
           "damageType": "energy",
-          "cost": { "resource": "solar_charge", "amount": 18 },
+          "cost": {
+            "resource": "solar_charge",
+            "amount": 18
+          },
           "cooldownTicks": 36,
           "windupTicks": 2,
-          "effects": [{ "kind": "blind", "magnitude": 0.2, "durationTicks": 12 }],
-          "tags": ["solar", "energy", "light"],
+          "effects": [
+            {
+              "kind": "blind",
+              "magnitude": 0.2,
+              "durationTicks": 12
+            }
+          ],
+          "tags": [
+            "solar",
+            "energy",
+            "light"
+          ],
           "animationIntent": "aerial_area_burst",
           "description": "A detonating flare that scorches and dazzles everyone beneath it."
         },
@@ -190,10 +302,17 @@
           "range": 3,
           "power": 24,
           "damageType": "kinetic",
-          "cost": { "resource": "stamina", "amount": 15 },
+          "cost": {
+            "resource": "stamina",
+            "amount": 15
+          },
           "cooldownTicks": 32,
           "windupTicks": 2,
-          "tags": ["solar", "kinetic", "aerial"],
+          "tags": [
+            "solar",
+            "kinetic",
+            "aerial"
+          ],
           "animationIntent": "diving_strike",
           "description": "A meteoric dive-kick trailing fire — her only close-range answer."
         },
@@ -204,11 +323,23 @@
           "targeting": "self",
           "range": 0,
           "power": 0,
-          "cost": { "resource": "solar_charge", "amount": 15 },
+          "cost": {
+            "resource": "solar_charge",
+            "amount": 15
+          },
           "cooldownTicks": 48,
           "windupTicks": 0,
-          "effects": [{ "kind": "shield", "magnitude": 40, "durationTicks": 40 }],
-          "tags": ["solar", "light"],
+          "effects": [
+            {
+              "kind": "shield",
+              "magnitude": 40,
+              "durationTicks": 40
+            }
+          ],
+          "tags": [
+            "solar",
+            "light"
+          ],
           "animationIntent": "barrier_raise",
           "description": "A hard-light shell that soaks incoming punishment."
         }
@@ -223,11 +354,20 @@
           "radius": 8,
           "power": 26,
           "damageType": "energy",
-          "cost": { "resource": "solar_charge", "amount": 30 },
+          "cost": {
+            "resource": "solar_charge",
+            "amount": 30
+          },
           "cooldownTicks": 60,
           "windupTicks": 3,
-          "requiresContext": ["daylight"],
-          "tags": ["solar", "energy", "solar_overcharge"],
+          "requiresContext": [
+            "daylight"
+          ],
+          "tags": [
+            "solar",
+            "energy",
+            "solar_overcharge"
+          ],
           "animationIntent": "overcharge_release",
           "description": "Direct daylight lets her vent raw stellar output in a wide ring."
         }
@@ -241,11 +381,23 @@
         "radius": 10,
         "power": 55,
         "damageType": "energy",
-        "cost": { "resource": "solar_charge", "amount": 40 },
+        "cost": {
+          "resource": "solar_charge",
+          "amount": 40
+        },
         "cooldownTicks": 240,
         "windupTicks": 6,
-        "effects": [{ "kind": "burn", "magnitude": 2, "durationTicks": 12 }],
-        "tags": ["solar", "energy"],
+        "effects": [
+          {
+            "kind": "burn",
+            "magnitude": 2,
+            "durationTicks": 12
+          }
+        ],
+        "tags": [
+          "solar",
+          "energy"
+        ],
         "animationIntent": "finisher_supernova",
         "description": "She dumps her entire reserve into one blinding detonation."
       },
@@ -255,21 +407,34 @@
           "name": "Slipstream Instincts",
           "kind": "evasive_flier",
           "magnitude": 0.15,
-          "tags": ["aerial"],
+          "tags": [
+            "aerial"
+          ],
           "description": "Hard to pin down while airborne."
         }
       ]
     },
     "defenses": {
-      "resistances": [{ "damageType": "thermal", "pct": 0.35 }],
-      "immunities": ["burn"]
+      "resistances": [
+        {
+          "damageType": "thermal",
+          "pct": 0.35
+        }
+      ],
+      "immunities": [
+        "burn"
+      ]
     },
     "weaknesses": [
       {
         "id": "darkness-starvation",
         "description": "Darkness starves her solar metabolism — she takes amplified punishment while her body diverts energy to life support.",
         "severity": 2,
-        "trigger": { "envTags": ["darkness"] },
+        "trigger": {
+          "envTags": [
+            "darkness"
+          ]
+        },
         "effect": {},
         "evidence": "solaria-lore-01"
       },
@@ -277,8 +442,16 @@
         "id": "nullification-collapse",
         "description": "Nullifying attacks scramble her solar expression, suppressing her powers and hitting far harder.",
         "severity": 3,
-        "trigger": { "abilityTags": ["nullify"] },
-        "effect": { "suppressTags": ["solar"] },
+        "trigger": {
+          "abilityTags": [
+            "nullify"
+          ]
+        },
+        "effect": {
+          "suppressTags": [
+            "solar"
+          ]
+        },
         "evidence": "solaria-design-01"
       }
     ],
@@ -295,44 +468,66 @@
       "environmental": [
         {
           "contextTag": "daylight",
-          "effect": { "resourceRegenMult": 1.5 },
+          "effect": {
+            "resourceRegenMult": 1.5
+          },
           "description": "Open daylight accelerates her solar recharge."
         },
         {
           "contextTag": "darkness",
-          "effect": { "resourceRegenMult": 0, "damageMult": 0.85 },
+          "effect": {
+            "resourceRegenMult": 0,
+            "damageMult": 0.85
+          },
           "description": "Darkness halts recharge and dims her output."
         }
       ],
       "synergies": [
         {
           "allyTag": "light",
-          "effect": { "damageMult": 1.08 },
+          "effect": {
+            "damageMult": 1.08
+          },
           "description": "Fights brighter alongside other light-wielders."
         }
       ],
-      "powerTags": ["solar", "energy", "light", "aerial", "projectile", "beam"]
+      "powerTags": [
+        "solar",
+        "energy",
+        "light",
+        "aerial",
+        "projectile",
+        "beam"
+      ]
     },
     "balance": {
-      "capabilityScore": 0,
-      "versatilityScore": 0,
-      "reliabilityScore": 0,
-      "counterabilityScore": 0,
-      "draftPrice": 44000000,
+      "capabilityScore": 65,
+      "versatilityScore": 98,
+      "reliabilityScore": 40,
+      "counterabilityScore": 47,
+      "draftPrice": 33000000,
       "priceVersion": "S0",
-      "priceRationale": "pending pricing tool run",
-      "_generated": "run `npm run price` to stamp final scores"
+      "priceRationale": "elite raw combat output, broad kit versatility, air superiority increased the price; conditional power source, serious exploitable weaknesses reduced it. Scores — capability 65, versatility 98, reliability 40, counterability 47."
     },
     "presentation": {
       "primaryColor": "#f5b93c",
       "secondaryColor": "#fef3d6",
       "energyColor": "#ffd94a",
       "silhouette": "Sleek flight-suit figure with a corona halo and trailing light ribbons",
-      "animationIntents": ["hover_idle", "charged_beam", "aerial_area_burst", "diving_strike", "barrier_raise", "finisher_supernova"]
+      "animationIntents": [
+        "hover_idle",
+        "charged_beam",
+        "aerial_area_burst",
+        "diving_strike",
+        "barrier_raise",
+        "finisher_supernova"
+      ]
     },
     "validation": {
       "eligibility": "ranked_eligible",
-      "passedSuites": ["schema"],
+      "passedSuites": [
+        "schema"
+      ],
       "knownIssues": []
     }
   }

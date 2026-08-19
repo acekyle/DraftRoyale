@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "0.1.0",
+  "wildcardId": "flash-flood",
+  "version": "1.0.0",
+  "creator": "Infinite Arena Studio",
+  "inputDescription": "Burst mains flood the whole arena shin-deep for the rest of the match",
+  "normalizedName": "Flash Flood",
+  "class": "terrain",
+  "radius": 0,
+  "durationTicks": 0,
+  "objectHp": 0,
+  "deployment": "global",
+  "effects": [
+    { "kind": "add_context_tags", "tags": ["water_present"], "affects": "both" }
+  ],
+  "environmentalInteractions": [
+    "Adds water_present arena-wide for the rest of the match: hydrokinetic reserves recharge everywhere and water-gated abilities unlock for everyone who has them.",
+    "The engine slows all grounded fighters without hydro affinity by 35% while they wade; fliers and hover fighters skim above it untouched.",
+    "Fire-natured fighters suffer doubly: heat and flame cores drain continuously, and water-triggered environmental weaknesses stay live for the whole match."
+  ],
+  "sideEffects": [
+    "Permanent and perfectly symmetric — BOTH teams wade, drain, and unlock in the same water.",
+    "Flooding the arena with your own fire fighter drafted is a self-inflicted wound.",
+    "There is no way to un-flood: this decision lasts until the final bell."
+  ],
+  "counterplay": [
+    "Draft fliers and hover fighters — the flood only punishes those standing in it.",
+    "Draft hydro-affinity fighters who move through water unimpeded and feed on the water_present context.",
+    "Exploit the symmetry harder than the flooder: if their team wades worse than yours, their wildcard worked for you."
+  ],
+  "visualManifestation": "Hydrant caps blow in sequence and a shin-deep sheet of grey-green water races across the entire arena, wakes trailing behind every moving fighter.",
+  "audioManifestation": "A rolling crash of arriving water settling into constant splashing underfoot and the drip of soaked structures.",
+  "confidence": "high",
+  "provenance": "Curated Season 0 template: global terrain-conversion archetype.",
+  "moderation": "approved",
+  "eligibility": "ranked_eligible"
+}

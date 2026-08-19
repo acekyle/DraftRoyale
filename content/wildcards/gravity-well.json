@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "0.1.0",
+  "wildcardId": "gravity-well",
+  "version": "1.0.0",
+  "creator": "Infinite Arena Studio",
+  "inputDescription": "A heavy-gravity zone that drags fliers out of the sky and slows everything caught inside",
+  "normalizedName": "Gravity Well",
+  "class": "field",
+  "radius": 10,
+  "durationTicks": 240,
+  "objectHp": 0,
+  "deployment": "placed",
+  "effects": [
+    { "kind": "ground_flight", "affects": "both" },
+    { "kind": "speed_mult", "magnitude": 0.8, "affects": "both" }
+  ],
+  "environmentalInteractions": [
+    "Fliers and hover fighters inside the well are forced to the ground, where melee kits can finally reach them.",
+    "Grounded fliers also lose airborne evasion bonuses — artillery that lives on altitude fights flat-footed inside the well.",
+    "Placed over the fountain or a choke point it turns the enemy's mobility advantage into a shared crawl."
+  ],
+  "sideEffects": [
+    "Affects BOTH teams — your own fliers drop and your own advance slows 20% inside it.",
+    "It cannot be destroyed; misplacing it hands the enemy 60 seconds of free positioning around a zone you created."
+  ],
+  "counterplay": [
+    "Leave the radius — flight resumes and speed returns the moment a fighter crosses the 10 m boundary.",
+    "Wait out the 60-second duration and keep ranged pressure from outside the well.",
+    "Draft ground-based fighters — a team that never flies loses almost nothing inside it."
+  ],
+  "visualManifestation": "A lens of warped, heat-shimmer air over darkened ground; dust and debris stream inward and downward, and airborne fighters visibly sag to earth crossing its edge.",
+  "audioManifestation": "A deep sub-bass pull, like a held breath, punctuated by the thud of fliers touching down.",
+  "confidence": "high",
+  "provenance": "Curated Season 0 template: anti-air control field archetype.",
+  "moderation": "approved",
+  "eligibility": "ranked_eligible"
+}

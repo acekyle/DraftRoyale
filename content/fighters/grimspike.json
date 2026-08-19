@@ -1,0 +1,510 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "grimspike",
+      "displayName": "Grimspike",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "heavy"
+    },
+    "canon": {
+      "summary": "A colossus of living granite grown around a resonant crystal core, quarried awake by a mining charge and never quite forgiven for it. Grimspike moves like geology and hits like it too \u2014 slow, patient, and inevitable. The core that animates him is also his undoing: the right frequency shakes it, and him, apart.",
+      "primarySources": [
+        {
+          "id": "grimspike-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: quarry awakening, crystal-core physiology, slow-grudge temperament, resonance vulnerability."
+        },
+        {
+          "id": "grimspike-design-01",
+          "kind": "design_document",
+          "note": "Kit design: heavy bruiser, seismic area pressure, leap mobility, sonic resonance as the defining counter."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Grimspike \u2014 a bounded granite colossus, not an unkillable mountain.",
+      "disputedClaims": [],
+      "assumptions": [
+        "His crystal core slowly re-knits cracked granite between exchanges; it cannot regrow him from rubble."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "crystal_core",
+        "origin": "A resonant crystal heart animating several tons of granite",
+        "dependencies": [
+          "core integrity"
+        ],
+        "interruptionConditions": [
+          "sonic resonance at the core's frequency shakes the whole body apart"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Crushing granite fists",
+        "Seismic ground slams",
+        "Thrown boulders"
+      ],
+      "conditional": [
+        "Street-splitting fault lines on paved urban ground"
+      ],
+      "defensive": [
+        "Massive stone bulk",
+        "Crystal-grown bulwark",
+        "Core-driven regrowth"
+      ],
+      "movement": [
+        "Ponderous walk",
+        "Surprising quarry-leaps"
+      ],
+      "signature": [
+        "Fault Slam",
+        "Boulder Hurl",
+        "Crystal Bulwark",
+        "Quake Stomp"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "Slow in every sense: he can be kited by anything that respects his leap range.",
+        "severity": "serious",
+        "condition": "open ground against ranged opponents",
+        "evidence": "grimspike-design-01"
+      },
+      {
+        "description": "The core re-knits granite slowly; sustained focus fire outpaces the regrowth.",
+        "severity": "minor",
+        "condition": "under focus fire",
+        "evidence": "grimspike-lore-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "Sonic resonance at the core's frequency \u2014 the single counter that turns the mountain to gravel.",
+        "severity": "defining",
+        "exposureMethod": "Sonic damage or sonically tagged abilities",
+        "evidence": "grimspike-lore-01"
+      },
+      {
+        "description": "Arcane energies interfere with the animating bond between core and stone.",
+        "severity": "minor",
+        "exposureMethod": "Magic damage",
+        "evidence": "grimspike-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "Simple and patient \u2014 he picks the biggest problem and walks at it until it stops being one.",
+      "tacticalStyle": "Anchors the center, splits the ground under grouped enemies, leaps only when it will land on someone.",
+      "riskTolerance": "High \u2014 few things on the field can genuinely hurt him, and he knows which ones.",
+      "allyProtection": "Moderate \u2014 he shields smaller teammates the way a cliff shelters climbers: by standing there.",
+      "moralConstraints": [
+        "Will not crush an opponent who has stopped fighting"
+      ],
+      "commandConstraints": [
+        "Slow to comply with repositioning orders \u2014 geology does not hurry"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.seismic.slams",
+          "selectedValue": "area-of-effect ground shocks around impact points",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "standing on solid ground"
+          ],
+          "evidence": [
+            "grimspike-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.resonance",
+          "selectedValue": "defining vulnerability to sonic resonance",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "grimspike-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Living granite body",
+        "Resonant crystal core",
+        "Quarry-leap mobility"
+      ],
+      "aiAssumptions": [
+        "Core regrowth modeled as a modest constant regen passive"
+      ],
+      "mechanicalNormalizations": [
+        "'Tosses transit cars' normalized to a bounded boulder-hurl ranged attack"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "grimspike",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "bruiser",
+      "chassis": "heavy",
+      "scale": 1.5
+    },
+    "attributes": {
+      "forceOutput": 8,
+      "durability": 8,
+      "combatSpeed": 4,
+      "reactionSpeed": 4,
+      "travelSpeed": 3,
+      "precision": 5,
+      "mobility": 2,
+      "recovery": 6,
+      "perception": 5,
+      "combatSkill": 6,
+      "tacticalIntelligence": 4,
+      "teamwork": 5,
+      "resolve": 9
+    },
+    "resources": {
+      "vitality": 420,
+      "stability": 110,
+      "stamina": 90,
+      "staminaRegenPerTick": 1.2
+    },
+    "movementModes": [
+      "ground",
+      "leap"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "granite-jab",
+          "name": "Granite Jab",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3.2,
+          "power": 13,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "stone",
+            "kinetic"
+          ],
+          "animationIntent": "stone_jab",
+          "description": "A short punch from a fist the size of an engine block."
+        }
+      ],
+      "signature": [
+        {
+          "id": "fault-slam",
+          "name": "Fault Slam",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 6,
+          "radius": 6,
+          "power": 26,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 16
+          },
+          "cooldownTicks": 32,
+          "windupTicks": 2,
+          "effects": [
+            {
+              "kind": "slow",
+              "magnitude": 0.3,
+              "durationTicks": 8
+            }
+          ],
+          "tags": [
+            "stone",
+            "seismic",
+            "kinetic"
+          ],
+          "animationIntent": "double_fist_slam",
+          "description": "Both fists into the ground \u2014 the shockwave travels through pavement better than anyone's footing does."
+        },
+        {
+          "id": "boulder-hurl",
+          "name": "Boulder Hurl",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 16,
+          "power": 22,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 14
+          },
+          "cooldownTicks": 36,
+          "windupTicks": 2,
+          "tags": [
+            "stone",
+            "kinetic",
+            "projectile"
+          ],
+          "animationIntent": "boulder_throw",
+          "description": "He tears a piece off himself \u2014 or the street, whichever is closer \u2014 and mails it downrange."
+        },
+        {
+          "id": "crystal-bulwark",
+          "name": "Crystal Bulwark",
+          "kind": "support",
+          "targeting": "self",
+          "range": 0,
+          "power": 8,
+          "cost": {
+            "resource": "stamina",
+            "amount": 15
+          },
+          "cooldownTicks": 46,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "shield",
+              "magnitude": 30,
+              "durationTicks": 40
+            }
+          ],
+          "tags": [
+            "stone",
+            "crystal",
+            "barrier"
+          ],
+          "animationIntent": "crystal_growth",
+          "description": "The core flares and fresh crystal sheets across his hide \u2014 armor grown in seconds, spent in moments."
+        },
+        {
+          "id": "quake-stomp",
+          "name": "Quake Stomp",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 8,
+          "radius": 5,
+          "power": 24,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 15
+          },
+          "cooldownTicks": 34,
+          "windupTicks": 1,
+          "tags": [
+            "stone",
+            "seismic",
+            "kinetic"
+          ],
+          "animationIntent": "quake_stomp",
+          "description": "One foot, brought down like a verdict. Everything nearby briefly leaves the ground."
+        }
+      ],
+      "contextual": [
+        {
+          "id": "seismic-fault",
+          "name": "Seismic Fault",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 10,
+          "radius": 7,
+          "power": 24,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 18
+          },
+          "cooldownTicks": 56,
+          "windupTicks": 3,
+          "requiresContext": [
+            "urban"
+          ],
+          "effects": [
+            {
+              "kind": "root",
+              "magnitude": 0,
+              "durationTicks": 6
+            }
+          ],
+          "tags": [
+            "stone",
+            "seismic",
+            "kinetic"
+          ],
+          "animationIntent": "fault_split",
+          "description": "Paved city ground is a gift: he drives a crack through it that catches ankles like a sprung trap."
+        }
+      ],
+      "escalation": {
+        "id": "tectonic-requiem",
+        "name": "Tectonic Requiem",
+        "kind": "area",
+        "targeting": "enemy",
+        "range": 6,
+        "radius": 9,
+        "power": 60,
+        "damageType": "kinetic",
+        "cost": {
+          "resource": "stamina",
+          "amount": 30
+        },
+        "cooldownTicks": 240,
+        "windupTicks": 6,
+        "effects": [
+          {
+            "kind": "stun",
+            "magnitude": 0,
+            "durationTicks": 3
+          }
+        ],
+        "tags": [
+          "stone",
+          "seismic",
+          "kinetic"
+        ],
+        "animationIntent": "finisher_tectonic",
+        "description": "He leaps, and the arena learns what a meteor feels like from underneath."
+      },
+      "passives": [
+        {
+          "id": "core-regrowth",
+          "name": "Core Regrowth",
+          "kind": "regen",
+          "magnitude": 0.4,
+          "tags": [
+            "crystal",
+            "stone"
+          ],
+          "description": "The crystal core hums, and cracked granite slowly knits back over it."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [
+        {
+          "damageType": "kinetic",
+          "pct": 0.3
+        }
+      ],
+      "immunities": []
+    },
+    "weaknesses": [
+      {
+        "id": "core-resonance",
+        "description": "The right frequency finds the core and the whole mountain rings \u2014 sonic attacks shake him apart from the inside.",
+        "severity": 3,
+        "trigger": {
+          "damageTypes": [
+            "sonic"
+          ],
+          "abilityTags": [
+            "sonic"
+          ]
+        },
+        "effect": {},
+        "evidence": "grimspike-lore-01"
+      },
+      {
+        "id": "animating-bond",
+        "description": "Arcane energies pluck at the bond between core and stone \u2014 magic bites deeper than granite expects.",
+        "severity": 1,
+        "trigger": {
+          "damageTypes": [
+            "magic"
+          ]
+        },
+        "effect": {},
+        "evidence": "grimspike-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Slow-spoken, slow-angered, and utterly unbothered \u2014 a landslide with manners.",
+      "riskTolerance": 0.7,
+      "allyProtection": 0.5,
+      "targetPreference": "highest_threat",
+      "commandCompliance": 0.7,
+      "constraints": [],
+      "repetitionAvoidance": 0.5
+    },
+    "interactions": {
+      "environmental": [],
+      "synergies": [
+        {
+          "allyTag": "seismic",
+          "effect": {
+            "damageMult": 1.05
+          },
+          "description": "A second seismic fighter keeps the ground already broken \u2014 his shocks travel farther."
+        }
+      ],
+      "powerTags": [
+        "stone",
+        "seismic",
+        "kinetic",
+        "crystal",
+        "projectile",
+        "barrier"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 69,
+      "versatilityScore": 86,
+      "reliabilityScore": 80,
+      "counterabilityScore": 50,
+      "draftPrice": 38500000,
+      "priceVersion": "S0",
+      "priceRationale": "elite raw combat output, broad kit versatility, dependable in any conditions increased the price; serious exploitable weaknesses reduced it. Scores \u2014 capability 69, versatility 86, reliability 80, counterability 50."
+    },
+    "presentation": {
+      "primaryColor": "#6b6f76",
+      "secondaryColor": "#3a3d42",
+      "energyColor": "#9fe8ff",
+      "silhouette": "Hunched granite colossus, pale blue crystal light bleeding through the seams of his chest",
+      "animationIntents": [
+        "mountain_idle",
+        "stone_jab",
+        "double_fist_slam",
+        "boulder_throw",
+        "crystal_growth",
+        "quake_stomp",
+        "fault_split",
+        "finisher_tectonic"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": [
+        "Balance: consistently ~80% self-play win rate across four harness schedules; needs a Season-0 correction before any ranked mode."
+      ]
+    }
+  }
+}

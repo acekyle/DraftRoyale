@@ -1,0 +1,536 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "riptide",
+      "displayName": "Riptide",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "humanoid"
+    },
+    "canon": {
+      "summary": "A former harbor-rescue diver whose nervous system learned to grip water the way a hand grips rope. Riptide fights as a battlefield controller: whips of seawater, dragging tide surges, and a brine cocoon that has pulled a hundred drowning sailors out of storms. Away from water he is only as strong as the reserve he carries on his back.",
+      "primarySources": [
+        {
+          "id": "riptide-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: harbor-rescue career, hydrokinesis awakening during the Meridian pier collapse, carried water reserve."
+        },
+        {
+          "id": "riptide-design-01",
+          "kind": "design_document",
+          "note": "Kit design: controller role, slow/zone identity, water-reserve management, thermal flash-evaporation counter."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Riptide — a reserve-limited hydrokinetic controller, not an ocean god.",
+      "disputedClaims": [],
+      "assumptions": [
+        "His backpack reservoir only refills while standing water is present; ambient humidity is not enough."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "water_reserve",
+        "origin": "Hydrokinetic control over a carried seawater reservoir",
+        "dependencies": [
+          "standing water to refill the reserve"
+        ],
+        "interruptionConditions": [
+          "thermal attacks flash-evaporate his working water",
+          "an empty reserve silences his hydrokinetic techniques"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Water whips",
+        "Dragging tide surges",
+        "Zone denial through slowing currents"
+      ],
+      "conditional": [
+        "Maelstrom vortex when standing water is present"
+      ],
+      "defensive": [
+        "Brine cocoon shield",
+        "Rescue-diver endurance"
+      ],
+      "movement": [
+        "Strong ground movement, unimpeded by flooded terrain"
+      ],
+      "signature": [
+        "Undertow Whip",
+        "Tidal Surge",
+        "Cocoon of Brine",
+        "Pressure Jet"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "Every hydrokinetic technique spends carried water; the reserve only refills near standing water.",
+        "severity": "defining",
+        "condition": "no water_present context",
+        "evidence": "riptide-lore-01"
+      },
+      {
+        "description": "With the reserve empty his hydro techniques fall silent, leaving only diver's grit and a steel rescue hook.",
+        "severity": "serious",
+        "condition": "water_reserve depleted",
+        "evidence": "riptide-design-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "Intense heat flash-evaporates his working water mid-technique.",
+        "severity": "serious",
+        "exposureMethod": "Thermal damage of any kind",
+        "evidence": "riptide-design-01"
+      },
+      {
+        "description": "Charged water conducts — energy attacks travel up his own whips.",
+        "severity": "minor",
+        "exposureMethod": "Energy damage while manipulating water",
+        "evidence": "riptide-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "Reads a battlefield like a tide table — patient, positional, always aware of where the water is.",
+      "tacticalStyle": "Slows and drags the most dangerous enemy while teammates work; anchors fights near water when he can.",
+      "riskTolerance": "Cautious — rescue divers survive by not becoming the second casualty.",
+      "allyProtection": "High — pulling people out of danger is the job description.",
+      "moralConstraints": [
+        "Will not drown a helpless opponent"
+      ],
+      "commandConstraints": [
+        "Follows orders readily; resists commands that pull him far from water"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.hydrokinesis.control",
+          "selectedValue": "fine control of carried and standing water within ~18 m",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "water_reserve above zero"
+          ],
+          "evidence": [
+            "riptide-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.thermal",
+          "selectedValue": "thermal attacks amplified by flash evaporation",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "riptide-design-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Harbor-rescue diver origin",
+        "Carried seawater reservoir",
+        "Water-context recharge"
+      ],
+      "aiAssumptions": [
+        "Reserve regen rate near water (0.9/tick) chosen for pacing"
+      ],
+      "mechanicalNormalizations": [
+        "Maelstrom bounded to an 8 m vortex rather than an arena-wide flood"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "riptide",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "controller",
+      "chassis": "humanoid",
+      "scale": 1
+    },
+    "attributes": {
+      "forceOutput": 6,
+      "durability": 6,
+      "combatSpeed": 5,
+      "reactionSpeed": 6,
+      "travelSpeed": 6,
+      "precision": 6,
+      "mobility": 6,
+      "recovery": 6,
+      "perception": 7,
+      "combatSkill": 5,
+      "tacticalIntelligence": 7,
+      "teamwork": 8,
+      "resolve": 7
+    },
+    "resources": {
+      "vitality": 260,
+      "stability": 85,
+      "stamina": 100,
+      "staminaRegenPerTick": 1.5,
+      "primary": {
+        "name": "water_reserve",
+        "max": 100,
+        "start": 100,
+        "regenPerTick": 0.9,
+        "regenRequiresContext": [
+          "water_present"
+        ],
+        "onDepletedSuppressTags": [
+          "hydro"
+        ]
+      }
+    },
+    "movementModes": [
+      "ground"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "rescue-hook",
+          "name": "Rescue Hook",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 10,
+          "power": 12,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "water",
+            "kinetic"
+          ],
+          "animationIntent": "hook_snap",
+          "description": "A weighted steel rescue hook on a line — the one tool that works with the reserve dry."
+        }
+      ],
+      "signature": [
+        {
+          "id": "undertow-whip",
+          "name": "Undertow Whip",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 14,
+          "power": 20,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "water_reserve",
+            "amount": 14
+          },
+          "cooldownTicks": 28,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "slow",
+              "magnitude": 0.25,
+              "durationTicks": 10
+            }
+          ],
+          "tags": [
+            "hydro",
+            "water",
+            "kinetic"
+          ],
+          "animationIntent": "water_whip_lash",
+          "description": "A ribbon of seawater cracks like a bullwhip and drags at the target's footing."
+        },
+        {
+          "id": "tidal-surge",
+          "name": "Tidal Surge",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 12,
+          "radius": 6,
+          "power": 18,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "water_reserve",
+            "amount": 16
+          },
+          "cooldownTicks": 36,
+          "windupTicks": 2,
+          "effects": [
+            {
+              "kind": "slow",
+              "magnitude": 0.3,
+              "durationTicks": 12
+            }
+          ],
+          "tags": [
+            "hydro",
+            "water",
+            "kinetic"
+          ],
+          "animationIntent": "surge_wave",
+          "description": "A knee-high wall of water rolls through the enemy line, sweeping legs and slowing everyone caught in it."
+        },
+        {
+          "id": "cocoon-of-brine",
+          "name": "Cocoon of Brine",
+          "kind": "support",
+          "targeting": "self",
+          "range": 0,
+          "power": 8,
+          "cost": {
+            "resource": "water_reserve",
+            "amount": 14
+          },
+          "cooldownTicks": 46,
+          "windupTicks": 0,
+          "effects": [
+            {
+              "kind": "shield",
+              "magnitude": 42,
+              "durationTicks": 40
+            }
+          ],
+          "tags": [
+            "water",
+            "barrier"
+          ],
+          "animationIntent": "cocoon_wrap",
+          "description": "A hardened shell of pressurized brine — the same trick that once carried a sailor through a burning slick."
+        },
+        {
+          "id": "pressure-jet",
+          "name": "Pressure Jet",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 16,
+          "power": 22,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "water_reserve",
+            "amount": 16
+          },
+          "cooldownTicks": 32,
+          "windupTicks": 2,
+          "tags": [
+            "hydro",
+            "water",
+            "kinetic"
+          ],
+          "animationIntent": "cutting_jet",
+          "description": "A needle-thin cutting jet at fire-hose pressure — his longest reach and hardest punch."
+        }
+      ],
+      "contextual": [
+        {
+          "id": "maelstrom",
+          "name": "Maelstrom",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 10,
+          "radius": 8,
+          "power": 24,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "water_reserve",
+            "amount": 22
+          },
+          "cooldownTicks": 60,
+          "windupTicks": 3,
+          "requiresContext": [
+            "water_present"
+          ],
+          "effects": [
+            {
+              "kind": "slow",
+              "magnitude": 0.35,
+              "durationTicks": 16
+            }
+          ],
+          "tags": [
+            "hydro",
+            "water",
+            "kinetic",
+            "vortex"
+          ],
+          "animationIntent": "vortex_spin",
+          "description": "With standing water to draw on, he spins a churning vortex that grinds and drags everything inside it."
+        }
+      ],
+      "escalation": {
+        "id": "hundred-fathom-crush",
+        "name": "Hundred-Fathom Crush",
+        "kind": "area",
+        "targeting": "enemy",
+        "range": 10,
+        "radius": 8,
+        "power": 48,
+        "damageType": "kinetic",
+        "cost": {
+          "resource": "water_reserve",
+          "amount": 30
+        },
+        "cooldownTicks": 220,
+        "windupTicks": 5,
+        "effects": [
+          {
+            "kind": "root",
+            "magnitude": 0,
+            "durationTicks": 6
+          }
+        ],
+        "tags": [
+          "hydro",
+          "water",
+          "kinetic"
+        ],
+        "animationIntent": "finisher_deep_crush",
+        "description": "He collapses his entire reserve into a single crushing sphere — the pressure of the deep, delivered all at once."
+      },
+      "passives": [
+        {
+          "id": "saltwater-mend",
+          "name": "Saltwater Mend",
+          "kind": "regen",
+          "magnitude": 0.25,
+          "tags": [
+            "hydro",
+            "water"
+          ],
+          "description": "A film of mineral-rich brine continually seals cuts and bruises while his reserve holds."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [
+        {
+          "damageType": "toxic",
+          "pct": 0.25
+        }
+      ],
+      "immunities": []
+    },
+    "weaknesses": [
+      {
+        "id": "flash-evaporation",
+        "description": "Intense heat flash-boils the water he is holding — thermal attacks detonate his own medium against him.",
+        "severity": 2,
+        "trigger": {
+          "damageTypes": [
+            "thermal"
+          ],
+          "abilityTags": [
+            "fire",
+            "thermal"
+          ]
+        },
+        "effect": {},
+        "evidence": "riptide-design-01"
+      },
+      {
+        "id": "conductive-spray",
+        "description": "Charged water conducts. Energy attacks arc up his whips and jets straight into him.",
+        "severity": 1,
+        "trigger": {
+          "damageTypes": [
+            "energy"
+          ],
+          "abilityTags": [
+            "emp"
+          ]
+        },
+        "effect": {},
+        "evidence": "riptide-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Steady, watchful, quietly stubborn — a rescue diver's calm in a fighter's body.",
+      "riskTolerance": 0.4,
+      "allyProtection": 0.7,
+      "targetPreference": "highest_threat",
+      "commandCompliance": 0.85,
+      "constraints": [],
+      "repetitionAvoidance": 0.6
+    },
+    "interactions": {
+      "environmental": [
+        {
+          "contextTag": "water_present",
+          "effect": {
+            "damageMult": 1.15,
+            "resourceRegenMult": 1.5
+          },
+          "description": "Standing water is ammunition: his techniques hit harder and his reserve refills half again as fast."
+        }
+      ],
+      "synergies": [
+        {
+          "allyTag": "hydro",
+          "effect": {
+            "damageMult": 1.06
+          },
+          "description": "Flows in concert with other hydrokinetics, layering currents into heavier hits."
+        }
+      ],
+      "powerTags": [
+        "hydro",
+        "water",
+        "kinetic",
+        "barrier",
+        "vortex"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 59,
+      "versatilityScore": 68,
+      "reliabilityScore": 53,
+      "counterabilityScore": 54,
+      "draftPrice": 24000000,
+      "priceVersion": "S0",
+      "priceRationale": "broad kit versatility increased the price; conditional power source reduced it. Scores — capability 59, versatility 68, reliability 53, counterability 54."
+    },
+    "presentation": {
+      "primaryColor": "#1a8f9e",
+      "secondaryColor": "#12335a",
+      "energyColor": "#4dd8e6",
+      "silhouette": "Broad-shouldered diver in a scarred wetsuit, twin water ribbons coiling from a backpack reservoir",
+      "animationIntents": [
+        "coil_idle",
+        "hook_snap",
+        "water_whip_lash",
+        "surge_wave",
+        "cocoon_wrap",
+        "cutting_jet",
+        "vortex_spin",
+        "finisher_deep_crush"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": []
+    }
+  }
+}

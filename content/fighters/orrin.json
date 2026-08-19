@@ -1,0 +1,492 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "orrin",
+      "displayName": "Orrin",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "floating"
+    },
+    "canon": {
+      "summary": "A monk of the Hollow Bell order who meditated so far past his body's needs that gravity quietly gave up on him. Orrin drifts a hand's breadth above the ground in legless robes, unraveling other fighters' gifts with an open palm and ending fights without ending anyone. He has never thrown a killing blow, and the arena's actuaries have stopped waiting for one.",
+      "primarySources": [
+        {
+          "id": "orrin-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: Hollow Bell order, levitation through detachment, nullifying palm technique, vow of preservation."
+        },
+        {
+          "id": "orrin-design-01",
+          "kind": "design_document",
+          "note": "Kit design: controller role, suppression as the anti-Solaria answer, containment finisher, frail-body kinetic counter."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Orrin — a pacifist suppression controller, not an untouchable ascendant.",
+      "disputedClaims": [],
+      "assumptions": [
+        "His nullification quiets a power's expression for seconds, not permanently; the gift itself is never harmed."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "still_mind",
+        "origin": "Decades of Hollow Bell discipline — psionics expressed as stillness rather than force",
+        "dependencies": [
+          "meditative equilibrium"
+        ],
+        "interruptionConditions": [
+          "raw kinetic trauma breaks the stillness faster than any exotic attack",
+          "concussive explosions scatter his focus"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Nullifying palm strikes",
+        "Psychic pressure waves",
+        "Non-lethal containment bindings"
+      ],
+      "conditional": [],
+      "defensive": [
+        "Stillness barrier",
+        "Meditative recovery",
+        "Constant levitation"
+      ],
+      "movement": [
+        "Serene hovering drift"
+      ],
+      "signature": [
+        "Null Palm",
+        "Serene Binding",
+        "Mantra Wave",
+        "Stillness Field"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "A lifetime of fasting and stillness left a body that cannot absorb punishment — his defense is not being hit.",
+        "severity": "defining",
+        "condition": "always",
+        "evidence": "orrin-lore-01"
+      },
+      {
+        "description": "His vow forbids lethal finishes; opponents who cannot be contained must be outlasted.",
+        "severity": "serious",
+        "condition": "always",
+        "evidence": "orrin-lore-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "Frail physiology — kinetic trauma lands catastrophically hard.",
+        "severity": "serious",
+        "exposureMethod": "Kinetic damage",
+        "evidence": "orrin-design-01"
+      },
+      {
+        "description": "Concussive blasts scatter the meditative focus his whole art rests on.",
+        "severity": "minor",
+        "exposureMethod": "Explosive-tagged abilities",
+        "evidence": "orrin-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "Sees fights as systems of dependency — he quiets the load-bearing gift and lets the structure settle.",
+      "tacticalStyle": "Drifts at mid-range, suppresses the most dangerous power, binds weakened opponents rather than finishing them.",
+      "riskTolerance": "Low — stillness is not recklessness.",
+      "allyProtection": "Moderate — he shelters teammates but will not kill for them.",
+      "moralConstraints": [
+        "Vow of preservation: no lethal force, ever",
+        "Prefers containment over knockout"
+      ],
+      "commandConstraints": [
+        "Rejects orders that require lethal finishes"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.nullification.palm",
+          "selectedValue": "brief suppression of solar and arcane expression on touch or bolt",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "target within 14 m"
+          ],
+          "evidence": [
+            "orrin-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.kinetic",
+          "selectedValue": "amplified damage from kinetic trauma",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "orrin-design-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Hollow Bell monk",
+        "Levitation through detachment",
+        "Vow of preservation"
+      ],
+      "aiAssumptions": [
+        "Suppression window normalized to 16 ticks (4 seconds) per palm strike"
+      ],
+      "mechanicalNormalizations": [
+        "Containment modeled through the engine's contained condition — succeeds only below 35% vitality, otherwise a brief hold"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "orrin",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "controller",
+      "chassis": "floating",
+      "scale": 1
+    },
+    "attributes": {
+      "forceOutput": 5,
+      "durability": 3,
+      "combatSpeed": 5,
+      "reactionSpeed": 8,
+      "travelSpeed": 5,
+      "precision": 7,
+      "mobility": 6,
+      "recovery": 8,
+      "perception": 9,
+      "combatSkill": 6,
+      "tacticalIntelligence": 8,
+      "teamwork": 7,
+      "resolve": 6
+    },
+    "resources": {
+      "vitality": 210,
+      "stability": 65,
+      "stamina": 110,
+      "staminaRegenPerTick": 1.7
+    },
+    "movementModes": [
+      "hover"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "palm-ripple",
+          "name": "Palm Ripple",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 12,
+          "power": 11,
+          "damageType": "psychic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "psychic",
+            "spirit"
+          ],
+          "animationIntent": "palm_ripple",
+          "description": "A soft push of folded air — the gentlest way he knows to say no."
+        }
+      ],
+      "signature": [
+        {
+          "id": "null-palm",
+          "name": "Null Palm",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 12,
+          "power": 18,
+          "damageType": "psychic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 14
+          },
+          "cooldownTicks": 30,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "suppress",
+              "magnitude": 0,
+              "durationTicks": 14,
+              "tags": [
+                "solar",
+                "magic"
+              ]
+            }
+          ],
+          "tags": [
+            "nullify",
+            "psychic"
+          ],
+          "animationIntent": "null_palm",
+          "description": "An open palm at distance — for four long seconds, the loudest gifts on the field go quiet."
+        },
+        {
+          "id": "serene-binding",
+          "name": "Serene Binding",
+          "kind": "control",
+          "targeting": "enemy",
+          "range": 12,
+          "power": 10,
+          "damageType": "psychic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 14
+          },
+          "cooldownTicks": 44,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "contained",
+              "magnitude": 0,
+              "durationTicks": 1
+            }
+          ],
+          "tags": [
+            "nullify",
+            "spirit",
+            "psychic"
+          ],
+          "animationIntent": "binding_rings",
+          "description": "Rings of stilled air close like a closing bell. The exhausted are carried gently out of the fight; the strong merely stumble."
+        },
+        {
+          "id": "mantra-wave",
+          "name": "Mantra Wave",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 10,
+          "radius": 6,
+          "power": 18,
+          "damageType": "psychic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 16
+          },
+          "cooldownTicks": 36,
+          "windupTicks": 2,
+          "effects": [
+            {
+              "kind": "slow",
+              "magnitude": 0.25,
+              "durationTicks": 10
+            }
+          ],
+          "tags": [
+            "psychic",
+            "spirit"
+          ],
+          "animationIntent": "mantra_wave",
+          "description": "A spoken syllable that arrives as weather — thought slows, then feet."
+        },
+        {
+          "id": "stillness-field",
+          "name": "Stillness Field",
+          "kind": "support",
+          "targeting": "self",
+          "range": 0,
+          "power": 10,
+          "cost": {
+            "resource": "stamina",
+            "amount": 15
+          },
+          "cooldownTicks": 44,
+          "windupTicks": 0,
+          "effects": [
+            {
+              "kind": "shield",
+              "magnitude": 44,
+              "durationTicks": 40
+            }
+          ],
+          "tags": [
+            "spirit",
+            "psychic",
+            "barrier"
+          ],
+          "animationIntent": "stillness_sphere",
+          "description": "A sphere of perfectly calm air that simply declines to pass violence along."
+        }
+      ],
+      "contextual": [],
+      "escalation": {
+        "id": "hollow-bell-toll",
+        "name": "Hollow Bell Toll",
+        "kind": "area",
+        "targeting": "enemy",
+        "range": 10,
+        "radius": 8,
+        "power": 45,
+        "damageType": "psychic",
+        "cost": {
+          "resource": "stamina",
+          "amount": 30
+        },
+        "cooldownTicks": 230,
+        "windupTicks": 5,
+        "effects": [
+          {
+            "kind": "suppress",
+            "magnitude": 0,
+            "durationTicks": 20,
+            "tags": [
+              "solar",
+              "magic"
+            ]
+          }
+        ],
+        "tags": [
+          "nullify",
+          "psychic",
+          "spirit"
+        ],
+        "animationIntent": "finisher_bell_toll",
+        "description": "He rings the bell that is not there. Everyone hears it; every borrowed power briefly forgets its own name."
+      },
+      "passives": [
+        {
+          "id": "meditative-flow",
+          "name": "Meditative Flow",
+          "kind": "regen",
+          "magnitude": 0.3,
+          "tags": [
+            "spirit"
+          ],
+          "description": "Even mid-fight, some part of him is still meditating — flesh mends at the pace of slow breathing."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [
+        {
+          "damageType": "psychic",
+          "pct": 0.35
+        }
+      ],
+      "immunities": []
+    },
+    "weaknesses": [
+      {
+        "id": "frail-vessel",
+        "description": "Decades of fasting left a body like paper around an enormous mind — kinetic trauma lands catastrophically.",
+        "severity": 2,
+        "trigger": {
+          "damageTypes": [
+            "kinetic"
+          ],
+          "abilityTags": [
+            "kinetic",
+            "charge"
+          ]
+        },
+        "effect": {},
+        "evidence": "orrin-design-01"
+      },
+      {
+        "id": "scattered-focus",
+        "description": "Concussive detonations scatter the meditative focus everything else depends on.",
+        "severity": 1,
+        "trigger": {
+          "abilityTags": [
+            "explosive",
+            "seismic",
+            "stone"
+          ]
+        },
+        "effect": {},
+        "evidence": "orrin-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Unhurried, kind, immovable in principle — he treats every opponent as a future friend having a bad day.",
+      "riskTolerance": 0.35,
+      "allyProtection": 0.6,
+      "targetPreference": "highest_threat",
+      "commandCompliance": 0.8,
+      "constraints": [
+        "avoids_lethal_force"
+      ],
+      "repetitionAvoidance": 0.6
+    },
+    "interactions": {
+      "environmental": [],
+      "synergies": [
+        {
+          "allyTag": "spirit",
+          "effect": {
+            "damageMult": 1.05
+          },
+          "description": "Another spirit-worker on the field deepens the stillness he draws from."
+        }
+      ],
+      "powerTags": [
+        "psychic",
+        "nullify",
+        "spirit",
+        "barrier"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 52,
+      "versatilityScore": 68,
+      "reliabilityScore": 82,
+      "counterabilityScore": 60,
+      "draftPrice": 25500000,
+      "priceVersion": "S0",
+      "priceRationale": "broad kit versatility, dependable in any conditions increased the price; wide counterplay surface reduced it. Scores — capability 52, versatility 68, reliability 82, counterability 60."
+    },
+    "presentation": {
+      "primaryColor": "#c9c2ae",
+      "secondaryColor": "#5e5648",
+      "energyColor": "#e8f0ff",
+      "silhouette": "Serene figure adrift in legless robes, palms open, a faint ring of stilled dust orbiting beneath him",
+      "animationIntents": [
+        "levitate_idle",
+        "palm_ripple",
+        "null_palm",
+        "binding_rings",
+        "mantra_wave",
+        "stillness_sphere",
+        "finisher_bell_toll"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": []
+    }
+  }
+}

@@ -804,7 +804,17 @@ export class MatchSim {
         if (!allyTarget && a.targeting === 'ally') continue;
         const missing = allyTarget ? 1 - allyTarget.vitality / allyTarget.dna.resources.vitality : 0.3;
         const inRange = !allyTarget || this.distTo(f, allyTarget) <= a.range;
-        const score = a.power * (0.5 + missing * 2.2) * (inRange ? 1 : 0.35) * this.repPenalty(f, a) * this.jitter();
+        // Shields/buffs carry value beyond raw heal power — score their effects too,
+        // so power-0 barrier abilities are actually used.
+        const effectValue = (a.effects ?? []).reduce((s, e) => {
+          if (e.kind === 'shield') return s + e.magnitude * 0.8;
+          if (e.kind === 'regen') return s + e.magnitude * Math.min(e.durationTicks, 40) * 0.5;
+          if (e.kind === 'fortified' || e.kind === 'empower' || e.kind === 'haste') return s + 14;
+          return s;
+        }, 0);
+        const score =
+          (a.power * (0.5 + missing * 2.2) + effectValue * (0.7 + missing)) *
+          (inRange ? 1 : 0.35) * this.repPenalty(f, a) * this.jitter();
         candidates.push(
           inRange
             ? { score, action: 'ability', ability: a, targetId: allyTarget?.fighterId ?? f.fighterId }
@@ -1451,15 +1461,15 @@ export class MatchSim {
       }
     }
     if (this.tick >= this.ruleset.hardLimitTicks) {
+      // Decision verdict blends survival with delivered damage so raw vitality
+      // pools alone cannot farm stalemate wins (Decision Ledger D-011 rev 2).
       const a = this.teams[0].playerId, b = this.teams[1].playerId;
-      const pa = this.teamVitalityPct(a), pb = this.teamVitalityPct(b);
-      let winner = pa >= pb ? a : b;
-      if (Math.abs(pa - pb) < 0.001) {
-        const da = this.fighters.filter((f) => f.teamId === a).reduce((s, f) => s + f.damageDealt, 0);
-        const db = this.fighters.filter((f) => f.teamId === b).reduce((s, f) => s + f.damageDealt, 0);
-        winner = da >= db ? a : b;
-      }
-      this.finish(winner, 'decision');
+      const da = this.fighters.filter((f) => f.teamId === a).reduce((s, f) => s + f.damageDealt, 0);
+      const db = this.fighters.filter((f) => f.teamId === b).reduce((s, f) => s + f.damageDealt, 0);
+      const dmgShareA = da + db > 0 ? da / (da + db) : 0.5;
+      const scoreA = this.teamVitalityPct(a) * 0.6 + dmgShareA * 0.4;
+      const scoreB = this.teamVitalityPct(b) * 0.6 + (1 - dmgShareA) * 0.4;
+      this.finish(scoreA >= scoreB ? a : b, 'decision');
     }
   }
 

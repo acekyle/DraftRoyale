@@ -68,7 +68,12 @@ export function computePrice(dna: CombatDNA): PriceResult {
     (reliabilityScore / 100) * 0.18 +
     ((100 - counterabilityScore) / 100) * 0.15;
 
-  const rawPrice = PRICE_MIN + blended * (PRICE_MAX - PRICE_MIN);
+  // Brief-compliant kits structurally land in a narrow blended band (~0.45–0.80):
+  // stretch that band across the full season price range so real differences
+  // become real price differences (Decision Ledger D-008 revision 2).
+  const stretched = Math.max(0, Math.min(1, (blended - 0.42) / 0.42));
+
+  const rawPrice = PRICE_MIN + stretched * (PRICE_MAX - PRICE_MIN);
   const draftPrice = Math.round(rawPrice / 500_000) * 500_000;
 
   const ups: string[] = [];

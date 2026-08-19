@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "0.1.0",
+  "wildcardId": "nullstone-shard",
+  "version": "1.0.0",
+  "creator": "Infinite Arena Studio",
+  "inputDescription": "A jagged spike of anti-power mineral that silences solar and arcane gifts around it",
+  "normalizedName": "Nullstone Shard",
+  "class": "object",
+  "radius": 6,
+  "durationTicks": 400,
+  "objectHp": 60,
+  "deployment": "placed",
+  "effects": [
+    { "kind": "suppress_tags", "tags": ["solar", "magic"], "affects": "both" }
+  ],
+  "environmentalInteractions": [
+    "Placement is everything: planted on a choke point it denies solar and arcane fighters the ground they most want.",
+    "Pairs brutally with fighters whose kits carry neither tag — they fight at full strength inside the dead zone."
+  ],
+  "sideEffects": [
+    "Suppresses BOTH teams' solar and magic expression inside its 6 m radius — drafting your own solar carry alongside it is on you.",
+    "High-tactical-intelligence enemy AI will actively move to destroy the shard."
+  ],
+  "counterplay": [
+    "Destroy it — 60 integrity falls fast to focused or area fire.",
+    "Fight outside its 6 m radius and cede that patch of ground instead of your powers.",
+    "Draft fighters who rely on neither solar nor magic tags; the shard is a paperweight against them."
+  ],
+  "visualManifestation": "A jagged obsidian-grey mineral spike shot through with dull violet veins; light and color visibly desaturate inside its radius.",
+  "audioManifestation": "A flat, pressure-drop hum — abilities entering the zone cut out with a sound like a snuffed candle.",
+  "confidence": "high",
+  "provenance": "Curated Season 0 template: anti-power suppression object archetype.",
+  "moderation": "approved",
+  "eligibility": "ranked_eligible"
+}

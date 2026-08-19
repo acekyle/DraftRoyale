@@ -1,0 +1,457 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "vex",
+      "displayName": "Vex",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "humanoid"
+    },
+    "canon": {
+      "summary": "A stage illusionist turned arena knife-artist who folds space in short, silent steps. Vex's blades carry a psychic edge that cuts confidence before it cuts skin. Brilliant, fragile, and allergic to loud noises — a shattered eardrum from the accident that gave him his gift never healed right.",
+      "primarySources": [
+        {
+          "id": "vex-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: stage-magic career, the teleportation accident, psychic-edged blade technique, sonic trauma."
+        },
+        {
+          "id": "vex-design-01",
+          "kind": "design_document",
+          "note": "Kit design: skirmisher role, blink mobility, stealth opener, glass-cannon budget."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Vex — short-range blink skirmisher, not a mass teleporter.",
+      "disputedClaims": [],
+      "assumptions": [
+        "His blink is limited to line-of-sight hops of roughly 14 m and cannot carry passengers."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "psychic_edge",
+        "origin": "Post-accident psionic charge channeled through thrown and held blades",
+        "dependencies": [
+          "concentration"
+        ],
+        "interruptionConditions": [
+          "sonic shock shatters his focus",
+          "arcane fields unravel the folded-space step"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Psychic-edged knife work",
+        "Thrown blades",
+        "Short-range blink"
+      ],
+      "conditional": [],
+      "defensive": [
+        "Stealth field",
+        "Exceptional evasion"
+      ],
+      "movement": [
+        "Ground agility",
+        "Blink steps"
+      ],
+      "signature": [
+        "Phase Shiv",
+        "Fan of Edges",
+        "Flicker Step",
+        "Mindshear Fang"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "No armor and a slight frame — anything that lands, lands hard.",
+        "severity": "defining",
+        "condition": "always",
+        "evidence": "vex-design-01"
+      },
+      {
+        "description": "Blink steps are short and demand focus; he cannot escape a fight that stays on top of him.",
+        "severity": "serious",
+        "condition": "sustained pressure",
+        "evidence": "vex-lore-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "Sonic attacks tear through his damaged inner ear and shatter his psychic focus.",
+        "severity": "serious",
+        "exposureMethod": "Sonic damage or sonically tagged abilities",
+        "evidence": "vex-lore-01"
+      },
+      {
+        "description": "Arcane energies interfere with the folded-space geometry of his steps.",
+        "severity": "minor",
+        "exposureMethod": "Magic damage",
+        "evidence": "vex-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "A showman's read of attention — he strikes wherever no one is looking.",
+      "tacticalStyle": "Opens from stealth on isolated targets, blinks out when the spotlight swings his way.",
+      "riskTolerance": "High — he trusts the exit he has already planned.",
+      "allyProtection": "Low — a solo act by training and temperament.",
+      "moralConstraints": [
+        "Refuses to strike a downed opponent"
+      ],
+      "commandConstraints": [
+        "Ignores orders that require him to hold a fixed position"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.blink.range",
+          "selectedValue": "line-of-sight hops up to ~14 m",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "concentration intact"
+          ],
+          "evidence": [
+            "vex-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.sonic",
+          "selectedValue": "amplified damage and broken focus under sonic assault",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "vex-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Stage illusionist origin",
+        "Psychic-edged blades",
+        "Shattered eardrum"
+      ],
+      "aiAssumptions": [
+        "Stealth re-engagement window (20 ticks out of combat) matches the engine's stealth-field passive"
+      ],
+      "mechanicalNormalizations": [
+        "Teleportation bounded to a 14 m movement ability with a real cooldown"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "vex",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "skirmisher",
+      "chassis": "humanoid",
+      "scale": 1
+    },
+    "attributes": {
+      "forceOutput": 5,
+      "durability": 3,
+      "combatSpeed": 8,
+      "reactionSpeed": 7,
+      "travelSpeed": 7,
+      "precision": 8,
+      "mobility": 8,
+      "recovery": 5,
+      "perception": 7,
+      "combatSkill": 7,
+      "tacticalIntelligence": 6,
+      "teamwork": 4,
+      "resolve": 3
+    },
+    "resources": {
+      "vitality": 220,
+      "stability": 60,
+      "stamina": 110,
+      "staminaRegenPerTick": 1.7
+    },
+    "movementModes": [
+      "ground",
+      "blink"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "edge-flick",
+          "name": "Edge Flick",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 12,
+          "power": 11,
+          "damageType": "psychic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "blade",
+            "kinetic",
+            "projectile"
+          ],
+          "animationIntent": "knife_flick",
+          "description": "A wrist-snap throw, faster than the eye that tries to follow it."
+        }
+      ],
+      "signature": [
+        {
+          "id": "phase-shiv",
+          "name": "Phase Shiv",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3,
+          "power": 22,
+          "damageType": "psychic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 12
+          },
+          "cooldownTicks": 26,
+          "windupTicks": 0,
+          "tags": [
+            "psychic",
+            "blade",
+            "shadow"
+          ],
+          "animationIntent": "phase_stab",
+          "description": "A blade that arrives half a thought before the hand holding it — it cuts the mind's map of the body."
+        },
+        {
+          "id": "fan-of-edges",
+          "name": "Fan of Edges",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 10,
+          "radius": 5,
+          "power": 19,
+          "damageType": "psychic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 14
+          },
+          "cooldownTicks": 36,
+          "windupTicks": 1,
+          "tags": [
+            "blade",
+            "kinetic",
+            "projectile"
+          ],
+          "animationIntent": "fan_throw",
+          "description": "A spread of seven knives thrown in one theatrical flourish."
+        },
+        {
+          "id": "flicker-step",
+          "name": "Flicker Step",
+          "kind": "movement",
+          "targeting": "enemy",
+          "range": 14,
+          "power": 0,
+          "cost": {
+            "resource": "stamina",
+            "amount": 8
+          },
+          "cooldownTicks": 30,
+          "windupTicks": 0,
+          "tags": [
+            "blink",
+            "psychic",
+            "shadow"
+          ],
+          "animationIntent": "blink_step",
+          "description": "He folds the space between here and there — used to close on prey or vanish from trouble."
+        },
+        {
+          "id": "mindshear-fang",
+          "name": "Mindshear Fang",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 14,
+          "power": 20,
+          "damageType": "psychic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 14
+          },
+          "cooldownTicks": 30,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "vulnerable",
+              "magnitude": 0.15,
+              "durationTicks": 12
+            }
+          ],
+          "tags": [
+            "psychic",
+            "blade",
+            "shadow"
+          ],
+          "animationIntent": "psychic_throw",
+          "description": "A thrown blade wrapped in dread — the flinch it leaves behind opens the target to everything that follows."
+        }
+      ],
+      "contextual": [],
+      "escalation": {
+        "id": "thousand-cuts",
+        "name": "Thousand Cuts",
+        "kind": "area",
+        "targeting": "enemy",
+        "range": 6,
+        "radius": 5,
+        "power": 45,
+        "damageType": "psychic",
+        "cost": {
+          "resource": "stamina",
+          "amount": 30
+        },
+        "cooldownTicks": 220,
+        "windupTicks": 3,
+        "tags": [
+          "blade",
+          "psychic",
+          "shadow"
+        ],
+        "animationIntent": "finisher_blink_flurry",
+        "description": "He blinks through the crowd faster than sound, leaving a constellation of cuts that all land at once."
+      },
+      "passives": [
+        {
+          "id": "stage-vanish",
+          "name": "Stage Vanish",
+          "kind": "stealth_field",
+          "magnitude": 0.35,
+          "tags": [
+            "shadow"
+          ],
+          "description": "Enters every encounter unseen and melts back into the wings when the fight looks away."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [],
+      "immunities": []
+    },
+    "weaknesses": [
+      {
+        "id": "shattered-focus",
+        "description": "Sonic shock rips through his ruined inner ear — the pain shatters the concentration his whole art depends on.",
+        "severity": 2,
+        "trigger": {
+          "damageTypes": [
+            "sonic"
+          ],
+          "abilityTags": [
+            "sonic"
+          ]
+        },
+        "effect": {},
+        "evidence": "vex-lore-01"
+      },
+      {
+        "id": "arcane-interference",
+        "description": "Arcane energies snag the folded-space geometry of his steps and bite deeper than they should.",
+        "severity": 1,
+        "trigger": {
+          "damageTypes": [
+            "magic"
+          ],
+          "abilityTags": [
+            "magic",
+            "hex",
+            "spirit"
+          ]
+        },
+        "effect": {},
+        "evidence": "vex-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Theatrical, needling, secretly meticulous — every fight is a performance with a planned exit.",
+      "riskTolerance": 0.7,
+      "allyProtection": 0.2,
+      "targetPreference": "isolated",
+      "commandCompliance": 0.6,
+      "constraints": [],
+      "repetitionAvoidance": 0.8
+    },
+    "interactions": {
+      "environmental": [],
+      "synergies": [
+        {
+          "allyTag": "shadow",
+          "effect": {
+            "damageMult": 1.06
+          },
+          "description": "Another shadow on the stage doubles the misdirection."
+        }
+      ],
+      "powerTags": [
+        "psychic",
+        "shadow",
+        "kinetic",
+        "blade",
+        "projectile",
+        "blink"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 57,
+      "versatilityScore": 75,
+      "reliabilityScore": 78,
+      "counterabilityScore": 60,
+      "draftPrice": 28500000,
+      "priceVersion": "S0",
+      "priceRationale": "broad kit versatility, dependable in any conditions increased the price; wide counterplay surface reduced it. Scores — capability 57, versatility 75, reliability 78, counterability 60."
+    },
+    "presentation": {
+      "primaryColor": "#5b2a86",
+      "secondaryColor": "#17121f",
+      "energyColor": "#b388ff",
+      "silhouette": "Slim figure in a high-collared stage coat, knife fans at both hips, edges glowing faint violet",
+      "animationIntents": [
+        "poised_idle",
+        "knife_flick",
+        "phase_stab",
+        "fan_throw",
+        "blink_step",
+        "psychic_throw",
+        "shadow_ambush",
+        "finisher_blink_flurry"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": []
+    }
+  }
+}

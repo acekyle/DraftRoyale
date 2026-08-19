@@ -1,0 +1,505 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "cinder-wisp",
+      "displayName": "Cinder Wisp",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "floating"
+    },
+    "canon": {
+      "summary": "A living ember that drifted out of a bonfire on festival night and decided people were interesting. Cinder Wisp is a playful fire elemental the size of a lantern flame stretched person-tall — she rains sparks from the air, blinds crowds in ash, and keeps her friends warm. Water is not a weakness so much as a description of her ending.",
+      "primarySources": [
+        {
+          "id": "cinder-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: festival bonfire birth, playful temperament, flame-core physiology, terror of standing water."
+        },
+        {
+          "id": "cinder-design-01",
+          "kind": "design_document",
+          "note": "Kit design: floating artillery, burn pressure, ash blind, ally warmth, hydro as the defining counter."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Cinder Wisp — a lantern-scale elemental, not a firestorm.",
+      "disputedClaims": [],
+      "assumptions": [
+        "Her flame-core burns steadily in open air; only standing water and hydrokinetics genuinely threaten it."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "flame_core",
+        "origin": "A self-sustaining elemental flame — the coal she was born from, carried in her own chest",
+        "dependencies": [
+          "air to burn"
+        ],
+        "interruptionConditions": [
+          "standing water drains the core continuously",
+          "a drowned core silences every fire technique until it rekindles"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Arcing spark volleys",
+        "Lingering burn fields",
+        "Blinding ash clouds"
+      ],
+      "conditional": [],
+      "defensive": [
+        "Constant flight",
+        "Aerial evasiveness",
+        "Being made of fire"
+      ],
+      "movement": [
+        "Darting flight"
+      ],
+      "signature": [
+        "Spark Volley",
+        "Cinder Rain",
+        "Ash Cloud",
+        "Warm Embers"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "Everything she is depends on the core staying lit — water contexts drain it toward silence.",
+        "severity": "defining",
+        "condition": "water_present context",
+        "evidence": "cinder-lore-01"
+      },
+      {
+        "description": "Physically slight even for an elemental; sustained fire from any direction shreds her quickly.",
+        "severity": "serious",
+        "condition": "when focused",
+        "evidence": "cinder-design-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "Hydrokinetic attacks strike at the core itself — the one attack she genuinely fears.",
+        "severity": "defining",
+        "exposureMethod": "Hydro-tagged abilities",
+        "evidence": "cinder-design-01"
+      },
+      {
+        "description": "Fighting over standing water leaves her dim, damp, and easier to hurt.",
+        "severity": "minor",
+        "exposureMethod": "Engaging inside water_present zones",
+        "evidence": "cinder-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "Instinctive and improvisational — she fights like a spark on a draft, all opportunism.",
+      "tacticalStyle": "Circles above the fight raining sparks, drops ash on clustered enemies, drifts low to warm wounded friends.",
+      "riskTolerance": "Playfully high — right up until water appears, at which point it is zero.",
+      "allyProtection": "Warm — literally. She keeps her people alive because cold people are boring.",
+      "moralConstraints": [
+        "Will not burn a downed opponent"
+      ],
+      "commandConstraints": [
+        "Cannot be ordered near standing water"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.flight.sustained",
+          "selectedValue": "constant effortless flight",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "flame core lit"
+          ],
+          "evidence": [
+            "cinder-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.hydro",
+          "selectedValue": "defining vulnerability to hydrokinetic attack",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "cinder-design-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Bonfire origin",
+        "Flame-core physiology",
+        "Playful temperament"
+      ],
+      "aiAssumptions": [
+        "Core drain rate in water contexts (0.6/tick) chosen for pacing against the fountain and flood wildcard"
+      ],
+      "mechanicalNormalizations": [
+        "'Sets the sky on fire' normalized to bounded area burns with real cooldowns"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "cinder-wisp",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "artillery",
+      "chassis": "floating",
+      "scale": 1
+    },
+    "attributes": {
+      "forceOutput": 6,
+      "durability": 4,
+      "combatSpeed": 6,
+      "reactionSpeed": 7,
+      "travelSpeed": 8,
+      "precision": 6,
+      "mobility": 8,
+      "recovery": 5,
+      "perception": 6,
+      "combatSkill": 5,
+      "tacticalIntelligence": 5,
+      "teamwork": 6,
+      "resolve": 6
+    },
+    "resources": {
+      "vitality": 220,
+      "stability": 70,
+      "stamina": 100,
+      "staminaRegenPerTick": 1.5,
+      "primary": {
+        "name": "flame_core",
+        "max": 100,
+        "start": 80,
+        "regenPerTick": 0.7,
+        "drainInContext": {
+          "tags": [
+            "water_present"
+          ],
+          "amount": 0.6
+        },
+        "onDepletedSuppressTags": [
+          "fire"
+        ]
+      }
+    },
+    "movementModes": [
+      "flight"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "spark-spit",
+          "name": "Spark Spit",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 16,
+          "power": 11,
+          "damageType": "thermal",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "fire",
+            "thermal",
+            "projectile"
+          ],
+          "animationIntent": "spark_spit",
+          "description": "A flicked mote of herself, thrown giggling downrange."
+        }
+      ],
+      "signature": [
+        {
+          "id": "spark-volley",
+          "name": "Spark Volley",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 18,
+          "power": 20,
+          "damageType": "thermal",
+          "cost": {
+            "resource": "flame_core",
+            "amount": 16
+          },
+          "cooldownTicks": 28,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "burn",
+              "magnitude": 1,
+              "durationTicks": 8
+            }
+          ],
+          "tags": [
+            "fire",
+            "thermal",
+            "projectile"
+          ],
+          "animationIntent": "spark_volley",
+          "description": "A fistful of embers thrown hard enough to matter, each one clinging where it lands."
+        },
+        {
+          "id": "cinder-rain",
+          "name": "Cinder Rain",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 16,
+          "radius": 6,
+          "power": 18,
+          "damageType": "thermal",
+          "cost": {
+            "resource": "flame_core",
+            "amount": 18
+          },
+          "cooldownTicks": 36,
+          "windupTicks": 2,
+          "effects": [
+            {
+              "kind": "burn",
+              "magnitude": 1.2,
+              "durationTicks": 10
+            }
+          ],
+          "tags": [
+            "fire",
+            "thermal"
+          ],
+          "animationIntent": "cinder_rain",
+          "description": "She wrings herself out over the enemy line — a slow, drifting rain that refuses to go out."
+        },
+        {
+          "id": "ash-cloud",
+          "name": "Ash Cloud",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 14,
+          "radius": 6,
+          "power": 14,
+          "damageType": "thermal",
+          "cost": {
+            "resource": "flame_core",
+            "amount": 14
+          },
+          "cooldownTicks": 40,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "blind",
+              "magnitude": 0.2,
+              "durationTicks": 14
+            }
+          ],
+          "tags": [
+            "fire",
+            "ash"
+          ],
+          "animationIntent": "ash_burst",
+          "description": "A soft grey detonation of spent ash — everyone inside spends the next moments coughing at silhouettes."
+        },
+        {
+          "id": "warm-embers",
+          "name": "Warm Embers",
+          "kind": "support",
+          "targeting": "ally",
+          "range": 12,
+          "power": 10,
+          "cost": {
+            "resource": "flame_core",
+            "amount": 14
+          },
+          "cooldownTicks": 44,
+          "windupTicks": 0,
+          "effects": [
+            {
+              "kind": "regen",
+              "magnitude": 1.2,
+              "durationTicks": 24
+            }
+          ],
+          "tags": [
+            "fire",
+            "spirit"
+          ],
+          "animationIntent": "ember_halo",
+          "description": "She settles a ring of gentle coals around a friend — warmth that closes wounds the slow, kind way."
+        }
+      ],
+      "contextual": [],
+      "escalation": {
+        "id": "bonfire-heart",
+        "name": "Bonfire Heart",
+        "kind": "area",
+        "targeting": "enemy",
+        "range": 12,
+        "radius": 9,
+        "power": 48,
+        "damageType": "thermal",
+        "cost": {
+          "resource": "flame_core",
+          "amount": 35
+        },
+        "cooldownTicks": 230,
+        "windupTicks": 5,
+        "effects": [
+          {
+            "kind": "burn",
+            "magnitude": 2,
+            "durationTicks": 12
+          }
+        ],
+        "tags": [
+          "fire",
+          "thermal",
+          "spirit"
+        ],
+        "animationIntent": "finisher_bonfire",
+        "description": "For one breath she remembers the bonfire she came from, and shares the memory with everyone below."
+      },
+      "passives": [
+        {
+          "id": "draft-dancer",
+          "name": "Draft Dancer",
+          "kind": "evasive_flier",
+          "magnitude": 0.15,
+          "tags": [
+            "fire",
+            "aerial"
+          ],
+          "description": "She rides thermals of her own making — swatting a spark out of the air is harder than it looks."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [
+        {
+          "damageType": "thermal",
+          "pct": 0.5
+        }
+      ],
+      "immunities": [
+        "burn"
+      ]
+    },
+    "weaknesses": [
+      {
+        "id": "drowned-core",
+        "description": "Hydrokinetic attacks reach past the flame and strike the core itself — the only wound she cannot laugh off.",
+        "severity": 3,
+        "trigger": {
+          "abilityTags": [
+            "hydro",
+            "water"
+          ]
+        },
+        "effect": {},
+        "evidence": "cinder-design-01"
+      },
+      {
+        "id": "damp-air",
+        "description": "Over standing water she burns dim and damp — everything hurts more when the air itself is against her.",
+        "severity": 1,
+        "trigger": {
+          "envTags": [
+            "water_present"
+          ]
+        },
+        "effect": {},
+        "evidence": "cinder-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Delighted by everything, briefly — a firework with opinions and friends.",
+      "riskTolerance": 0.65,
+      "allyProtection": 0.6,
+      "targetPreference": "lowest_vitality",
+      "commandCompliance": 0.7,
+      "constraints": [],
+      "repetitionAvoidance": 0.7
+    },
+    "interactions": {
+      "environmental": [
+        {
+          "contextTag": "water_present",
+          "effect": {
+            "damageMult": 0.8
+          },
+          "description": "Damp air chokes her sparks — everything she throws lands softer near water."
+        }
+      ],
+      "synergies": [
+        {
+          "allyTag": "fire",
+          "effect": {
+            "damageMult": 1.07
+          },
+          "description": "Another flame on the field feeds her — sparks leap higher from a shared blaze."
+        }
+      ],
+      "powerTags": [
+        "fire",
+        "thermal",
+        "spirit",
+        "projectile",
+        "ash",
+        "aerial"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 57,
+      "versatilityScore": 52,
+      "reliabilityScore": 55,
+      "counterabilityScore": 45,
+      "draftPrice": 21000000,
+      "priceVersion": "S0",
+      "priceRationale": "air superiority increased the price; serious exploitable weaknesses reduced it. Scores — capability 57, versatility 52, reliability 55, counterability 45."
+    },
+    "presentation": {
+      "primaryColor": "#e8622c",
+      "secondaryColor": "#4a1f14",
+      "energyColor": "#ffd07a",
+      "silhouette": "Person-tall flame with a bright coal heart, trailing sparks that curl like laughter",
+      "animationIntents": [
+        "flicker_idle",
+        "spark_spit",
+        "spark_volley",
+        "cinder_rain",
+        "ash_burst",
+        "ember_halo",
+        "finisher_bonfire"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": []
+    }
+  }
+}

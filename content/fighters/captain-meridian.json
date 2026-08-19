@@ -1,0 +1,506 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "captain-meridian",
+      "displayName": "Captain Meridian",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "humanoid"
+    },
+    "canon": {
+      "summary": "The arena circuit's most decorated squad leader — a peak-human tactician carrying a hard-light shield-lance issued for the plaza that now bears her name. Captain Meridian wins by making everyone around her fight one grade above their ceiling, and by refusing, on principle, to strike the weakest target on the field.",
+      "primarySources": [
+        {
+          "id": "meridian-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: enlisted rescue-corps career, the Meridian Plaza stand, hard-light shield-lance issue, squad-first doctrine."
+        },
+        {
+          "id": "meridian-design-01",
+          "kind": "design_document",
+          "note": "Kit design: tactician role, empower aura, target designation, unaugmented-mind psychic counter."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Captain Meridian — peak-human leadership with issued hard-light gear, no superhuman physiology.",
+      "disputedClaims": [],
+      "assumptions": [
+        "The shield-lance's hard-light emitters run indefinitely on their own cell; her limits are human stamina and an unshielded human mind."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "hard_light_lance",
+        "origin": "Issued shield-lance projecting hard-light edges and barriers",
+        "dependencies": [
+          "intact emitter array"
+        ],
+        "interruptionConditions": [
+          "the mind guiding it is peak-human but unshielded — psychic assault bypasses everything the lance can block"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Shield-lance combat",
+        "Squad-wide combat direction",
+        "Target designation"
+      ],
+      "conditional": [
+        "Sunlit standard rally under open daylight"
+      ],
+      "defensive": [
+        "Hard-light phalanx barriers",
+        "Veteran guard discipline"
+      ],
+      "movement": [
+        "Disciplined ground movement"
+      ],
+      "signature": [
+        "Meridian Throw",
+        "Phalanx Order",
+        "Line Breaker",
+        "Mark Target"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "Peak-human, not superhuman: she cannot trade raw force with enhanced bruisers and wins through positioning instead.",
+        "severity": "serious",
+        "condition": "always",
+        "evidence": "meridian-lore-01"
+      },
+      {
+        "description": "Her doctrine forbids abandoning endangered allies or ganging up on the weakest enemy, even when it would be optimal.",
+        "severity": "serious",
+        "condition": "always",
+        "evidence": "meridian-lore-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "An unaugmented human mind — psychic assault cuts past every barrier the lance can raise.",
+        "severity": "serious",
+        "exposureMethod": "Psychic damage",
+        "evidence": "meridian-design-01"
+      },
+      {
+        "description": "An unaugmented human body — toxins hit her at full baseline severity.",
+        "severity": "minor",
+        "exposureMethod": "Toxic damage",
+        "evidence": "meridian-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "Elite — processes the whole field, assigns threats, and spends herself where the line is thinnest.",
+      "tacticalStyle": "Anchors the formation, designates priority targets, and duels the enemy's strongest to buy her squad space.",
+      "riskTolerance": "Measured — takes personal risk freely, squad risk never.",
+      "allyProtection": "Defining — she has never once left a teammate behind.",
+      "moralConstraints": [
+        "Refuses to focus the weakest enemy",
+        "Never abandons an endangered ally"
+      ],
+      "commandConstraints": [
+        "Rejects disengage orders while an ally is in danger",
+        "Rejects focus orders pointed at the weakest opponent"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.leadership.aura",
+          "selectedValue": "measurable squad performance lift within ~9 m",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "allies within voice and signal range"
+          ],
+          "evidence": [
+            "meridian-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.psychic",
+          "selectedValue": "amplified damage from psychic attack",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "meridian-design-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Peak-human squad leader",
+        "Hard-light shield-lance",
+        "Squad-first doctrine"
+      ],
+      "aiAssumptions": [
+        "Leadership modeled as a 0.08 empower aura at 9 m radius"
+      ],
+      "mechanicalNormalizations": [
+        "'Never loses a soldier' normalized to behavior constraints rather than mechanical invulnerability for allies"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "captain-meridian",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "tactician",
+      "chassis": "humanoid",
+      "scale": 1
+    },
+    "attributes": {
+      "forceOutput": 6,
+      "durability": 6,
+      "combatSpeed": 6,
+      "reactionSpeed": 7,
+      "travelSpeed": 5,
+      "precision": 7,
+      "mobility": 5,
+      "recovery": 6,
+      "perception": 8,
+      "combatSkill": 8,
+      "tacticalIntelligence": 9,
+      "teamwork": 9,
+      "resolve": 8
+    },
+    "resources": {
+      "vitality": 320,
+      "stability": 100,
+      "stamina": 100,
+      "staminaRegenPerTick": 1.5
+    },
+    "movementModes": [
+      "ground"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "lance-jab",
+          "name": "Lance Jab",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3,
+          "power": 12,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "kinetic",
+            "valor"
+          ],
+          "animationIntent": "lance_jab",
+          "description": "A drilled, economical thrust — ten thousand repetitions behind every one."
+        }
+      ],
+      "signature": [
+        {
+          "id": "meridian-throw",
+          "name": "Meridian Throw",
+          "kind": "ranged",
+          "targeting": "enemy",
+          "range": 16,
+          "power": 22,
+          "damageType": "energy",
+          "cost": {
+            "resource": "stamina",
+            "amount": 14
+          },
+          "cooldownTicks": 28,
+          "windupTicks": 1,
+          "tags": [
+            "light",
+            "kinetic",
+            "projectile"
+          ],
+          "animationIntent": "lance_throw",
+          "description": "The lance leaves her hand trailing hard-light and re-forms in it a heartbeat later."
+        },
+        {
+          "id": "phalanx-order",
+          "name": "Phalanx Order",
+          "kind": "support",
+          "targeting": "ally",
+          "range": 10,
+          "power": 8,
+          "cost": {
+            "resource": "stamina",
+            "amount": 16
+          },
+          "cooldownTicks": 44,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "shield",
+              "magnitude": 40,
+              "durationTicks": 40
+            }
+          ],
+          "tags": [
+            "light",
+            "valor",
+            "barrier"
+          ],
+          "animationIntent": "phalanx_project",
+          "description": "She throws a hard-light wall over whichever teammate the enemy wants most."
+        },
+        {
+          "id": "line-breaker",
+          "name": "Line Breaker",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3.2,
+          "power": 25,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 15
+          },
+          "cooldownTicks": 30,
+          "windupTicks": 2,
+          "effects": [
+            {
+              "kind": "slow",
+              "magnitude": 0.2,
+              "durationTicks": 8
+            }
+          ],
+          "tags": [
+            "kinetic",
+            "valor"
+          ],
+          "animationIntent": "shield_charge",
+          "description": "Shield-first through the enemy's strongest — the charge that held the plaza."
+        },
+        {
+          "id": "mark-target",
+          "name": "Mark Target",
+          "kind": "control",
+          "targeting": "enemy",
+          "range": 14,
+          "power": 6,
+          "damageType": "energy",
+          "cost": {
+            "resource": "stamina",
+            "amount": 10
+          },
+          "cooldownTicks": 34,
+          "windupTicks": 0,
+          "effects": [
+            {
+              "kind": "vulnerable",
+              "magnitude": 0.15,
+              "durationTicks": 16
+            }
+          ],
+          "tags": [
+            "light",
+            "valor"
+          ],
+          "animationIntent": "designate_target",
+          "description": "A hard-light designator paints the threat — her whole squad reads the seams she calls out."
+        }
+      ],
+      "contextual": [
+        {
+          "id": "sunlit-standard",
+          "name": "Sunlit Standard",
+          "kind": "support",
+          "targeting": "ally",
+          "range": 12,
+          "power": 10,
+          "cost": {
+            "resource": "stamina",
+            "amount": 18
+          },
+          "cooldownTicks": 48,
+          "windupTicks": 1,
+          "requiresContext": [
+            "daylight"
+          ],
+          "effects": [
+            {
+              "kind": "empower",
+              "magnitude": 0.15,
+              "durationTicks": 20
+            }
+          ],
+          "tags": [
+            "light",
+            "valor"
+          ],
+          "animationIntent": "raise_standard",
+          "description": "Under open sun she raises the lance like a standard — the light off it puts iron in a teammate's arm."
+        }
+      ],
+      "escalation": {
+        "id": "meridian-judgment",
+        "name": "Meridian Judgment",
+        "kind": "melee",
+        "targeting": "enemy",
+        "range": 3.5,
+        "power": 55,
+        "damageType": "energy",
+        "cost": {
+          "resource": "stamina",
+          "amount": 30
+        },
+        "cooldownTicks": 240,
+        "windupTicks": 4,
+        "effects": [
+          {
+            "kind": "stun",
+            "magnitude": 0,
+            "durationTicks": 3
+          }
+        ],
+        "tags": [
+          "light",
+          "kinetic",
+          "valor"
+        ],
+        "animationIntent": "finisher_judgment",
+        "description": "Every emitter in the lance discharges through a single overhead strike — issued for emergencies, used like one."
+      },
+      "passives": [
+        {
+          "id": "standard-bearer",
+          "name": "Standard Bearer",
+          "kind": "ally_aura_empower",
+          "magnitude": 0.08,
+          "radius": 9,
+          "tags": [
+            "valor",
+            "light"
+          ],
+          "description": "Fighting beside her simply makes people better — calmer hands, cleaner reads, harder hits."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [
+        {
+          "damageType": "kinetic",
+          "pct": 0.15
+        }
+      ],
+      "immunities": []
+    },
+    "weaknesses": [
+      {
+        "id": "unshielded-mind",
+        "description": "The lance blocks bullets, beams, and blades — nothing it projects can blunt an attack on an unaugmented human mind.",
+        "severity": 2,
+        "trigger": {
+          "damageTypes": [
+            "psychic"
+          ]
+        },
+        "effect": {},
+        "evidence": "meridian-design-01"
+      },
+      {
+        "id": "baseline-physiology",
+        "description": "No enhancements means no filters: toxins work on her exactly as designed.",
+        "severity": 1,
+        "trigger": {
+          "damageTypes": [
+            "toxic"
+          ]
+        },
+        "effect": {},
+        "evidence": "meridian-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Calm, exact, quietly warm — the officer whose voice you hear when things go wrong.",
+      "riskTolerance": 0.5,
+      "allyProtection": 0.9,
+      "targetPreference": "highest_threat",
+      "commandCompliance": 0.95,
+      "constraints": [
+        "never_abandons_allies",
+        "hunts_strongest"
+      ],
+      "repetitionAvoidance": 0.6
+    },
+    "interactions": {
+      "environmental": [],
+      "synergies": [
+        {
+          "allyTag": "light",
+          "effect": {
+            "damageMult": 1.05
+          },
+          "description": "Light-wielding teammates give her emitters something to harmonize with."
+        }
+      ],
+      "powerTags": [
+        "light",
+        "kinetic",
+        "valor",
+        "projectile",
+        "barrier"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 65,
+      "versatilityScore": 83,
+      "reliabilityScore": 82,
+      "counterabilityScore": 36,
+      "draftPrice": 38500000,
+      "priceVersion": "S0",
+      "priceRationale": "elite raw combat output, broad kit versatility, dependable in any conditions increased the price. Scores — capability 65, versatility 83, reliability 82, counterability 36."
+    },
+    "presentation": {
+      "primaryColor": "#2456a8",
+      "secondaryColor": "#e8ecf5",
+      "energyColor": "#7fd0ff",
+      "silhouette": "Square-shouldered officer in ceramic squad plate, tower-shield lance projecting a pale blue edge",
+      "animationIntents": [
+        "watchful_idle",
+        "lance_jab",
+        "lance_throw",
+        "phalanx_project",
+        "shield_charge",
+        "designate_target",
+        "raise_standard",
+        "finisher_judgment"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": []
+    }
+  }
+}

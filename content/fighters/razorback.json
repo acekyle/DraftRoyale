@@ -1,0 +1,476 @@
+{
+  "contract": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "razorback",
+      "displayName": "Razorback",
+      "version": "1.0.0",
+      "continuity": "arena-original",
+      "era": "season-0",
+      "creator": "Infinite Arena Studio",
+      "ownership": "studio_original",
+      "visibility": "published",
+      "remixPolicy": "allowed_with_attribution",
+      "division": "enhanced",
+      "chassis": "quadruped"
+    },
+    "canon": {
+      "summary": "A bio-forged war-boar the size of a truck, plated in ablative tusk-steel and fitted with surplus booster rockets by a pit crew who thought it would be funny. It was. Razorback knows exactly one tactic \u2014 forward \u2014 and executes it with the sincerity of an avalanche. He has never once retreated, mostly because nobody has taught him the concept.",
+      "primarySources": [
+        {
+          "id": "razorback-lore-01",
+          "kind": "creator_lore",
+          "note": "Studio origin document: bio-forge program, the rocket retrofit, pit-crew adoption, zero-retreat temperament."
+        },
+        {
+          "id": "razorback-design-01",
+          "kind": "design_document",
+          "note": "Kit design: quadruped bruiser, charge identity, counter-attack tusks, energy overload and psychic simplicity as counters."
+        }
+      ],
+      "selectedInterpretation": "Season 0 baseline Razorback \u2014 an armored charge specialist, not an unstoppable projectile.",
+      "disputedClaims": [],
+      "assumptions": [
+        "The booster rockets are dumb solid-fuel units on a mechanical timer; they cannot be hacked, only survived."
+      ]
+    },
+    "powerSources": [
+      {
+        "name": "tusk_steel_and_rockets",
+        "origin": "Bio-forged muscle and bone under ablative plate, plus strap-on solid-fuel boosters",
+        "dependencies": [
+          "intact plating",
+          "rocket fuel reserves"
+        ],
+        "interruptionConditions": [
+          "energy weapons overload the ablative plate's dissipation mesh",
+          "his simple mind takes psychic assault poorly"
+        ]
+      }
+    ],
+    "capabilitySummary": {
+      "core": [
+        "Rocket-assisted charges",
+        "Goring tusk strikes",
+        "Trample shockwaves"
+      ],
+      "conditional": [],
+      "defensive": [
+        "Ablative tusk-steel plate",
+        "Reflexive counter-gore"
+      ],
+      "movement": [
+        "Powerful gallop",
+        "Burst sprints"
+      ],
+      "signature": [
+        "Rocket Charge",
+        "Gore Toss",
+        "Trample Burst",
+        "Tusk Rend"
+      ]
+    },
+    "limitations": [
+      {
+        "description": "One gear: forward. He cannot disengage, feint, or hold position with any conviction.",
+        "severity": "defining",
+        "condition": "always",
+        "evidence": "razorback-lore-01"
+      },
+      {
+        "description": "Turns like a truck \u2014 agile enemies who sidestep the charge get free hits on his flanks.",
+        "severity": "serious",
+        "condition": "against high-mobility opponents",
+        "evidence": "razorback-design-01"
+      }
+    ],
+    "weaknessSummary": [
+      {
+        "description": "Energy fire overloads the ablative mesh and cooks the muscle beneath the plate.",
+        "severity": "serious",
+        "exposureMethod": "Energy damage",
+        "evidence": "razorback-design-01"
+      },
+      {
+        "description": "A simple, trusting mind \u2014 psychic attack finds no defenses at all.",
+        "severity": "minor",
+        "exposureMethod": "Psychic damage",
+        "evidence": "razorback-design-01"
+      }
+    ],
+    "behaviorSummary": {
+      "combatIntelligence": "Low cunning, superb instinct \u2014 he reads momentum and mass the way tacticians read maps.",
+      "tacticalStyle": "Charge the biggest thing, gore it, trample whatever gathers, repeat until the arena is quiet.",
+      "riskTolerance": "Total \u2014 the concept of losing has never been successfully explained to him.",
+      "allyProtection": "Incidental \u2014 teammates learn to fight in the wake he clears.",
+      "moralConstraints": [
+        "Stops goring anything that stops moving"
+      ],
+      "commandConstraints": [
+        "Physically incapable of honoring a retreat order",
+        "Ignores his own injuries when choosing to attack"
+      ]
+    },
+    "provenance": {
+      "claims": [
+        {
+          "path": "capabilities.charge.rocket",
+          "selectedValue": "rocket-assisted charge covering ~12 m in a burst",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "rocket fuel remaining"
+          ],
+          "evidence": [
+            "razorback-lore-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        },
+        {
+          "path": "weaknesses.energy",
+          "selectedValue": "amplified damage from energy weapons via plate overload",
+          "portrayalType": "repeatable",
+          "conditions": [
+            "always"
+          ],
+          "evidence": [
+            "razorback-design-01"
+          ],
+          "conflicts": [],
+          "confidence": "high"
+        }
+      ],
+      "conflicts": [],
+      "confidence": "high",
+      "creatorFacts": [
+        "Bio-forged war-boar",
+        "Solid-fuel booster retrofit",
+        "Never-retreat temperament"
+      ],
+      "aiAssumptions": [
+        "Rocket charge modeled as a movement ability rather than a damaging dash, with tusk damage arriving via follow-up strikes"
+      ],
+      "mechanicalNormalizations": [
+        "Trample bounded to a 5 m shockwave rather than a full lane of destruction"
+      ]
+    },
+    "approval": {
+      "creatorApproved": true,
+      "semanticRevisionCount": 0,
+      "visualRevisionCount": 0,
+      "eligibility": "ranked_eligible"
+    }
+  },
+  "dna": {
+    "schemaVersion": "0.1.0",
+    "identity": {
+      "fighterId": "razorback",
+      "contractVersion": "1.0.0",
+      "combatVersion": "1.0.0",
+      "division": "enhanced",
+      "role": "bruiser",
+      "chassis": "quadruped",
+      "scale": 1.2
+    },
+    "attributes": {
+      "forceOutput": 8,
+      "durability": 8,
+      "combatSpeed": 6,
+      "reactionSpeed": 5,
+      "travelSpeed": 8,
+      "precision": 4,
+      "mobility": 4,
+      "recovery": 6,
+      "perception": 5,
+      "combatSkill": 5,
+      "tacticalIntelligence": 3,
+      "teamwork": 5,
+      "resolve": 9
+    },
+    "resources": {
+      "vitality": 420,
+      "stability": 115,
+      "stamina": 100,
+      "staminaRegenPerTick": 1.4
+    },
+    "movementModes": [
+      "ground",
+      "sprint"
+    ],
+    "capabilities": {
+      "foundational": [
+        {
+          "id": "tusk-swipe",
+          "name": "Tusk Swipe",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3.2,
+          "power": 13,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 4
+          },
+          "cooldownTicks": 4,
+          "windupTicks": 0,
+          "tags": [
+            "beast",
+            "kinetic"
+          ],
+          "animationIntent": "tusk_swipe",
+          "description": "A sideways rake of the head. For Razorback this is a friendly greeting."
+        }
+      ],
+      "signature": [
+        {
+          "id": "rocket-charge",
+          "name": "Rocket Charge",
+          "kind": "movement",
+          "targeting": "enemy",
+          "range": 12,
+          "power": 0,
+          "cost": {
+            "resource": "stamina",
+            "amount": 10
+          },
+          "cooldownTicks": 28,
+          "windupTicks": 1,
+          "selfEffects": [
+            {
+              "kind": "haste",
+              "magnitude": 0.3,
+              "durationTicks": 8
+            }
+          ],
+          "tags": [
+            "beast",
+            "charge",
+            "kinetic"
+          ],
+          "animationIntent": "rocket_charge",
+          "description": "The boosters light, the arena shrinks, and the distance between Razorback and his problem stops existing."
+        },
+        {
+          "id": "gore-toss",
+          "name": "Gore Toss",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3.2,
+          "power": 27,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 15
+          },
+          "cooldownTicks": 30,
+          "windupTicks": 1,
+          "effects": [
+            {
+              "kind": "slow",
+              "magnitude": 0.25,
+              "durationTicks": 8
+            }
+          ],
+          "tags": [
+            "beast",
+            "kinetic",
+            "charge"
+          ],
+          "animationIntent": "gore_toss",
+          "description": "Tusks under, neck up \u2014 whatever he hits spends a moment airborne reconsidering its draft position."
+        },
+        {
+          "id": "trample-burst",
+          "name": "Trample Burst",
+          "kind": "area",
+          "targeting": "enemy",
+          "range": 8,
+          "radius": 5,
+          "power": 25,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 16
+          },
+          "cooldownTicks": 36,
+          "windupTicks": 1,
+          "tags": [
+            "beast",
+            "kinetic",
+            "charge"
+          ],
+          "animationIntent": "trample_shockwave",
+          "description": "He bucks and slams all four hooves down \u2014 the misfiring rockets spray shrapnel and shockwave in a ring."
+        },
+        {
+          "id": "tusk-rend",
+          "name": "Tusk Rend",
+          "kind": "melee",
+          "targeting": "enemy",
+          "range": 3,
+          "power": 26,
+          "damageType": "kinetic",
+          "cost": {
+            "resource": "stamina",
+            "amount": 14
+          },
+          "cooldownTicks": 26,
+          "windupTicks": 0,
+          "effects": [
+            {
+              "kind": "vulnerable",
+              "magnitude": 0.12,
+              "durationTicks": 10
+            }
+          ],
+          "tags": [
+            "beast",
+            "kinetic"
+          ],
+          "animationIntent": "tusk_rend",
+          "description": "A grinding twist of both tusks that peels armor open for everything that follows."
+        }
+      ],
+      "contextual": [],
+      "escalation": {
+        "id": "final-stampede",
+        "name": "Final Stampede",
+        "kind": "area",
+        "targeting": "enemy",
+        "range": 8,
+        "radius": 7,
+        "power": 56,
+        "damageType": "kinetic",
+        "cost": {
+          "resource": "stamina",
+          "amount": 30
+        },
+        "cooldownTicks": 230,
+        "windupTicks": 4,
+        "effects": [
+          {
+            "kind": "stun",
+            "magnitude": 0,
+            "durationTicks": 3
+          }
+        ],
+        "tags": [
+          "beast",
+          "charge",
+          "kinetic"
+        ],
+        "animationIntent": "finisher_stampede",
+        "description": "Every remaining rocket fires at once. Witnesses describe it as weather."
+      },
+      "passives": [
+        {
+          "id": "reflex-gore",
+          "name": "Reflex Gore",
+          "kind": "counter_attack",
+          "magnitude": 0.3,
+          "tags": [
+            "beast"
+          ],
+          "description": "Hit him up close and the tusks answer before the brain is consulted."
+        }
+      ]
+    },
+    "defenses": {
+      "resistances": [
+        {
+          "damageType": "kinetic",
+          "pct": 0.25
+        }
+      ],
+      "immunities": []
+    },
+    "weaknesses": [
+      {
+        "id": "plate-overload",
+        "description": "Energy fire saturates the ablative mesh \u2014 past its limit, every bolt cooks straight through to muscle.",
+        "severity": 2,
+        "trigger": {
+          "damageTypes": [
+            "energy"
+          ]
+        },
+        "effect": {},
+        "evidence": "razorback-design-01"
+      },
+      {
+        "id": "simple-mind",
+        "description": "There are no locked doors in Razorback's head. Psychic attacks walk right in.",
+        "severity": 1,
+        "trigger": {
+          "damageTypes": [
+            "psychic"
+          ]
+        },
+        "effect": {},
+        "evidence": "razorback-design-01"
+      }
+    ],
+    "behavior": {
+      "personality": "Cheerfully unstoppable \u2014 an avalanche that loves its job.",
+      "riskTolerance": 0.95,
+      "allyProtection": 0.3,
+      "targetPreference": "highest_threat",
+      "commandCompliance": 0.5,
+      "constraints": [
+        "reckless",
+        "never_retreats"
+      ],
+      "repetitionAvoidance": 0.4
+    },
+    "interactions": {
+      "environmental": [],
+      "synergies": [
+        {
+          "allyTag": "beast",
+          "effect": {
+            "damageMult": 1.05
+          },
+          "description": "Another beast on the field wakes something pack-shaped in him."
+        }
+      ],
+      "powerTags": [
+        "beast",
+        "kinetic",
+        "charge"
+      ]
+    },
+    "balance": {
+      "capabilityScore": 71,
+      "versatilityScore": 63,
+      "reliabilityScore": 87,
+      "counterabilityScore": 36,
+      "draftPrice": 37000000,
+      "priceVersion": "S0",
+      "priceRationale": "elite raw combat output, dependable in any conditions increased the price. Scores \u2014 capability 71, versatility 63, reliability 87, counterability 36."
+    },
+    "presentation": {
+      "primaryColor": "#7a4a2b",
+      "secondaryColor": "#3d2a1a",
+      "energyColor": "#ffb347",
+      "silhouette": "Truck-sized armored boar, chipped steel tusks, twin booster rockets strapped over the haunches",
+      "animationIntents": [
+        "pawing_idle",
+        "tusk_swipe",
+        "rocket_charge",
+        "gore_toss",
+        "trample_shockwave",
+        "tusk_rend",
+        "finisher_stampede"
+      ]
+    },
+    "validation": {
+      "eligibility": "ranked_eligible",
+      "passedSuites": [
+        "schema"
+      ],
+      "knownIssues": [
+        "Balance: below-band self-play win rate; melee approach tax under investigation (systemic, shared with ember-ronin)."
+      ]
+    }
+  }
+}
