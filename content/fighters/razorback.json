@@ -15,7 +15,7 @@
       "chassis": "quadruped"
     },
     "canon": {
-      "summary": "A bio-forged war-boar the size of a truck, plated in ablative tusk-steel and fitted with surplus booster rockets by a pit crew who thought it would be funny. It was. Razorback knows exactly one tactic \u2014 forward \u2014 and executes it with the sincerity of an avalanche. He has never once retreated, mostly because nobody has taught him the concept.",
+      "summary": "A bio-forged war-boar the size of a truck, plated in ablative tusk-steel and fitted with surplus booster rockets by a pit crew who thought it would be funny. It was. Razorback knows exactly one tactic — forward — and executes it with the sincerity of an avalanche. He has never once retreated, mostly because nobody has taught him the concept.",
       "primarySources": [
         {
           "id": "razorback-lore-01",
@@ -28,7 +28,7 @@
           "note": "Kit design: quadruped bruiser, charge identity, counter-attack tusks, energy overload and psychic simplicity as counters."
         }
       ],
-      "selectedInterpretation": "Season 0 baseline Razorback \u2014 an armored charge specialist, not an unstoppable projectile.",
+      "selectedInterpretation": "Season 0 baseline Razorback — an armored charge specialist, not an unstoppable projectile.",
       "disputedClaims": [],
       "assumptions": [
         "The booster rockets are dumb solid-fuel units on a mechanical timer; they cannot be hacked, only survived."
@@ -78,7 +78,7 @@
         "evidence": "razorback-lore-01"
       },
       {
-        "description": "Turns like a truck \u2014 agile enemies who sidestep the charge get free hits on his flanks.",
+        "description": "Turns like a truck — agile enemies who sidestep the charge get free hits on his flanks.",
         "severity": "serious",
         "condition": "against high-mobility opponents",
         "evidence": "razorback-design-01"
@@ -92,17 +92,17 @@
         "evidence": "razorback-design-01"
       },
       {
-        "description": "A simple, trusting mind \u2014 psychic attack finds no defenses at all.",
+        "description": "A simple, trusting mind — psychic attack finds no defenses at all.",
         "severity": "minor",
         "exposureMethod": "Psychic damage",
         "evidence": "razorback-design-01"
       }
     ],
     "behaviorSummary": {
-      "combatIntelligence": "Low cunning, superb instinct \u2014 he reads momentum and mass the way tacticians read maps.",
+      "combatIntelligence": "Low cunning, superb instinct — he reads momentum and mass the way tacticians read maps.",
       "tacticalStyle": "Charge the biggest thing, gore it, trample whatever gathers, repeat until the arena is quiet.",
-      "riskTolerance": "Total \u2014 the concept of losing has never been successfully explained to him.",
-      "allyProtection": "Incidental \u2014 teammates learn to fight in the wake he clears.",
+      "riskTolerance": "Total — the concept of losing has never been successfully explained to him.",
+      "allyProtection": "Incidental — teammates learn to fight in the wake he clears.",
       "moralConstraints": [
         "Stops goring anything that stops moving"
       ],
@@ -277,7 +277,7 @@
             "charge"
           ],
           "animationIntent": "gore_toss",
-          "description": "Tusks under, neck up \u2014 whatever he hits spends a moment airborne reconsidering its draft position."
+          "description": "Tusks under, neck up — whatever he hits spends a moment airborne reconsidering its draft position."
         },
         {
           "id": "trample-burst",
@@ -300,7 +300,7 @@
             "charge"
           ],
           "animationIntent": "trample_shockwave",
-          "description": "He bucks and slams all four hooves down \u2014 the misfiring rockets spray shrapnel and shockwave in a ring."
+          "description": "He bucks and slams all four hooves down — the misfiring rockets spray shrapnel and shockwave in a ring."
         },
         {
           "id": "tusk-rend",
@@ -387,7 +387,7 @@
     "weaknesses": [
       {
         "id": "plate-overload",
-        "description": "Energy fire saturates the ablative mesh \u2014 past its limit, every bolt cooks straight through to muscle.",
+        "description": "Energy fire saturates the ablative mesh — past its limit, every bolt cooks straight through to muscle.",
         "severity": 2,
         "trigger": {
           "damageTypes": [
@@ -411,7 +411,7 @@
       }
     ],
     "behavior": {
-      "personality": "Cheerfully unstoppable \u2014 an avalanche that loves its job.",
+      "personality": "Cheerfully unstoppable — an avalanche that loves its job.",
       "riskTolerance": 0.95,
       "allyProtection": 0.3,
       "targetPreference": "highest_threat",
@@ -446,7 +446,7 @@
       "counterabilityScore": 36,
       "draftPrice": 37000000,
       "priceVersion": "S0",
-      "priceRationale": "elite raw combat output, dependable in any conditions increased the price. Scores \u2014 capability 71, versatility 63, reliability 87, counterability 36."
+      "priceRationale": "elite raw combat output, dependable in any conditions increased the price. Scores — capability 71, versatility 63, reliability 87, counterability 36."
     },
     "presentation": {
       "primaryColor": "#7a4a2b",

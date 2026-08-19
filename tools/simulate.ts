@@ -1,15 +1,29 @@
 /**
- * Balance harness: runs seeded round-robin matchups across the roster and reports
- * win rates, price efficiency, durations, stalemates, and determinism failures.
+ * Balance harness: runs seeded matchups across the roster and reports win
+ * rates, price efficiency, durations, stalemates, and determinism failures.
  *
- * Usage: npm run simulate [-- --seeds 20]
+ * Schedule-confound fix: a single deterministic pairing schedule baked a
+ * team-slate confound into per-fighter win rates (who you were scheduled WITH
+ * mattered as much as who you fought), and the schedule silently reshuffled
+ * whenever prices changed the combo pool. The harness now generates N
+ * DIFFERENT deterministic schedules — the pairing offsets are parameterized by
+ * the schedule index — aggregates wins/games across all of them, and reports
+ * each fighter's cross-schedule spread (min/max per-schedule win rate) so
+ * slate-driven artifacts are visible instead of hidden.
+ *
+ * Usage: npm run simulate [-- --seeds 8 --schedules 6]
  */
 import { RULESET_S0, type TeamSetup } from '@arena/contracts';
 import { buildManifest, runManifest, verifyReplay, type SimContent } from '@arena/combat-sim';
 import { loadContent } from './load-content';
 
-const seedsArg = process.argv.indexOf('--seeds');
-const SEEDS = seedsArg > -1 ? Number(process.argv[seedsArg + 1]) : 8;
+function intArg(flag: string, fallback: number): number {
+  const i = process.argv.indexOf(flag);
+  const v = i > -1 ? Number(process.argv[i + 1]) : NaN;
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
+}
+const SEEDS = intArg('--seeds', 8); // seeds per matchup
+const SCHEDULES = intArg('--schedules', 6); // distinct deterministic schedules
 
 const content = loadContent();
 const arena = content.arenas.get('meridian-plaza')!;
@@ -48,81 +62,135 @@ function makeTeam(playerId: string, roster: string[]): TeamSetup {
 }
 
 const combos = teamsOf3();
-// Deterministic matchup schedule with guaranteed coverage: sample disjoint pairs,
-// then top up any fighter that landed zero appearances.
+const MATCHUPS = Math.min(40, combos.length); // per schedule; total sampling comes from SCHEDULES × MATCHUPS
+
+// Distinct co-prime-ish stride pools; schedule k draws different pairing
+// offsets so every schedule walks a different slice of the combo space.
+const A_STEPS = [11, 13, 17, 19, 23, 29, 31, 37, 41, 43];
+const B_STEPS = [7, 5, 3, 19, 13, 17, 23, 11, 29, 31];
+
+/** Deterministic matchup schedule #k with guaranteed per-fighter coverage. */
+function buildSchedule(k: number): [string[], string[]][] {
+  const aStep = A_STEPS[k % A_STEPS.length] + 2 * Math.floor(k / A_STEPS.length);
+  const bStep = B_STEPS[k % B_STEPS.length] + 2 * Math.floor(k / B_STEPS.length);
+  const bOff = 3 + 13 * k;
+
+  const schedule: [string[], string[]][] = [];
+  const appearances: Record<string, number> = Object.fromEntries(ids.map((id) => [id, 0]));
+  const addMatchup = (a: string[], b: string[]) => {
+    schedule.push([a, b]);
+    for (const id of [...a, ...b]) appearances[id]++;
+  };
+
+  for (let i = 0; i < combos.length && schedule.length < MATCHUPS; i++) {
+    const a = combos[(i * aStep + k) % combos.length];
+    for (let j = 1; j < combos.length; j++) {
+      const b = combos[(i * aStep + j * bStep + bOff) % combos.length];
+      if (a.some((x) => b.includes(x))) continue;
+      addMatchup(a, b);
+      break;
+    }
+  }
+  // Top up any fighter that landed fewer than 2 appearances — coverage is
+  // guaranteed within EVERY schedule, and the top-up slate rotates with k.
+  for (const id of ids) {
+    const withId = combos.filter((c) => c.includes(id));
+    while ((appearances[id] ?? 0) < 2) {
+      const a = withId.length ? withId[k % withId.length] : undefined;
+      const b = a && combos.find((c) => !c.some((x) => a.includes(x)));
+      if (!a || !b) break;
+      addMatchup(a, b);
+    }
+  }
+  return schedule;
+}
+
+// ---------------------------------------------------------------------------
+// Run all schedules, aggregating globally and per schedule.
+// ---------------------------------------------------------------------------
+
 const wins: Record<string, number> = {};
 const games: Record<string, number> = {};
+const perSchedule: { wins: Record<string, number>; games: Record<string, number> }[] = [];
 let stalemates = 0, decisions = 0, eliminations = 0, totalTicks = 0, matches = 0, determinismFailures = 0;
 const durations: number[] = [];
 
-const MATCHUPS = Math.min(60, combos.length);
-const schedule: [string[], string[]][] = [];
-const appearances: Record<string, number> = Object.fromEntries(ids.map((id) => [id, 0]));
-const addMatchup = (a: string[], b: string[]) => {
-  schedule.push([a, b]);
-  for (const id of [...a, ...b]) appearances[id]++;
-};
-for (let i = 0; i < combos.length && schedule.length < MATCHUPS; i++) {
-  const a = combos[(i * 11) % combos.length];
-  for (let j = 1; j < combos.length; j++) {
-    const b = combos[(i * 11 + j * 7 + 3) % combos.length];
-    if (a.some((x) => b.includes(x))) continue;
-    addMatchup(a, b);
-    break;
-  }
-}
-for (const id of ids) {
-  while ((appearances[id] ?? 0) < 2) {
-    const a = combos.find((c) => c.includes(id));
-    const b = a && combos.find((c) => !c.some((x) => a.includes(x)));
-    if (!a || !b) break;
-    addMatchup(a, b);
+for (let k = 0; k < SCHEDULES; k++) {
+  const schedule = buildSchedule(k);
+  const sw: Record<string, number> = {};
+  const sg: Record<string, number> = {};
+  perSchedule.push({ wins: sw, games: sg });
+
+  for (const [m, [a, b]] of schedule.entries()) {
+    for (let s = 0; s < SEEDS; s++) {
+      const manifest = buildManifest({
+        matchId: `sim-${k}-${m}-${s}`,
+        roomId: 'harness',
+        createdAt: '2026-01-01T00:00:00Z',
+        ruleset: RULESET_S0,
+        arenaId: arena.arenaId,
+        arenaVersion: arena.version,
+        seed: 1000 + k * 1_000_000 + m * 100 + s,
+        teams: [makeTeam('A', a), makeTeam('B', b)],
+        content: simContent,
+      });
+      const run = runManifest(manifest, simContent);
+      if (s === 0) {
+        const v = verifyReplay(manifest, simContent);
+        if (!v.ok) determinismFailures++;
+      }
+      matches++;
+      totalTicks += run.outcome.finalTick;
+      durations.push(run.outcome.finalTick);
+      if (run.outcome.reason === 'decision') decisions++;
+      else eliminations++;
+      if (run.outcome.finalTick >= RULESET_S0.hardLimitTicks) stalemates++;
+      const winnerRoster = run.outcome.winnerPlayerId === 'A' ? a : b;
+      const loserRoster = run.outcome.winnerPlayerId === 'A' ? b : a;
+      for (const id of winnerRoster) {
+        wins[id] = (wins[id] ?? 0) + 1; games[id] = (games[id] ?? 0) + 1;
+        sw[id] = (sw[id] ?? 0) + 1; sg[id] = (sg[id] ?? 0) + 1;
+      }
+      for (const id of loserRoster) {
+        games[id] = (games[id] ?? 0) + 1;
+        sg[id] = (sg[id] ?? 0) + 1;
+      }
+    }
   }
 }
 
-for (const [m, [a, b]] of schedule.entries()) {
-  for (let s = 0; s < SEEDS; s++) {
-    const manifest = buildManifest({
-      matchId: `sim-${m}-${s}`,
-      roomId: 'harness',
-      createdAt: '2026-01-01T00:00:00Z',
-      ruleset: RULESET_S0,
-      arenaId: arena.arenaId,
-      arenaVersion: arena.version,
-      seed: 1000 + m * 100 + s,
-      teams: [makeTeam('A', a), makeTeam('B', b)],
-      content: simContent,
-    });
-    const run = runManifest(manifest, simContent);
-    if (s === 0) {
-      const v = verifyReplay(manifest, simContent);
-      if (!v.ok) determinismFailures++;
-    }
-    matches++;
-    totalTicks += run.outcome.finalTick;
-    durations.push(run.outcome.finalTick);
-    if (run.outcome.reason === 'decision') decisions++;
-    else eliminations++;
-    if (run.outcome.finalTick >= RULESET_S0.hardLimitTicks) stalemates++;
-    const winnerRoster = run.outcome.winnerPlayerId === 'A' ? a : b;
-    const loserRoster = run.outcome.winnerPlayerId === 'A' ? b : a;
-    for (const id of winnerRoster) { wins[id] = (wins[id] ?? 0) + 1; games[id] = (games[id] ?? 0) + 1; }
-    for (const id of loserRoster) games[id] = (games[id] ?? 0) + 1;
-  }
-}
+// ---------------------------------------------------------------------------
+// Report
+// ---------------------------------------------------------------------------
 
 durations.sort((x, y) => x - y);
 const median = durations[Math.floor(durations.length / 2)] ?? 0;
-console.log(`\n=== Balance harness: ${matches} matches ===`);
+console.log(`\n=== Balance harness: ${matches} matches (${SCHEDULES} schedules × ${SEEDS} seeds/matchup) ===`);
 console.log(`avg duration ${(totalTicks / matches / 4).toFixed(0)}s | median ${(median / 4).toFixed(0)}s | eliminations ${eliminations} | decisions ${decisions} | hard-limit stalemates ${stalemates}`);
 console.log(`determinism failures: ${determinismFailures}\n`);
-console.log('fighter win rates (participation-weighted):');
+console.log(`fighter win rates (aggregate across ${SCHEDULES} schedules ± cross-schedule spread):`);
+
+const pct = (r: number) => (r * 100).toFixed(1);
 for (const id of ids) {
   const g = games[id] ?? 0;
   const w = wins[id] ?? 0;
   const price = content.fighters.get(id)!.balance.draftPrice / 1e6;
-  const rate = g ? ((w / g) * 100).toFixed(1) : ' n/a';
-  const flag = g && (w / g > 0.62 || w / g < 0.38) ? '  <-- OUTLIER' : '';
-  console.log(`  ${id.padEnd(18)} ${String(rate).padStart(5)}%  (${g} games, $${price.toFixed(1)}M)${flag}`);
+  const scheduleRates = perSchedule
+    .filter(({ games: sg }) => (sg[id] ?? 0) > 0)
+    .map(({ wins: sw, games: sg }) => (sw[id] ?? 0) / sg[id]!);
+  if (g === 0 || scheduleRates.length === 0) {
+    console.log(`  ${id.padEnd(18)}   n/a  (0 games, $${price.toFixed(1)}M)`);
+    continue;
+  }
+  const rate = w / g;
+  const min = Math.min(...scheduleRates);
+  const max = Math.max(...scheduleRates);
+  let flag = '';
+  if (min > 0.62) flag = '  <-- OUTLIER (every schedule >62%)';
+  else if (max < 0.38) flag = '  <-- OUTLIER (every schedule <38%)';
+  else if (rate > 0.62 || rate < 0.38) flag = '  <-- aggregate outlier (schedule-dependent)';
+  console.log(
+    `  ${id.padEnd(18)} ${pct(rate).padStart(5)}%  [${pct(min).padStart(5)}–${pct(max).padStart(5)}% across schedules]  (${g} games, $${price.toFixed(1)}M)${flag}`,
+  );
 }
 if (determinismFailures > 0) process.exit(1);

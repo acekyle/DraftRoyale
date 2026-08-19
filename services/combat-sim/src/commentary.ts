@@ -46,7 +46,7 @@ const T: Partial<Record<MatchEvent['type'], TemplateSet>> = {
   },
   WEAKNESS_TRIGGERED: {
     priority: 7,
-    cooldownTicks: 16,
+    cooldownTicks: 48,
     variants: [
       (e, n) => `That's the weakness! ${n(e.data.by)} is exploiting exactly what ${n(e.data.fighterId)} can't handle.`,
       (e, n) => `${n(e.data.fighterId)}'s known vulnerability just got exposed — this is why you study the draft board.`,
@@ -87,7 +87,7 @@ const T: Partial<Record<MatchEvent['type'], TemplateSet>> = {
   },
   STABILITY_BROKEN: {
     priority: 4,
-    cooldownTicks: 20,
+    cooldownTicks: 56,
     variants: [(e, n) => `${n(e.data.fighterId)}'s guard is SHATTERED — completely exposed!`],
   },
   RESERVE_ENTERED: {
@@ -142,6 +142,9 @@ export function generateCommentary(events: MatchEvent[], dnaById: Map<string, Co
   };
   const lines: CommentaryLine[] = [];
   const lastUsed: Record<string, number> = {};
+  // Phrase memory: the exact same rendered line backs off exponentially and is
+  // hard-capped per match — commentary must never turn into a chant.
+  const phraseUse: Record<string, { count: number; lastTick: number }> = {};
   for (const e of events) {
     const set = T[e.type];
     if (!set) continue;
@@ -150,6 +153,12 @@ export function generateCommentary(events: MatchEvent[], dnaById: Map<string, Co
     const variant = set.variants[e.seq % set.variants.length];
     const text = variant(e, n);
     if (!text) continue;
+    const mem = phraseUse[text];
+    if (mem) {
+      if (mem.count >= 3) continue; // per-match cap on an identical line
+      if (e.tick - mem.lastTick < set.cooldownTicks * (mem.count + 2)) continue; // escalating backoff
+    }
+    phraseUse[text] = { count: (mem?.count ?? 0) + 1, lastTick: e.tick };
     lastUsed[key] = e.tick;
     lines.push({ tick: e.tick, priority: set.priority, text });
   }

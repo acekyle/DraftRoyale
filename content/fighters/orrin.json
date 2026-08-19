@@ -462,9 +462,9 @@
       "versatilityScore": 68,
       "reliabilityScore": 82,
       "counterabilityScore": 60,
-      "draftPrice": 25500000,
+      "draftPrice": 31000000,
       "priceVersion": "S0",
-      "priceRationale": "broad kit versatility, dependable in any conditions increased the price; wide counterplay surface reduced it. Scores — capability 52, versatility 68, reliability 82, counterability 60."
+      "priceRationale": "Reviewer override +$5.5M (D-013): suppression, containment, and shielding utility is systematically undervalued by pricing formula v1 (which scores damage-shaped capability); cross-schedule simulations show top-tier win contribution at a bottom-third formula price. Formula baseline: broad kit versatility, dependable in any conditions increased the price; wide counterplay surface reduced it. Scores — capability 52, versatility 68, reliability 82, counterability 60."
     },
     "presentation": {
       "primaryColor": "#c9c2ae",

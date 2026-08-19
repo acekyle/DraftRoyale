@@ -24,7 +24,16 @@ export function aiDraftPick(
     const picksStillNeeded = Math.max(0, RULESET_S0.rosterMin - picksMade - 1);
     return price <= budget - picksStillNeeded * MIN_PRICE;
   });
-  if (affordable.length === 0) return 'pass';
+  if (affordable.length === 0) {
+    if (!mustPick) return 'pass';
+    // Never pass below the minimum roster: the feasibility reserve assumed a
+    // MIN_PRICE floor that the real market may not offer. Take the cheapest
+    // fighter that fits the raw budget instead of soft-locking the draft.
+    const fallback = availableIds
+      .filter((id) => DNA_BY_ID.get(id)!.balance.draftPrice <= budget)
+      .sort((a, b) => DNA_BY_ID.get(a)!.balance.draftPrice - DNA_BY_ID.get(b)!.balance.draftPrice)[0];
+    return fallback ?? 'pass';
+  }
   if (!mustPick) {
     // Roster is legal — only extend for cheap depth.
     const cheap = affordable.filter((id) => DNA_BY_ID.get(id)!.balance.draftPrice <= budget * 0.8);

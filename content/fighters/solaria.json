@@ -179,7 +179,7 @@
       "combatSpeed": 6,
       "reactionSpeed": 7,
       "travelSpeed": 8,
-      "precision": 8,
+      "precision": 7,
       "mobility": 7,
       "recovery": 5,
       "perception": 7,
@@ -254,7 +254,7 @@
             "resource": "solar_charge",
             "amount": 22
           },
-          "cooldownTicks": 28,
+          "cooldownTicks": 32,
           "windupTicks": 3,
           "tags": [
             "solar",
@@ -501,13 +501,13 @@
       ]
     },
     "balance": {
-      "capabilityScore": 65,
+      "capabilityScore": 64,
       "versatilityScore": 98,
       "reliabilityScore": 40,
       "counterabilityScore": 47,
-      "draftPrice": 33000000,
+      "draftPrice": 32500000,
       "priceVersion": "S0",
-      "priceRationale": "elite raw combat output, broad kit versatility, air superiority increased the price; conditional power source, serious exploitable weaknesses reduced it. Scores — capability 65, versatility 98, reliability 40, counterability 47."
+      "priceRationale": "broad kit versatility, air superiority increased the price; conditional power source, serious exploitable weaknesses reduced it. Scores — capability 64, versatility 98, reliability 40, counterability 47."
     },
     "presentation": {
       "primaryColor": "#f5b93c",

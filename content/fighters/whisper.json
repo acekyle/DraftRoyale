@@ -388,7 +388,7 @@
       "constraints": [
         "never_abandons_allies"
       ],
-      "repetitionAvoidance": 0.5
+      "repetitionAvoidance": 0.8
     },
     "interactions": {
       "environmental": [],

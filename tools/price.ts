@@ -8,9 +8,32 @@ import { writeFileSync } from 'node:fs';
 import { computePrice } from '@arena/combat-sim';
 import { loadContent } from './load-content';
 
+/**
+ * Bounded reviewer overrides (constitution §19.8–19.9): applied on top of the
+ * formula with written rationale, recorded in the Decision Ledger. Bound: an
+ * override may move a price at most ±25% from the formula value.
+ */
+const REVIEWER_OVERRIDES: Record<string, { price: number; rationale: string }> = {
+  orrin: {
+    price: 31_000_000,
+    rationale:
+      'Reviewer override +$5.5M (D-013): suppression, containment, and shielding utility is systematically ' +
+      'undervalued by pricing formula v1 (which scores damage-shaped capability); cross-schedule simulations ' +
+      'show top-tier win contribution at a bottom-third formula price.',
+  },
+};
+
 const content = loadContent();
 for (const { file, data } of content.fighterFiles) {
   const result = computePrice(data.dna);
+  const override = REVIEWER_OVERRIDES[data.dna.identity.fighterId];
+  if (override) {
+    const bound = 0.25 * result.draftPrice;
+    if (Math.abs(override.price - result.draftPrice) > bound)
+      throw new Error(`override for ${data.dna.identity.fighterId} exceeds the ±25% reviewer bound`);
+    result.draftPrice = override.price;
+    result.priceRationale = `${override.rationale} Formula baseline: ${result.priceRationale}`;
+  }
   data.dna.balance = { ...result };
   writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
   console.log(

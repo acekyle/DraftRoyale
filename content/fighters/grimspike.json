@@ -15,7 +15,7 @@
       "chassis": "heavy"
     },
     "canon": {
-      "summary": "A colossus of living granite grown around a resonant crystal core, quarried awake by a mining charge and never quite forgiven for it. Grimspike moves like geology and hits like it too \u2014 slow, patient, and inevitable. The core that animates him is also his undoing: the right frequency shakes it, and him, apart.",
+      "summary": "A colossus of living granite grown around a resonant crystal core, quarried awake by a mining charge and never quite forgiven for it. Grimspike moves like geology and hits like it too — slow, patient, and inevitable. The core that animates him is also his undoing: the right frequency shakes it, and him, apart.",
       "primarySources": [
         {
           "id": "grimspike-lore-01",
@@ -28,7 +28,7 @@
           "note": "Kit design: heavy bruiser, seismic area pressure, leap mobility, sonic resonance as the defining counter."
         }
       ],
-      "selectedInterpretation": "Season 0 baseline Grimspike \u2014 a bounded granite colossus, not an unkillable mountain.",
+      "selectedInterpretation": "Season 0 baseline Grimspike — a bounded granite colossus, not an unkillable mountain.",
       "disputedClaims": [],
       "assumptions": [
         "His crystal core slowly re-knits cracked granite between exchanges; it cannot regrow him from rubble."
@@ -87,7 +87,7 @@
     ],
     "weaknessSummary": [
       {
-        "description": "Sonic resonance at the core's frequency \u2014 the single counter that turns the mountain to gravel.",
+        "description": "Sonic resonance at the core's frequency — the single counter that turns the mountain to gravel.",
         "severity": "defining",
         "exposureMethod": "Sonic damage or sonically tagged abilities",
         "evidence": "grimspike-lore-01"
@@ -100,15 +100,15 @@
       }
     ],
     "behaviorSummary": {
-      "combatIntelligence": "Simple and patient \u2014 he picks the biggest problem and walks at it until it stops being one.",
+      "combatIntelligence": "Simple and patient — he picks the biggest problem and walks at it until it stops being one.",
       "tacticalStyle": "Anchors the center, splits the ground under grouped enemies, leaps only when it will land on someone.",
-      "riskTolerance": "High \u2014 few things on the field can genuinely hurt him, and he knows which ones.",
-      "allyProtection": "Moderate \u2014 he shields smaller teammates the way a cliff shelters climbers: by standing there.",
+      "riskTolerance": "High — few things on the field can genuinely hurt him, and he knows which ones.",
+      "allyProtection": "Moderate — he shields smaller teammates the way a cliff shelters climbers: by standing there.",
       "moralConstraints": [
         "Will not crush an opponent who has stopped fighting"
       ],
       "commandConstraints": [
-        "Slow to comply with repositioning orders \u2014 geology does not hurry"
+        "Slow to comply with repositioning orders — geology does not hurry"
       ]
     },
     "provenance": {
@@ -173,7 +173,7 @@
       "scale": 1.5
     },
     "attributes": {
-      "forceOutput": 8,
+      "forceOutput": 7,
       "durability": 8,
       "combatSpeed": 4,
       "reactionSpeed": 4,
@@ -205,7 +205,7 @@
           "kind": "melee",
           "targeting": "enemy",
           "range": 3.2,
-          "power": 13,
+          "power": 11,
           "damageType": "kinetic",
           "cost": {
             "resource": "stamina",
@@ -229,7 +229,7 @@
           "targeting": "enemy",
           "range": 6,
           "radius": 6,
-          "power": 26,
+          "power": 23,
           "damageType": "kinetic",
           "cost": {
             "resource": "stamina",
@@ -250,7 +250,7 @@
             "kinetic"
           ],
           "animationIntent": "double_fist_slam",
-          "description": "Both fists into the ground \u2014 the shockwave travels through pavement better than anyone's footing does."
+          "description": "Both fists into the ground — the shockwave travels through pavement better than anyone's footing does."
         },
         {
           "id": "boulder-hurl",
@@ -272,7 +272,7 @@
             "projectile"
           ],
           "animationIntent": "boulder_throw",
-          "description": "He tears a piece off himself \u2014 or the street, whichever is closer \u2014 and mails it downrange."
+          "description": "He tears a piece off himself — or the street, whichever is closer — and mails it downrange."
         },
         {
           "id": "crystal-bulwark",
@@ -300,7 +300,7 @@
             "barrier"
           ],
           "animationIntent": "crystal_growth",
-          "description": "The core flares and fresh crystal sheets across his hide \u2014 armor grown in seconds, spent in moments."
+          "description": "The core flares and fresh crystal sheets across his hide — armor grown in seconds, spent in moments."
         },
         {
           "id": "quake-stomp",
@@ -309,7 +309,7 @@
           "targeting": "enemy",
           "range": 8,
           "radius": 5,
-          "power": 24,
+          "power": 21,
           "damageType": "kinetic",
           "cost": {
             "resource": "stamina",
@@ -417,7 +417,7 @@
     "weaknesses": [
       {
         "id": "core-resonance",
-        "description": "The right frequency finds the core and the whole mountain rings \u2014 sonic attacks shake him apart from the inside.",
+        "description": "The right frequency finds the core and the whole mountain rings — sonic attacks shake him apart from the inside.",
         "severity": 3,
         "trigger": {
           "damageTypes": [
@@ -432,7 +432,7 @@
       },
       {
         "id": "animating-bond",
-        "description": "Arcane energies pluck at the bond between core and stone \u2014 magic bites deeper than granite expects.",
+        "description": "Arcane energies pluck at the bond between core and stone — magic bites deeper than granite expects.",
         "severity": 1,
         "trigger": {
           "damageTypes": [
@@ -444,7 +444,7 @@
       }
     ],
     "behavior": {
-      "personality": "Slow-spoken, slow-angered, and utterly unbothered \u2014 a landslide with manners.",
+      "personality": "Slow-spoken, slow-angered, and utterly unbothered — a landslide with manners.",
       "riskTolerance": 0.7,
       "allyProtection": 0.5,
       "targetPreference": "highest_threat",
@@ -460,7 +460,7 @@
           "effect": {
             "damageMult": 1.05
           },
-          "description": "A second seismic fighter keeps the ground already broken \u2014 his shocks travel farther."
+          "description": "A second seismic fighter keeps the ground already broken — his shocks travel farther."
         }
       ],
       "powerTags": [
@@ -473,13 +473,13 @@
       ]
     },
     "balance": {
-      "capabilityScore": 69,
+      "capabilityScore": 67,
       "versatilityScore": 86,
       "reliabilityScore": 80,
       "counterabilityScore": 50,
-      "draftPrice": 38500000,
+      "draftPrice": 37500000,
       "priceVersion": "S0",
-      "priceRationale": "elite raw combat output, broad kit versatility, dependable in any conditions increased the price; serious exploitable weaknesses reduced it. Scores \u2014 capability 69, versatility 86, reliability 80, counterability 50."
+      "priceRationale": "elite raw combat output, broad kit versatility, dependable in any conditions increased the price; serious exploitable weaknesses reduced it. Scores — capability 67, versatility 86, reliability 80, counterability 50."
     },
     "presentation": {
       "primaryColor": "#6b6f76",
