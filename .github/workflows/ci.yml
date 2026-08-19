@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: |
+          npx tsc -p packages/contracts/tsconfig.json
+          npx tsc -p services/combat-sim/tsconfig.json
+          npx tsc -p apps/web/tsconfig.json
+      - name: Unit / property / determinism tests
+        run: npm test
+      - name: Content schema validation
+        run: npm run validate
+      - name: Client build
+        run: npm run build
