@@ -328,8 +328,8 @@ export function renderBattle() {
   refreshPanels();
 }
 
-function teamPanelHtml(pid: string, name: string, color: string): string {
-  const team = (state.replayMode && state.lastManifest ? state.lastManifest.teams : state.teams!)
+export function teamPanelHtml(pid: string, name: string, color: string, teamsOverride?: import('@arena/contracts').TeamSetup[]): string {
+  const team = (teamsOverride ?? (state.replayMode && state.lastManifest ? state.lastManifest.teams : state.teams!))
     .find((t) => t.playerId === pid)!;
   return `
   <div class="team-panel" data-team="${esc(pid)}">

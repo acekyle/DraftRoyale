@@ -1,6 +1,8 @@
 /** App state machine + local persistence + analytics funnel logging. */
 import type {
   ChampionRecord,
+  CompiledFighterResult,
+  FighterFile,
   MatchManifest,
   MatchOutcome,
   CausalBreakdown,
@@ -9,7 +11,7 @@ import type {
   ReinforcementTrigger,
 } from '@arena/contracts';
 
-export type Screen = 'home' | 'reveal' | 'draft' | 'prep' | 'wildcard' | 'battle' | 'breakdown';
+export type Screen = 'home' | 'reveal' | 'draft' | 'prep' | 'wildcard' | 'battle' | 'breakdown' | 'online';
 export type Mode = 'solo' | 'hotseat' | 'dethrone';
 
 export interface PlayerCfg {
@@ -31,6 +33,9 @@ export interface PrepState {
   formation: FormationId;
   reinforcement: ReinforcementTrigger;
   wildcardId: string | null;
+  /** Experimental typed wildcards compiled by this player (ids into the wildcard index). */
+  customWildcardIds?: string[];
+  customWildcardUsed?: boolean;
 }
 
 export interface MatchRecord {
@@ -41,12 +46,25 @@ export interface MatchRecord {
   playedAt: string;
 }
 
+export interface NominationState {
+  used: boolean;
+  semanticLeft: number;
+  visualLeft: number;
+  pending: CompiledFighterResult | null;
+}
+
 export interface AppState {
   screen: Screen;
   mode: Mode;
   players: [PlayerCfg, PlayerCfg];
   seed: number;
-  draft: { order: ('p1' | 'p2')[]; turn: number; picks: Record<'p1' | 'p2', DraftPickState> } | null;
+  draft: {
+    order: ('p1' | 'p2')[];
+    turn: number;
+    picks: Record<'p1' | 'p2', DraftPickState>;
+    customFighters: { file: FighterFile; nominator: 'p1' | 'p2' }[];
+    nominations: Record<'p1' | 'p2', NominationState>;
+  } | null;
   prep: Record<'p1' | 'p2', PrepState> | null;
   teams: TeamSetup[] | null;
   lastManifest: MatchManifest | null;
@@ -88,6 +106,7 @@ export function bindRenderer(r: Renderer) {
 }
 export function go(screen: Screen) {
   state.screen = screen;
+  document.body.style.overflow = '';
   window.scrollTo(0, 0);
   renderer(screen);
 }

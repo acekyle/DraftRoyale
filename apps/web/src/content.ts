@@ -49,3 +49,49 @@ export function displayName(fighterId: string): string {
 export function money(v: number): string {
   return `$${(v / 1e6).toFixed(1)}M`;
 }
+
+// ---------------------------------------------------------------------------
+// Experimental custom content (compiler output). Registered into the same
+// indexes the sim/renderer read, persisted locally so replays keep working.
+// ---------------------------------------------------------------------------
+
+const CUSTOM_FIGHTERS_KEY = 'ia_custom_fighters';
+const CUSTOM_WILDCARDS_KEY = 'ia_custom_wildcards';
+
+export function registerCustomFighter(file: FighterFile, persist = true) {
+  const id = file.dna.identity.fighterId;
+  DNA_BY_ID.set(id, file.dna);
+  FILE_BY_ID.set(id, file);
+  if (persist) {
+    try {
+      const all = JSON.parse(localStorage.getItem(CUSTOM_FIGHTERS_KEY) ?? '[]') as FighterFile[];
+      if (!all.some((f) => f.dna.identity.fighterId === id)) {
+        all.push(file);
+        localStorage.setItem(CUSTOM_FIGHTERS_KEY, JSON.stringify(all.slice(-40)));
+      }
+    } catch { /* quota */ }
+  }
+}
+
+export function registerCustomWildcard(contract: WildcardContract, persist = true) {
+  if (!WILDCARD_BY_ID.has(contract.wildcardId)) {
+    WILDCARD_BY_ID.set(contract.wildcardId, contract);
+  }
+  if (persist) {
+    try {
+      const all = JSON.parse(localStorage.getItem(CUSTOM_WILDCARDS_KEY) ?? '[]') as WildcardContract[];
+      if (!all.some((w) => w.wildcardId === contract.wildcardId)) {
+        all.push(contract);
+        localStorage.setItem(CUSTOM_WILDCARDS_KEY, JSON.stringify(all.slice(-40)));
+      }
+    } catch { /* quota */ }
+  }
+}
+
+// Re-register persisted customs at boot so historical replays resolve.
+try {
+  for (const f of JSON.parse(localStorage.getItem(CUSTOM_FIGHTERS_KEY) ?? '[]') as FighterFile[])
+    registerCustomFighter(f, false);
+  for (const w of JSON.parse(localStorage.getItem(CUSTOM_WILDCARDS_KEY) ?? '[]') as WildcardContract[])
+    registerCustomWildcard(w, false);
+} catch { /* corrupted storage — ignore */ }

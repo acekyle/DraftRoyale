@@ -1,6 +1,7 @@
 import type { WildcardContract } from '@arena/contracts';
 import { RULESET_S0, hasErrors, validateTeamSetup } from '@arena/contracts';
-import { DNA_BY_ID, WILDCARDS, WILDCARD_BY_ID } from '../content';
+import { compileWildcardFromText } from '@arena/wildcard-compiler';
+import { DNA_BY_ID, WILDCARDS, WILDCARD_BY_ID, registerCustomWildcard } from '../content';
 import { go, state, track } from '../state';
 import { el, esc, interstitial, mount, q, qa, topbar } from '../ui';
 import { buildTeamSetup } from './prep';
@@ -36,13 +37,17 @@ function renderFor(pid: 'p1' | 'p2') {
   }
   const prep = state.prep![pid];
 
+  const options: WildcardContract[] = [
+    ...WILDCARDS,
+    ...(prep.customWildcardIds ?? []).map((id) => WILDCARD_BY_ID.get(id)!).filter(Boolean),
+  ];
   const node = el(`
   <div>
     ${topbar(`Wildcard — ${esc(cfg.name)} · exact mechanics shown before you lock`)}
     <div class="screen wide">
       <p class="muted mb">One wildcard per player. You see its exact compiled mechanics now; both wildcards are revealed only after both players lock. Deployment timing stays in your hands during battle. Every wildcard has counterplay.</p>
       <div class="grid cols-4" id="wc-grid">
-        ${WILDCARDS.map((w) => `
+        ${options.map((w) => `
           <div class="wildcard-card ${prep.wildcardId === w.wildcardId ? 'selected' : ''}" data-id="${esc(w.wildcardId)}">
             <div class="wc-class">${esc(w.class)} · ${w.durationTicks === 0 ? 'permanent' : `${(w.durationTicks / 4).toFixed(0)}s`}${w.objectHp ? ` · ${w.objectHp} HP` : ''}${w.radius ? ` · ${w.radius}m` : ''}</div>
             <h4>${esc(w.normalizedName)}</h4>
@@ -55,6 +60,14 @@ function renderFor(pid: 'p1' | 'p2') {
         <div>
           <button class="primary" id="btn-lock" style="width:100%" disabled>Lock wildcard</button>
           <p class="muted small mt">Locking is final for this match.</p>
+          ${!prep.customWildcardUsed ? `
+          <div class="compiler-panel mt">
+            <h3 style="color:var(--purple)">Typed custom wildcard <span class="badge-exp">EXPERIMENTAL</span></h3>
+            <p class="muted small mb">Describe a wildcard; the compiler normalizes it into safe, counterable mechanics you see before locking.</p>
+            <textarea id="cwc-desc" rows="2" maxlength="240" placeholder="e.g. a crackling storm cloud that rains sparks on everyone below"></textarea>
+            <button class="small mt" id="cwc-compile" style="width:100%">Compile wildcard</button>
+            <div id="cwc-out"></div>
+          </div>` : ''}
         </div>
       </div>
     </div>
@@ -88,6 +101,32 @@ function renderFor(pid: 'p1' | 'p2') {
   lockBtn.addEventListener('click', () => {
     track('wildcard_locked', { player: pid, wildcardId: prep.wildcardId! });
     finishOrNext(pid);
+  });
+
+  node.querySelector('#cwc-compile')?.addEventListener('click', () => {
+    const desc = q<HTMLTextAreaElement>(node, '#cwc-desc').value.trim();
+    if (desc.length < 6) return;
+    const out = q(node, '#cwc-out');
+    try {
+      const result = compileWildcardFromText(desc, { seed: state.seed ^ (pid === 'p1' ? 11 : 22) });
+      track('wildcard_created', { player: pid });
+      out.innerHTML = `
+        <h4 class="mt">${esc(result.wildcard.normalizedName)}</h4>
+        <div class="small">${humanizeEffect(result.wildcard).map((s) => `<div>· ${esc(s)}</div>`).join('')}</div>
+        <p class="small muted">Counterplay: ${esc(result.wildcard.counterplay[0] ?? '')}</p>
+        ${result.notes.map((n) => `<div class="compiler-note">${esc(n)}</div>`).join('')}
+        ${result.rejectedClauses.map((n) => `<div class="compiler-note">Rejected: ${esc(n)}</div>`).join('')}
+        <button class="small mt" id="cwc-add" style="width:100%">Add to my options</button>`;
+      q(out, '#cwc-add').addEventListener('click', () => {
+        registerCustomWildcard(result.wildcard);
+        prep.customWildcardIds = [...(prep.customWildcardIds ?? []), result.wildcard.wildcardId];
+        prep.customWildcardUsed = true;
+        prep.wildcardId = result.wildcard.wildcardId;
+        renderFor(pid);
+      });
+    } catch {
+      out.innerHTML = '<div class="compiler-note">Compiler is still being assembled by the workshop team — try again shortly.</div>';
+    }
   });
 
   mount(node);

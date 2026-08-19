@@ -5,14 +5,14 @@ import { aiPrep } from '../opponentAI';
 import { go, state, track, type PrepState } from '../state';
 import { el, esc, interstitial, mount, q, qa, topbar } from '../ui';
 
-const FORMATIONS: { id: FormationId; label: string; desc: string }[] = [
+export const FORMATIONS: { id: FormationId; label: string; desc: string }[] = [
   { id: 'balanced', label: 'Balanced Line', desc: 'Even spacing, flexible engagements.' },
   { id: 'protect_captain', label: 'Protect Captain', desc: 'Captain starts behind the front line.' },
   { id: 'spread', label: 'Wide Spread', desc: 'Maximum spacing — blunts area attacks.' },
   { id: 'ambush', label: 'Ambush Wing', desc: 'One fighter starts on the flank.' },
 ];
 
-const TRIGGERS: { id: ReinforcementTrigger; label: string }[] = [
+export const TRIGGERS: { id: ReinforcementTrigger; label: string }[] = [
   { id: 'ally_ko', label: 'Relay on defeat — reserves enter only when a teammate goes down' },
   { id: 'ally_below_35', label: 'Rotate early — swap out any fighter who falls below 35% vitality' },
   { id: 'enemy_wildcard_deployed', label: 'Wildcard answer — swap the weakest fighter when the enemy wildcard lands' },

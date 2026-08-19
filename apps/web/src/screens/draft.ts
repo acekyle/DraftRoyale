@@ -1,6 +1,7 @@
 import { RULESET_S0, type FighterFile } from '@arena/contracts';
 import { createRng, type Rng } from '@arena/combat-sim';
-import { DNA_BY_ID, FIGHTERS, FILE_BY_ID, ROLE_COLORS, money } from '../content';
+import { compileFighterFromText, applySemanticCorrection, applyVisualCorrection } from '@arena/character-compiler';
+import { DNA_BY_ID, FIGHTERS, FILE_BY_ID, ROLE_COLORS, money, registerCustomFighter } from '../content';
 import { aiDraftPick } from '../opponentAI';
 import { go, state, track } from '../state';
 import { el, esc, mount, q, qa, topbar } from '../ui';
@@ -26,8 +27,17 @@ function initDraft() {
         passed: frozenP2,
       },
     },
+    customFighters: [],
+    nominations: {
+      p1: { used: false, semanticLeft: 1, visualLeft: 1, pending: null },
+      p2: { used: false, semanticLeft: 1, visualLeft: 1, pending: null },
+    },
   };
   aiRng = createRng(state.seed ^ 0x2c1b3c6d);
+}
+
+function marketFiles(): FighterFile[] {
+  return [...FIGHTERS, ...state.draft!.customFighters.map((c) => c.file)];
 }
 
 const spent = (p: 'p1' | 'p2') => state.draft!.picks[p].roster.reduce((s, r) => s + r.pricePaid, 0);
@@ -50,7 +60,11 @@ function currentPlayer(): 'p1' | 'p2' | null {
       continue;
     }
     // If a player can't afford any remaining fighter, they are auto-passed.
-    const anyAffordable = FIGHTERS.some((f) => !takenIds().has(f.dna.identity.fighterId) && canAfford(p, f.dna.identity.fighterId));
+    const anyAffordable = marketFiles().some((f) => {
+      const custom = state.draft!.customFighters.find((c) => c.file === f);
+      if (custom && custom.nominator !== p) return false; // nominator-exclusive right
+      return !takenIds().has(f.dna.identity.fighterId) && canAfford(p, f.dna.identity.fighterId);
+    });
     if (!anyAffordable && ps.roster.length >= RULESET_S0.rosterMin) {
       ps.passed = true;
       d.turn++;
@@ -77,6 +91,7 @@ function pass(p: 'p1' | 'p2') {
 export function renderDraft() {
   if (!state.draft) initDraft();
   if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
+  document.body.style.overflow = '';
 
   const p = currentPlayer();
   if (p === null) {
@@ -94,7 +109,7 @@ export function renderDraft() {
   const taken = takenIds();
   const isAITurn = cfg.isAI;
 
-  const marketCards = FIGHTERS.map((f) => fighterCard(f, taken, p, isAITurn)).join('');
+  const marketCards = marketFiles().map((f) => fighterCard(f, taken, p, isAITurn)).join('');
   const node = el(`
   <div>
     ${topbar('Market Draft — ABBA snake order · prices season-locked')}
@@ -114,6 +129,7 @@ export function renderDraft() {
             ? `<button class="mt" id="btn-pass" style="width:100%">Lock roster with ${state.draft!.picks[p].roster.length} fighters</button>`
             : ''}
           <p class="muted small mt">Minimum ${RULESET_S0.rosterMin}, maximum ${RULESET_S0.rosterMax}. Reserves join through the Squad Relay.</p>
+          <div id="nomination-slot" class="mt"></div>
         </div>
       </div>
     </div>
@@ -121,8 +137,13 @@ export function renderDraft() {
   </div>`);
 
   qa(node, '.fighter-card').forEach((card) => {
-    card.addEventListener('click', () => openInspect(node, card.dataset.id!, p, isAITurn));
+    const open = () => openInspect(node, card.dataset.id!, p, isAITurn);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', (ev) => {
+      if ((ev as KeyboardEvent).key === 'Enter') open();
+    });
   });
+  if (!isAITurn) renderNominationPanel(node, p);
   node.querySelector('#btn-pass')?.addEventListener('click', () => {
     pass(p);
     renderDraft();
@@ -144,13 +165,16 @@ export function renderDraft() {
 function fighterCard(f: FighterFile, taken: Set<string>, p: 'p1' | 'p2', isAITurn: boolean): string {
   const id = f.dna.identity.fighterId;
   const affordable = canAfford(p, id);
+  const custom = state.draft!.customFighters.find((c) => c.file.dna.identity.fighterId === id);
   const cls = [
     'fighter-card',
     taken.has(id) ? 'taken' : '',
     !taken.has(id) && !affordable && !isAITurn ? 'unaffordable' : '',
   ].join(' ');
+  const badge = custom ? `<div style="margin-bottom:4px"><span class="badge-exp">EXPERIMENTAL · ${custom.nominator === p ? 'YOUR NOMINEE' : 'RIVAL NOMINEE'}</span></div>` : '';
   return `
-  <div class="${cls}" data-id="${esc(id)}" style="--accent:${esc(f.dna.presentation.primaryColor)}">
+  <div class="${cls}" data-id="${esc(id)}" tabindex="0" role="button" style="--accent:${esc(f.dna.presentation.primaryColor)}">
+    ${badge}
     <div class="portrait">
       ${silhouette(f)}
       <div class="pedestal"></div>
@@ -198,11 +222,105 @@ function sidePanel(p: 'p1' | 'p2'): string {
   </div>`;
 }
 
+/** Live custom nomination — the compiler runs client-side (deterministic, rule-based). */
+function renderNominationPanel(root: HTMLElement, p: 'p1' | 'p2') {
+  const slot = q(root, '#nomination-slot');
+  const nom = state.draft!.nominations[p];
+
+  const render = () => {
+    if (nom.used && !nom.pending) {
+      slot.innerHTML = '<p class="muted small">Custom nomination used for this draft.</p>';
+      return;
+    }
+    if (!nom.pending) {
+      slot.innerHTML = `
+        <div class="compiler-panel">
+          <h3 style="color:var(--purple)">Live custom nomination <span class="badge-exp">EXPERIMENTAL</span></h3>
+          <p class="muted small mb">Describe a fighter. The compiler produces a full Character Contract at a formula price — one semantic and one visual correction allowed. Private rooms only; not ranked-eligible.</p>
+          <textarea id="nom-desc" rows="3" maxlength="400" placeholder="e.g. A patient ice-sculptor monk who freezes the ground and shields allies with walls of ice"></textarea>
+          <button class="mt" id="nom-compile" style="width:100%">Compile fighter</button>
+          <div id="nom-error"></div>
+        </div>`;
+      q(slot, '#nom-compile').addEventListener('click', () => {
+        const desc = q<HTMLTextAreaElement>(slot, '#nom-desc').value.trim();
+        if (desc.length < 8) return;
+        try {
+          nom.pending = compileFighterFromText(desc, { seed: state.seed ^ (p === 'p1' ? 1 : 2) });
+          track('custom_nomination', { player: p });
+        } catch {
+          q(slot, '#nom-error').innerHTML = '<div class="compiler-note">Compiler is still being assembled by the workshop team — try again shortly.</div>';
+          return;
+        }
+        render();
+      });
+      return;
+    }
+    const r = nom.pending;
+    const dna = r.fighter.dna;
+    slot.innerHTML = `
+      <div class="compiler-panel">
+        <h3 style="color:var(--purple)">${esc(r.fighter.contract.identity.displayName)} <span class="badge-exp">EXPERIMENTAL</span></h3>
+        <p class="small">${esc(dna.identity.role)} · ${esc(dna.identity.chassis)} · <b class="gold">${money(dna.balance.draftPrice)}</b></p>
+        <p class="muted small">${esc(r.fighter.contract.canon.summary)}</p>
+        <p class="small mt"><b>Signatures:</b> ${dna.capabilities.signature.map((a) => esc(a.name)).join(', ')}</p>
+        <p class="small"><b>Weaknesses:</b> ${dna.weaknesses.map((w) => `${esc(w.description.split('—')[0].split('.')[0])} (sev ${w.severity})`).join(' · ')}</p>
+        ${r.notes.map((n) => `<div class="compiler-note">${esc(n)}</div>`).join('')}
+        ${nom.semanticLeft > 0 ? `
+          <input type="text" id="nom-sem" placeholder="Semantic correction (1 left): e.g. 'more defensive, weak to fire'" class="mt"/>
+          <button class="small mt" id="nom-sem-btn">Apply semantic correction</button>` : ''}
+        ${nom.visualLeft > 0 ? `
+          <input type="text" id="nom-vis" placeholder="Visual correction (1 left): e.g. 'crimson and gold, larger'" class="mt"/>
+          <button class="small mt" id="nom-vis-btn">Apply visual correction</button>` : ''}
+        <div class="row mt">
+          <button class="primary" id="nom-accept">Add to market at ${money(dna.balance.draftPrice)}</button>
+          <button class="danger" id="nom-discard">Discard</button>
+        </div>
+      </div>`;
+    slot.querySelector('#nom-sem-btn')?.addEventListener('click', () => {
+      const instr = q<HTMLInputElement>(slot, '#nom-sem').value.trim();
+      if (!instr) return;
+      try {
+        nom.pending = applySemanticCorrection(r, instr);
+        nom.semanticLeft -= 1;
+        track('custom_correction', { kind: 'semantic' });
+      } catch { /* compiler offline */ }
+      render();
+    });
+    slot.querySelector('#nom-vis-btn')?.addEventListener('click', () => {
+      const instr = q<HTMLInputElement>(slot, '#nom-vis').value.trim();
+      if (!instr) return;
+      try {
+        nom.pending = applyVisualCorrection(r, instr);
+        nom.visualLeft -= 1;
+        track('custom_correction', { kind: 'visual' });
+      } catch { /* compiler offline */ }
+      render();
+    });
+    q(slot, '#nom-accept').addEventListener('click', () => {
+      registerCustomFighter(r.fighter);
+      state.draft!.customFighters.push({ file: r.fighter, nominator: p });
+      nom.used = true;
+      nom.pending = null;
+      track('fighter_approved', { fighterId: dna.identity.fighterId });
+      renderDraft();
+    });
+    q(slot, '#nom-discard').addEventListener('click', () => {
+      nom.used = true; // the one nomination right is spent
+      nom.pending = null;
+      render();
+    });
+  };
+  render();
+}
+
 function openInspect(root: HTMLElement, fighterId: string, p: 'p1' | 'p2', isAITurn: boolean) {
   const f = FILE_BY_ID.get(fighterId)!;
   const dna = f.dna;
   const taken = takenIds().has(fighterId);
   const affordable = canAfford(p, fighterId);
+  const custom = state.draft!.customFighters.find((c) => c.file.dna.identity.fighterId === fighterId);
+  const rivalNominee = !!custom && custom.nominator !== p;
+  document.body.style.overflow = 'hidden';
   track('fighter_inspected', { fighterId });
 
   const attrs: [string, number][] = [
@@ -261,14 +379,18 @@ function openInspect(root: HTMLElement, fighterId: string, p: 'p1' | 'p2', isAIT
     <p class="small muted">${esc(dna.behavior.personality)} Prefers ${esc(dna.behavior.targetPreference.replace(/_/g, ' '))} targets.
       ${dna.behavior.constraints.length ? `Constraints: ${esc(dna.behavior.constraints.join(', ').replace(/_/g, ' '))}.` : ''}</p>
 
-    ${!isAITurn && !taken ? `<button class="primary mt" id="btn-pick" style="width:100%" ${affordable ? '' : 'disabled'}>
-      ${affordable ? `Draft for ${money(dna.balance.draftPrice)}` : 'Cannot afford (min-roster budget rule)'}
+    ${!isAITurn && !taken ? `<button class="primary mt" id="btn-pick" style="width:100%" ${affordable && !rivalNominee ? '' : 'disabled'}>
+      ${rivalNominee ? 'Nominated by your rival — only they may draft this version' : affordable ? `Draft for ${money(dna.balance.draftPrice)}` : 'Cannot afford (min-roster budget rule)'}
     </button>` : ''}
   </div>`);
-  q(drawer, '.close').addEventListener('click', () => drawer.remove());
+  const closeDrawer = () => {
+    document.body.style.overflow = '';
+    drawer.remove();
+  };
+  q(drawer, '.close').addEventListener('click', closeDrawer);
   drawer.querySelector('#btn-pick')?.addEventListener('click', () => {
     pick(p, fighterId);
-    drawer.remove();
+    closeDrawer();
     renderDraft();
   });
   slot.appendChild(drawer);

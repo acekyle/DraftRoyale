@@ -1,5 +1,6 @@
 import { formatTick } from '@arena/combat-sim';
 import { RULESET_S0 } from '@arena/contracts';
+import { downloadChampionCard } from '../championCard';
 import { FILE_BY_ID, WILDCARD_BY_ID, displayName, money } from '../content';
 import { encodeDethroneLink, go, loadChampion, state, track } from '../state';
 import { el, esc, mount, q, topbar } from '../ui';
@@ -98,6 +99,7 @@ export function renderBreakdown() {
         <button class="primary" id="btn-runback" style="font-size:17px">🔁 Run it back</button>
         <button id="btn-replay">Watch replay</button>
         ${champion ? '<button id="btn-dethrone-link">Copy dethrone link</button>' : ''}
+        ${champion ? '<button id="btn-champ-card">Champion card</button>' : ''}
         <button id="btn-export">Export match manifest</button>
         <button id="btn-home">Lobby</button>
       </div>
@@ -118,6 +120,13 @@ export function renderBreakdown() {
     track('replay_opened', {});
     state.replayMode = true;
     go('battle');
+  });
+  node.querySelector('#btn-champ-card')?.addEventListener('click', () => {
+    const c = loadChampion();
+    if (c) {
+      downloadChampionCard(c);
+      track('champion_card_shared', {});
+    }
   });
   node.querySelector('#btn-dethrone-link')?.addEventListener('click', async () => {
     const c = loadChampion();

@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import type { MatchEvent } from '@arena/contracts';
 import type { FighterRt, MatchSim } from '@arena/combat-sim';
 import { DNA_BY_ID, FILE_BY_ID } from '../content';
+import { loadSettings, type Settings } from '../settings';
 
 interface FighterVisual {
   group: THREE.Group;
@@ -62,6 +63,7 @@ export class BattleView {
   private dark = 0; // 0 = daylight, 1 = eclipse
   private floodMesh: THREE.Mesh | null = null;
   private disposed = false;
+  private motion: Settings = loadSettings();
 
   constructor(private container: HTMLElement, private sim: MatchSim) {
     const w = container.clientWidth, h = container.clientHeight;
@@ -540,7 +542,7 @@ export class BattleView {
       const z = v.prev.z + (v.curr.z - v.prev.z) * alpha;
       const alt = v.prev.alt + (v.curr.alt - v.prev.alt) * alpha;
       v.bobPhase += dt * 2.2;
-      const bob = Math.sin(v.bobPhase) * (alt > 0 ? 0.28 : 0.06);
+      const bob = this.motion.reducedMotion ? 0 : Math.sin(v.bobPhase) * (alt > 0 ? 0.28 : 0.06);
       let lx = 0, lz = 0;
       if (v.lunge) {
         v.lunge.t -= dt * 4;
@@ -658,8 +660,10 @@ export class BattleView {
     this.camera.position.lerp(desired, 0.045);
     if (this.shake > 0) {
       this.shake = Math.max(0, this.shake - dt * 2.4);
-      this.camera.position.x += (Math.random() - 0.5) * this.shake * 0.7;
-      this.camera.position.y += (Math.random() - 0.5) * this.shake * 0.5;
+      if (this.motion.cameraShake && !this.motion.reducedMotion) {
+        this.camera.position.x += (Math.random() - 0.5) * this.shake * 0.7;
+        this.camera.position.y += (Math.random() - 0.5) * this.shake * 0.5;
+      }
     }
     this.camera.lookAt(look);
   }

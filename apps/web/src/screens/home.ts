@@ -1,15 +1,18 @@
-import { ARENA, money } from '../content';
+import { ARENA, DNA_BY_ID, money } from '../content';
 import {
   state, go, saveProfileName, loadChampion, loadHistory, decodeDethroneHash,
   encodeDethroneLink, track, exportTelemetry,
 } from '../state';
+import { downloadChampionCard } from '../championCard';
+import { loadSettings, saveSettings } from '../settings';
 import { el, esc, mount, q, topbar } from '../ui';
-import { RULESET_S0 } from '@arena/contracts';
+import { RULESET_S0, type ChampionRecord } from '@arena/contracts';
 
 export function renderHome() {
   const champion = loadChampion();
   const dethrone = decodeDethroneHash();
   const history = loadHistory();
+  const settings = loadSettings();
   if (dethrone) track('challenge_link_opened', { champion: dethrone.playerName });
 
   const node = el(`
@@ -39,7 +42,7 @@ export function renderHome() {
         </div>
       </div>
 
-      <div class="grid cols-2 mb">
+      <div class="grid cols-3 mb">
         <div class="panel mode-card" id="mode-solo">
           <div class="icon">🤖</div>
           <h3>Solo Gauntlet</h3>
@@ -48,7 +51,12 @@ export function renderHome() {
         <div class="panel mode-card" id="mode-hotseat">
           <div class="icon">🛋️</div>
           <h3>Couch Versus</h3>
-          <p class="muted small">Two players, one machine. Wildcard picks stay private via pass-the-screen. Online rooms are the next milestone.</p>
+          <p class="muted small">Two players, one machine. Wildcard picks stay private via pass-the-screen.</p>
+        </div>
+        <div class="panel mode-card" id="mode-online">
+          <div class="icon">🌐</div>
+          <h3>Online Room</h3>
+          <p class="muted small">Server-authoritative rooms with spectators and reactions. LAN/self-hosted while the alpha deployment gate is pending.</p>
         </div>
       </div>
 
@@ -57,9 +65,10 @@ export function renderHome() {
         <h3>👑 Reigning champion — ${esc(champion.playerName)}</h3>
         <p class="small">Squad: ${esc(champion.team.roster.map((r) => r.fighterId).join(', '))}
           · streak ${champion.winStreak} · defended ${champion.defended}×</p>
-        <div class="row mt">
+        <div class="row mt wrap">
           <button id="btn-challenge-champ">Challenge the Crown</button>
           <button id="btn-copy-link">Copy dethrone link</button>
+          <button id="btn-champ-card">Download champion card</button>
           <span class="muted small" id="copy-note"></span>
         </div>
       </div>` : ''}
@@ -82,6 +91,23 @@ export function renderHome() {
           <button class="small mt" id="btn-export">Export local telemetry</button>
         </div>
       </div>
+
+      <div class="panel mt">
+        <h3>Settings & accessibility</h3>
+        <div class="settings-row">
+          <label><input type="checkbox" id="set-motion" ${settings.reducedMotion ? 'checked' : ''}/> Reduced motion</label>
+          <label><input type="checkbox" id="set-shake" ${settings.cameraShake ? 'checked' : ''}/> Camera shake</label>
+          <label><input type="checkbox" id="set-colorsafe" ${settings.colorSafeStatus ? 'checked' : ''}/> Color-independent status bars</label>
+          <label>Text size
+            <select id="set-scale">
+              <option value="1" ${settings.textScale === 1 ? 'selected' : ''}>Normal</option>
+              <option value="1.15" ${settings.textScale === 1.15 ? 'selected' : ''}>Large</option>
+              <option value="1.3" ${settings.textScale === 1.3 ? 'selected' : ''}>Larger</option>
+            </select>
+          </label>
+          <span class="muted small">Commentary is text-captioned by default. Full keyboard navigation of the web UI is supported via Tab/Enter.</span>
+        </div>
+      </div>
     </div>
   </div>`);
 
@@ -89,17 +115,37 @@ export function renderHome() {
 
   q(node, '#mode-solo').addEventListener('click', () => start('solo', nameOf()));
   q(node, '#mode-hotseat').addEventListener('click', () => start('hotseat', nameOf()));
+  q(node, '#mode-online').addEventListener('click', () => {
+    saveProfileName(nameOf());
+    go('online');
+  });
+
+  // Settings wiring.
+  const syncSettings = () => {
+    saveSettings({
+      reducedMotion: (q<HTMLInputElement>(node, '#set-motion')).checked,
+      cameraShake: (q<HTMLInputElement>(node, '#set-shake')).checked,
+      colorSafeStatus: (q<HTMLInputElement>(node, '#set-colorsafe')).checked,
+      textScale: Number((q<HTMLSelectElement>(node, '#set-scale')).value) as 1 | 1.15 | 1.3,
+    });
+  };
+  for (const id of ['#set-motion', '#set-shake', '#set-colorsafe', '#set-scale'])
+    q(node, id).addEventListener('change', syncSettings);
   if (dethrone) {
     q(node, '#btn-dethrone').addEventListener('click', () => {
-      state.dethroneTarget = dethrone;
-      start('dethrone', nameOf());
+      state.dethroneTarget = repriceUnderCurrentRules(dethrone);
+      if (state.dethroneTarget) start('dethrone', nameOf());
     });
   }
   if (champion) {
     const challengeBtn = node.querySelector('#btn-challenge-champ');
     challengeBtn?.addEventListener('click', () => {
-      state.dethroneTarget = champion;
-      start('dethrone', nameOf());
+      state.dethroneTarget = repriceUnderCurrentRules(champion);
+      if (state.dethroneTarget) start('dethrone', nameOf());
+    });
+    node.querySelector('#btn-champ-card')?.addEventListener('click', () => {
+      downloadChampionCard(champion);
+      track('champion_card_shared', {});
     });
     node.querySelector('#btn-copy-link')?.addEventListener('click', async () => {
       await navigator.clipboard.writeText(encodeDethroneLink(champion));
@@ -116,6 +162,29 @@ export function renderHome() {
   });
 
   mount(node);
+}
+
+/**
+ * "Challenge Under Current Rules" (constitution §28): the historical champion
+ * record is immutable, but a fresh challenge recompiles the lineup at current
+ * locked prices. Incompatible lineups (removed fighters) cannot be challenged.
+ */
+function repriceUnderCurrentRules(champ: ChampionRecord): ChampionRecord | null {
+  const roster = champ.team.roster
+    .filter((r) => DNA_BY_ID.has(r.fighterId))
+    .map((r) => ({ fighterId: r.fighterId, pricePaid: DNA_BY_ID.get(r.fighterId)!.balance.draftPrice }));
+  if (roster.length < champ.team.roster.length || roster.length < 3) {
+    alert('This champion lineup is no longer compatible with the current ruleset. The historical record remains preserved.');
+    return null;
+  }
+  return {
+    ...champ,
+    team: {
+      ...champ.team,
+      roster,
+      activeFighterIds: champ.team.activeFighterIds.filter((id) => DNA_BY_ID.has(id)),
+    },
+  };
 }
 
 function start(mode: 'solo' | 'hotseat' | 'dethrone', p1name: string) {

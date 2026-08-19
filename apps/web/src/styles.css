@@ -266,3 +266,37 @@ input[type='text']:focus { border-color: var(--gold); }
   .cols-3, .cols-4 { grid-template-columns: 1fr 1fr; }
   .inspect { width: 100%; }
 }
+
+/* ---- Accessibility ---- */
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 3px; }
+.reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {
+  animation-duration: 0.001s !important;
+  transition-duration: 0.001s !important;
+}
+.color-safe .fighter-strip .vit i { background: repeating-linear-gradient(45deg, #e8ecf6, #e8ecf6 3px, #9aa5c0 3px, #9aa5c0 6px); }
+.color-safe .fighter-strip .stab i { background: #e8ecf6; }
+
+.settings-row { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+.settings-row label { cursor: pointer; color: var(--text-dim); }
+
+/* ---- Custom nomination / compiler panel ---- */
+.compiler-panel { border: 1px dashed var(--purple); background: #1c1430aa; border-radius: 6px; padding: 14px; }
+.compiler-panel textarea, .compiler-panel input[type='text'] {
+  width: 100%; background: var(--bg-panel); border: 1px solid var(--line-bright); color: var(--text);
+  border-radius: 4px; padding: 9px 12px; font-family: var(--font-body); font-size: 14px; resize: vertical;
+}
+.compiler-note { font-size: 12px; color: var(--purple); background: #9b6ef315; border-left: 3px solid var(--purple); padding: 6px 9px; border-radius: 3px; margin: 5px 0; }
+.badge-exp { display: inline-block; background: #9b6ef3; color: #14091f; font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; padding: 1px 6px; border-radius: 3px; }
+
+/* ---- Online rooms ---- */
+.room-code { font-family: var(--font-display); font-size: 34px; letter-spacing: 0.35em; color: var(--gold); text-align: center; padding: 8px; border: 1px dashed var(--gold); border-radius: 6px; }
+.participant-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #ffffff0a; font-size: 14px; }
+.participant-row .pdot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+.participant-row.offline .pdot { background: var(--danger); }
+.emote-bar { display: flex; gap: 6px; }
+.emote-bar button { padding: 5px 9px; font-size: 17px; }
+.emote-float { position: fixed; font-size: 30px; z-index: 200; pointer-events: none; animation: emote-rise 1.6s ease-out forwards; }
+@keyframes emote-rise { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-90px) scale(1.5); } }
+.conn-pill { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line-bright); }
+.conn-pill.ok { color: var(--green); border-color: var(--green); }
+.conn-pill.bad { color: var(--danger); border-color: var(--danger); }
