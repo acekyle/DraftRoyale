@@ -114,3 +114,27 @@ Phase 2 remainder (online layer — not started):
 - Ranked matchmaking · monetization of any kind · paid marketplace · voice chat ·
   additional divisions beyond Enhanced · brackets/tournaments · mobile companion ·
   Steam/console packaging (path preserved per docs/TECHNICAL_ARCHITECTURE.md §9)
+
+---
+
+## Verification findings — live E2E pass, 2026-08-19 (Executive Producer)
+
+Full solo-mode loop verified in-browser with zero console errors: guest entry → arena
+reveal → ABBA draft (inspection, cap enforcement, AI opponent, roster lock) → team prep +
+readout → wildcard exact-mechanics/lock/reveal → live 3D battle (eclipse lighting change,
+focus command, enemy counterplay destroyed the Nullstone Shard, escalation flag, decision
+verdict) → causal breakdown (draft value, weakness exploitation, turning point, command +
+wildcard factors, transcript) → champion record → run-it-back restart. Polish items observed:
+
+- [ ] [qa] E2E coverage for `ally_below_35` relay swap — a 4-roster match saw the reserve
+      never enter despite heavy damage on an active (heals may have kept everyone above the
+      threshold at check time; needs a deterministic test either way)
+- [ ] [gameplay] Sustain-heavy comps can carry a full match to the 4:30 decision with zero
+      KOs — consider escalation also damping healing, or a shrinking-zone pressure
+- [ ] [gameplay] AI wildcard selection is random — should score wildcards against both
+      drafts (it picked anti-solar Nullstone while fielding Solaria)
+- [ ] [frontend] Team Readout axis bars render near-empty for mid values — display scaling
+- [ ] [frontend] Fights can drift into arena corners — add soft centering pressure or
+      camera framing bias
+- [ ] [frontend] Inspect-drawer clicks can land on re-flowed cards after background scroll —
+      lock body scroll while the drawer is open
