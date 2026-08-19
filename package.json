@@ -15,12 +15,18 @@
     "simulate": "tsx tools/simulate.ts",
     "price": "tsx tools/price.ts",
     "draft-order": "tsx tools/draft-order.ts",
-    "validate": "tsx tools/validate-content.ts"
+    "validate": "tsx tools/validate-content.ts",
+    "server": "tsx services/control-plane/src/main.ts",
+    "variety": "tsx tools/variety.ts",
+    "e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "ws": "^8.21.3"
   },
   "engines": {
     "node": ">=20"
