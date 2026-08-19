@@ -1,0 +1,27 @@
+# Infinite Arena — ownership routing (constitution §5 / §9.4).
+# The Founder's account is the accountable human owner for every path; the
+# specialist-agent role responsible for each area is noted for review routing.
+
+*                           @acekyle
+
+# Technical Architect + Multiplayer & Backend Lead
+/packages/contracts/        @acekyle
+/services/control-plane/    @acekyle
+
+# Combat Systems Designer + QA Lead
+/services/combat-sim/       @acekyle
+
+# Character Canon & Compiler Lead
+/services/character-compiler/  @acekyle
+/services/wildcard-compiler/   @acekyle
+/content/                   @acekyle
+
+# Game Client Lead + UX & Social Systems Designer + Art Director
+/apps/web/                  @acekyle
+
+# QA, Simulation & Red-Team Lead
+/e2e/                       @acekyle
+/tools/                     @acekyle
+
+# Executive Producer
+/docs/                      @acekyle
