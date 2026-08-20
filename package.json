@@ -18,6 +18,7 @@
     "validate": "tsx tools/validate-content.ts",
     "server": "tsx services/control-plane/src/main.ts",
     "variety": "tsx tools/variety.ts",
+    "compiler:smoke": "tsx tools/llm-smoke.ts",
     "e2e": "playwright test"
   },
   "devDependencies": {
@@ -30,5 +31,9 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
+    "zod": "^4.4.3"
   }
 }

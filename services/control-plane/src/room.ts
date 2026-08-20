@@ -36,13 +36,10 @@ import {
   type WildcardContract,
 } from '@arena/contracts';
 import { MatchSim, buildManifest, fnv1a, hashRun, type SimContent } from '@arena/combat-sim';
-import {
-  CompilerUnavailableError,
-  applySemanticCorrection,
-  applyVisualCorrection,
-  compileFighterFromText,
-} from '@arena/character-compiler';
-import { WildcardCompilerUnavailableError, compileWildcardFromText } from '@arena/wildcard-compiler';
+import { CompilerUnavailableError, applyVisualCorrection } from '@arena/character-compiler';
+import { applySemanticCorrectionSmart, compileFighterSmart } from '@arena/character-compiler/llm';
+import { WildcardCompilerUnavailableError } from '@arena/wildcard-compiler';
+import { compileWildcardSmart } from '@arena/wildcard-compiler/llm';
 import type { LoadedContent } from '../../../tools/load-content';
 
 export type Seat = 'p1' | 'p2';
@@ -510,18 +507,26 @@ export class Room {
     const nom = this.draft!.nominations[seat];
     if (nom.used) return this.err(p.guestId, 'nomination_used', 'you already used your custom nomination');
 
-    let result: CompiledFighterResult;
-    try {
-      result = compileFighterFromText(description, { seed: this.nominationSeed(p.guestId, '') });
-    } catch (e) {
-      if (e instanceof CompilerUnavailableError)
-        return this.err(p.guestId, 'compiler_unavailable', 'the character compiler is not available yet');
-      return this.err(p.guestId, 'compiler_failed', 'the character compiler rejected this description');
-    }
+    // Reserve the nomination right BEFORE the (possibly LLM-async) compile so a
+    // second request during the in-flight call cannot double-spend it.
     nom.used = true;
-    this.pendingNominations[seat] = result;
-    this.sendNominationResult(p.guestId, seat, result);
-    this.broadcastState(); // nomination usage is public
+    this.broadcastState();
+    void (async () => {
+      let result: CompiledFighterResult;
+      try {
+        result = await compileFighterSmart(description, { seed: this.nominationSeed(p.guestId, '') });
+      } catch (e) {
+        nom.used = false;
+        this.broadcastState();
+        if (e instanceof CompilerUnavailableError)
+          return this.err(p.guestId, 'compiler_unavailable', 'the character compiler is not available yet');
+        return this.err(p.guestId, 'compiler_failed', 'the character compiler rejected this description');
+      }
+      if (this.phase !== 'draft') return; // draft ended while compiling — discard
+      this.pendingNominations[seat] = result;
+      this.sendNominationResult(p.guestId, seat, result);
+      this.broadcastState();
+    })();
   }
 
   private sendNominationResult(guestId: string, seat: Seat, result: CompiledFighterResult) {
@@ -550,19 +555,29 @@ export class Room {
     if (kind === 'visual' && nom.visualCorrections >= 1)
       return this.err(p.guestId, 'correction_limit', 'visual correction already used');
 
-    let result: CompiledFighterResult;
-    try {
-      result = kind === 'semantic' ? applySemanticCorrection(pending, instruction) : applyVisualCorrection(pending, instruction);
-    } catch (e) {
-      if (e instanceof CompilerUnavailableError)
-        return this.err(p.guestId, 'compiler_unavailable', 'the character compiler is not available yet');
-      return this.err(p.guestId, 'compiler_failed', 'the character compiler rejected this correction');
-    }
+    // Reserve the correction BEFORE the (possibly LLM-async) call; revert on failure.
     if (kind === 'semantic') nom.semanticCorrections += 1;
     else nom.visualCorrections += 1;
-    this.pendingNominations[seat] = result;
-    this.sendNominationResult(p.guestId, seat, result);
-    this.broadcastState(); // correction counters are public
+    this.broadcastState();
+    void (async () => {
+      let result: CompiledFighterResult;
+      try {
+        result = kind === 'semantic'
+          ? await applySemanticCorrectionSmart(pending, instruction)
+          : applyVisualCorrection(pending, instruction);
+      } catch (e) {
+        if (kind === 'semantic') nom.semanticCorrections -= 1;
+        else nom.visualCorrections -= 1;
+        this.broadcastState();
+        if (e instanceof CompilerUnavailableError)
+          return this.err(p.guestId, 'compiler_unavailable', 'the character compiler is not available yet');
+        return this.err(p.guestId, 'compiler_failed', 'the character compiler rejected this correction');
+      }
+      if (this.phase !== 'draft') return;
+      this.pendingNominations[seat] = result;
+      this.sendNominationResult(p.guestId, seat, result);
+      this.broadcastState();
+    })();
   }
 
   private onCustomResolve(p: Participant, accept: unknown) {
@@ -640,19 +655,23 @@ export class Room {
       return this.err(p.guestId, 'bad_message', 'description must be a non-empty string');
     if (this.customWcUsed[seat]) return this.err(p.guestId, 'wildcard_nomination_used', 'you already compiled a custom wildcard');
 
-    let result;
-    try {
-      result = compileWildcardFromText(description, { seed: this.nominationSeed(p.guestId, ':wc') });
-    } catch (e) {
-      if (e instanceof WildcardCompilerUnavailableError)
-        return this.err(p.guestId, 'compiler_unavailable', 'the wildcard compiler is not available yet');
-      return this.err(p.guestId, 'compiler_failed', 'the wildcard compiler rejected this description');
-    }
-    this.customWcUsed[seat] = true;
-    if (result.wildcard.moderation === 'approved')
-      this.customWildcards.push({ contract: result.wildcard, owner: seat });
-    this.deps.send(p.guestId, { t: 'custom_wildcard_result', wildcard: result.wildcard, notes: result.notes });
-    // Nothing public changes until reveal — no broadcast needed.
+    this.customWcUsed[seat] = true; // reserve before the (possibly LLM-async) compile
+    void (async () => {
+      let result;
+      try {
+        result = await compileWildcardSmart(description, { seed: this.nominationSeed(p.guestId, ':wc') });
+      } catch (e) {
+        this.customWcUsed[seat] = false;
+        if (e instanceof WildcardCompilerUnavailableError)
+          return this.err(p.guestId, 'compiler_unavailable', 'the wildcard compiler is not available yet');
+        return this.err(p.guestId, 'compiler_failed', 'the wildcard compiler rejected this description');
+      }
+      if (this.phase !== 'wildcard' || this.revealed) return; // phase moved on — discard
+      if (result.wildcard.moderation === 'approved')
+        this.customWildcards.push({ contract: result.wildcard, owner: seat });
+      this.deps.send(p.guestId, { t: 'custom_wildcard_result', wildcard: result.wildcard, notes: result.notes });
+      // Nothing public changes until reveal — no broadcast needed.
+    })();
   }
 
   private onLockWildcard(p: Participant, wildcardId: unknown) {

@@ -19,6 +19,8 @@
 | D-012 | 2026-08-19 | All 12 Season-0 fighters are studio originals; no protected-character content anywhere in the repo or product | IP Reviewer → EP, Compiler Lead | Accepted | content/fighters/* provenance blocks |
 | D-013 | 2026-08-19 | Bounded reviewer price override for Orrin (+$5.5M, within the ±25% bound): suppression/containment utility is a formula-v1 blind spot; cross-schedule sims showed top-tier win contribution at a bottom-third price | Draft Designer → Combat Designer, EP; QA red-team (harness evidence) | Accepted | tools/price.ts override table; harness runs 2026-08-19 |
 | D-014 | 2026-08-19 | Ember Ronin correction is mechanical, not numerical: empower stance replaced with a gap-closing dash (melee approach tax was the root cause); commentary gains phrase memory (escalating backoff + per-match line cap) after variety-analyzer findings | Combat Designer → QA Lead, Product Director | Accepted | 18.1%→32.0% cross-schedule; variety report 0 repetition findings |
+| D-015 | 2026-08-19 | Gate 1 implementation: client on GitHub Pages (branch deploy), server self-hosted behind a Cloudflare quick tunnel now, Fly/Render one-command configs for durability; join deep links carry server+room | Backend Lead → Tech Architect, EP | Accepted (Founder-approved gate) | docs/DEPLOY.md; live at acekyle.github.io/DraftRoyale |
+| D-016 | 2026-08-19 | Gate 2 implementation: Claude as interpretation-only layer over the deterministic assembler/validators, server-only subpath, automatic fallback, spend accounting | Compiler Lead → Tech Architect, IP Reviewer; QA red-team | Accepted (Founder-approved gate) | [ADR-0009](adr/0009-llm-interpretation-layer.md) |
 
 ## Standing dissent / open questions
 
