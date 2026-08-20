@@ -116,6 +116,12 @@ function wireShell(node: HTMLElement) {
 
 function renderPhase() {
   if (battleMount && net.snapshot?.phase !== 'battle') {
+    if (net.snapshot?.phase === 'finished') {
+      // Let the battle mount play its outro and deliver the breakdown + hash
+      // verdict via onFinished (which re-renders this phase). Disposing here
+      // would race away the causal breakdown.
+      return;
+    }
     battleMount.dispose();
     battleMount = null;
   }

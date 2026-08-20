@@ -17,6 +17,8 @@
 | D-010 | 2026-08-19 | Containment as non-lethal defeat: `contained` lands only below 35% vitality, else degrades to a short root | Combat Designer → Compiler Lead | Accepted | sim `applyCondition` |
 | D-011 | 2026-08-19 | Escalation stalemate-breaker: +15% cumulative damage every 20 s after 3:00; decision verdict at 4:30 by remaining team vitality | Combat Designer → Product Director, QA | Accepted | ruleset S0; harness duration stats |
 | D-012 | 2026-08-19 | All 12 Season-0 fighters are studio originals; no protected-character content anywhere in the repo or product | IP Reviewer → EP, Compiler Lead | Accepted | content/fighters/* provenance blocks |
+| D-013 | 2026-08-19 | Bounded reviewer price override for Orrin (+$5.5M, within the ±25% bound): suppression/containment utility is a formula-v1 blind spot; cross-schedule sims showed top-tier win contribution at a bottom-third price | Draft Designer → Combat Designer, EP; QA red-team (harness evidence) | Accepted | tools/price.ts override table; harness runs 2026-08-19 |
+| D-014 | 2026-08-19 | Ember Ronin correction is mechanical, not numerical: empower stance replaced with a gap-closing dash (melee approach tax was the root cause); commentary gains phrase memory (escalating backoff + per-match line cap) after variety-analyzer findings | Combat Designer → QA Lead, Product Director | Accepted | 18.1%→32.0% cross-schedule; variety report 0 repetition findings |
 
 ## Standing dissent / open questions
 

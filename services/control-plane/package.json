@@ -1,0 +1,17 @@
+{
+  "name": "@arena/control-plane",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/server.ts"
+  },
+  "main": "./src/server.ts",
+  "dependencies": {
+    "@arena/character-compiler": "*",
+    "@arena/combat-sim": "*",
+    "@arena/contracts": "*",
+    "@arena/wildcard-compiler": "*",
+    "ws": "^8"
+  }
+}
