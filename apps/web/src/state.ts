@@ -11,7 +11,15 @@ import type {
   ReinforcementTrigger,
 } from '@arena/contracts';
 
-export type Screen = 'home' | 'reveal' | 'draft' | 'prep' | 'wildcard' | 'battle' | 'breakdown' | 'online';
+export type Screen = 'home' | 'reveal' | 'draft' | 'prep' | 'wildcard' | 'battle' | 'breakdown' | 'online' | 'bracket';
+
+export type BracketSlot = 'semi1' | 'semi2' | 'final';
+
+export interface BracketState {
+  createdAt: string;
+  names: [string, string, string, string];
+  winners: Partial<Record<BracketSlot, string>>;
+}
 export type Mode = 'solo' | 'hotseat' | 'dethrone';
 
 export interface PlayerCfg {
@@ -72,6 +80,8 @@ export interface AppState {
   lastBreakdown: CausalBreakdown | null;
   replayMode: boolean;
   dethroneTarget: ChampionRecord | null;
+  /** Set while a hotseat match is being played as part of a bracket. */
+  bracketMatch: BracketSlot | null;
 }
 
 const K = {
@@ -97,6 +107,7 @@ export const state: AppState = {
   lastBreakdown: null,
   replayMode: false,
   dethroneTarget: null,
+  bracketMatch: null,
 };
 
 type Renderer = (screen: Screen) => void;
@@ -141,6 +152,20 @@ export function pushHistory(rec: MatchRecord) {
   h.unshift(rec);
   try {
     localStorage.setItem(K.history, JSON.stringify(h.slice(0, 40)));
+  } catch { /* quota */ }
+}
+
+export function loadBracket(): BracketState | null {
+  try {
+    return JSON.parse(localStorage.getItem('ia_bracket') ?? 'null');
+  } catch {
+    return null;
+  }
+}
+export function saveBracket(b: BracketState | null) {
+  try {
+    if (b) localStorage.setItem('ia_bracket', JSON.stringify(b));
+    else localStorage.removeItem('ia_bracket');
   } catch { /* quota */ }
 }
 

@@ -59,6 +59,9 @@ export function renderHome() {
           <p class="muted small">Server-authoritative rooms with spectators and reactions. LAN/self-hosted while the alpha deployment gate is pending.</p>
         </div>
       </div>
+      <div class="row mb" style="justify-content:center">
+        <button class="small" id="mode-bracket">🏆 Bracket Night — four players, single elimination</button>
+      </div>
 
       ${champion ? `
       <div class="panel champion-banner mb">
@@ -118,6 +121,10 @@ export function renderHome() {
   q(node, '#mode-online').addEventListener('click', () => {
     saveProfileName(nameOf());
     go('online');
+  });
+  q(node, '#mode-bracket').addEventListener('click', () => {
+    saveProfileName(nameOf());
+    go('bracket');
   });
 
   // Settings wiring.

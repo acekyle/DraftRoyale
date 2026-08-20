@@ -53,7 +53,50 @@ export function aiDraftPick(
   return scored[0].id;
 }
 
-export function aiPrep(roster: string[], rng: Rng): PrepState {
+/** Score a wildcard against both drafts — the AI must not gas its own solar fighter. */
+function scoreWildcard(w: WildcardContract, own: Set<string>, ownFliers: number, enemy: Set<string>, enemyFliers: number): number {
+  let s = 1;
+  const envSwing = (tag: string, favors: string, hurts: string) => {
+    let v = 0;
+    if (own.has(favors)) v += 4;
+    if (own.has(hurts)) v -= 5;
+    if (enemy.has(favors)) v -= 4;
+    if (enemy.has(hurts)) v += 5;
+    void tag;
+    return v;
+  };
+  for (const e of w.effects) {
+    const hitsEnemies = e.affects !== 'allies';
+    const hitsAllies = e.affects !== 'enemies';
+    switch (e.kind) {
+      case 'suppress_tags': {
+        const tags = e.tags ?? [];
+        s += (hitsEnemies ? tags.filter((t) => enemy.has(t)).length * 6 : 0)
+          - (hitsAllies ? tags.filter((t) => own.has(t)).length * 6 : 0);
+        break;
+      }
+      case 'hot': s += (hitsAllies ? 5 : 0) - (e.affects === 'both' ? 2 : 0); break;
+      case 'dot': s += (hitsEnemies ? 3 : 0) - (hitsAllies ? 3 : 0); break;
+      case 'ground_flight': s += (hitsEnemies ? enemyFliers * 4 : 0) - (hitsAllies ? ownFliers * 4 : 0); break;
+      case 'speed_mult': if ((e.magnitude ?? 1) < 1) s += (hitsEnemies ? 2 : 0) - (hitsAllies ? ownFliers === 0 ? 2 : 0 : 0); break;
+      case 'accuracy_delta': if ((e.magnitude ?? 0) < 0 && hitsEnemies && !hitsAllies) s += 3; break;
+      case 'stealth_bonus': s += hitsAllies ? 2 : 0; break;
+      case 'add_context_tags':
+        for (const t of e.tags ?? []) {
+          if (t === 'water_present') s += envSwing(t, 'hydro', 'fire');
+          if (t === 'darkness') s += envSwing(t, 'shadow', 'solar');
+          if (t === 'emp_field') s += (enemy.has('tech') ? 5 : 0) - (own.has('tech') ? 5 : 0);
+        }
+        break;
+      case 'remove_context_tags':
+        for (const t of e.tags ?? []) if (t === 'daylight') s += (enemy.has('solar') ? 5 : 0) - (own.has('solar') ? 5 : 0);
+        break;
+    }
+  }
+  return s;
+}
+
+export function aiPrep(roster: string[], rng: Rng, enemyRoster: string[] = []): PrepState {
   const byPrice = [...roster].sort(
     (a, b) => DNA_BY_ID.get(b)!.balance.draftPrice - DNA_BY_ID.get(a)!.balance.draftPrice,
   );
@@ -64,7 +107,17 @@ export function aiPrep(roster: string[], rng: Rng): PrepState {
   });
   const active = supportLast.slice(0, 3);
   const captain = byPrice[0];
-  const wc = WILDCARDS[Math.floor(rng.next() * WILDCARDS.length)];
+
+  const tagsOf = (ids: string[]) => new Set(ids.flatMap((id) => DNA_BY_ID.get(id)?.interactions.powerTags ?? []));
+  const fliersOf = (ids: string[]) =>
+    ids.filter((id) => DNA_BY_ID.get(id)?.movementModes.some((m) => m === 'flight' || m === 'hover')).length;
+  const own = tagsOf(roster);
+  const enemy = tagsOf(enemyRoster);
+  const scored = WILDCARDS
+    .map((w) => ({ w, s: scoreWildcard(w, own, fliersOf(roster), enemy, fliersOf(enemyRoster)) * (0.9 + rng.next() * 0.2) }))
+    .sort((a, b) => b.s - a.s);
+  const wc = scored[0]?.w;
+
   return {
     activeFighterIds: active,
     captainId: captain,

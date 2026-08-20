@@ -2,6 +2,7 @@ import { formatTick } from '@arena/combat-sim';
 import { RULESET_S0 } from '@arena/contracts';
 import { downloadChampionCard } from '../championCard';
 import { FILE_BY_ID, WILDCARD_BY_ID, displayName, money } from '../content';
+import { recordBracketResult } from './bracket';
 import { encodeDethroneLink, go, loadChampion, state, track } from '../state';
 import { el, esc, mount, q, topbar } from '../ui';
 
@@ -96,7 +97,8 @@ export function renderBreakdown() {
       </div>` : ''}
 
       <div class="row wrap center" style="justify-content:center">
-        <button class="primary" id="btn-runback" style="font-size:17px">🔁 Run it back</button>
+        ${state.bracketMatch ? `<button class="primary" id="btn-bracket" style="font-size:17px">🏆 Record result & return to bracket</button>` : ''}
+        <button class="${state.bracketMatch ? '' : 'primary'}" id="btn-runback" ${state.bracketMatch ? '' : 'style="font-size:17px"'}>🔁 Run it back</button>
         <button id="btn-replay">Watch replay</button>
         ${champion ? '<button id="btn-dethrone-link">Copy dethrone link</button>' : ''}
         ${champion ? '<button id="btn-champ-card">Champion card</button>' : ''}
@@ -107,7 +109,14 @@ export function renderBreakdown() {
     </div>
   </div>`);
 
+  node.querySelector('#btn-bracket')?.addEventListener('click', () => {
+    const slot = state.bracketMatch!;
+    state.bracketMatch = null;
+    recordBracketResult(slot, winnerTeam.displayName);
+    go('bracket');
+  });
   q(node, '#btn-runback').addEventListener('click', () => {
+    state.bracketMatch = null;
     track('run_it_back', { mode: state.mode });
     state.seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0;
     state.draft = null;

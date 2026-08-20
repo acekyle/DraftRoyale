@@ -25,13 +25,17 @@ let myCustomWildcards: WildcardContract[] = [];
 let pendingNomination: { fighter: FighterFile; notes: string[]; semanticLeft: number; visualLeft: number } | null = null;
 let lastPhase = '';
 
-function resetLocal() {
+function resetMatchLocals() {
   battleResult = null;
   myPrep = null;
   prepSubmitted = false;
   myWildcardChoice = null;
   myCustomWildcards = [];
   pendingNomination = null;
+}
+
+function resetLocal() {
+  resetMatchLocals();
   lastPhase = '';
 }
 
@@ -41,8 +45,14 @@ export function renderOnline() {
     for (const f of snap.draft?.customFighters ?? []) registerCustomFighter(f, false);
     for (const w of snap.wildcard?.customWildcards ?? []) registerCustomWildcard(w, false);
     if (snap.phase !== lastPhase) {
-      if (lastPhase === 'battle' && battleMount) {
-        // battle end handled by battle_over; nothing to do here
+      // Run it back: a finished room resetting into a fresh draft clears all
+      // match-scoped local state (prep, wildcard picks, nominations, result).
+      if ((lastPhase === 'finished' || lastPhase === 'battle') && (snap.phase === 'draft' || snap.phase === 'lobby')) {
+        if (battleMount) {
+          battleMount.dispose();
+          battleMount = null;
+        }
+        resetMatchLocals();
       }
       lastPhase = snap.phase;
     }
@@ -560,8 +570,15 @@ function renderFinished(snap: RoomSnapshot) {
       ${r.breakdown.factors.slice(0, 4).map((f) => `<div class="factor"><div class="icon">·</div><div><b>${esc(f.headline)}</b><div class="small muted">${esc(f.detail)}</div></div></div>`).join('')}
     </div>` : ''}
     <div class="row center wrap" style="justify-content:center">
-      <button class="primary" id="btn-again">Back to home — run it back</button>
+      ${net.amHost()
+        ? '<button class="primary" id="btn-rematch" style="font-size:17px">🔁 Run it back — same room, fresh draft</button>'
+        : '<p class="muted">Waiting for the host to run it back…</p>'}
+      <button id="btn-again">Leave room</button>
     </div>`);
+  node.querySelector('#btn-rematch')?.addEventListener('click', () => {
+    track('run_it_back', { mode: 'online' });
+    net.send({ t: 'start_draft' });
+  });
   q(node, '#btn-again').addEventListener('click', () => {
     net.close();
     resetLocal();

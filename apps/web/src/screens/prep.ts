@@ -47,7 +47,12 @@ export function renderPrep() {
             wildcardId: cfg.frozenTeam.wildcardId,
           };
         } else {
-          state.prep[pid] = aiPrep(state.draft!.picks[pid].roster.map((r) => r.fighterId), rng);
+          const other = pid === 'p1' ? 'p2' : 'p1';
+          state.prep[pid] = aiPrep(
+            state.draft!.picks[pid].roster.map((r) => r.fighterId),
+            rng,
+            state.draft!.picks[other].roster.map((r) => r.fighterId),
+          );
         }
       }
     }

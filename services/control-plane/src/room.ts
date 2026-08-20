@@ -324,10 +324,15 @@ export class Room {
 
   private onStartDraft(p: Participant) {
     if (p.guestId !== this.hostGuestId) return this.err(p.guestId, 'not_host', 'only the host can start the draft');
-    if (this.phase !== 'lobby') return this.err(p.guestId, 'bad_phase', `cannot start draft during ${this.phase}`);
+    if (this.phase !== 'lobby' && this.phase !== 'finished')
+      return this.err(p.guestId, 'bad_phase', `cannot start draft during ${this.phase}`);
     const seated = SEATS.map((s) => this.participants.find((q) => q.seat === s));
     if (!seated.every((q) => q && q.connected))
       return this.err(p.guestId, 'need_players', 'draft needs 2 seated, connected players');
+
+    // Run it back (same room): a finished room resets to a completely fresh
+    // draft — the previous match's immutable record is already persisted.
+    if (this.phase === 'finished') this.resetForRematch();
 
     const order: Seat[] = [];
     for (let round = 0; round < RULESET_S0.rosterMax; round++) {
@@ -350,6 +355,26 @@ export class Room {
     this.phase = 'draft';
     this.advanceDraft();
     this.broadcastState();
+  }
+
+  /** Fresh-draft reset: everything match-scoped clears; participants, seats, and room identity stay. */
+  private resetForRematch() {
+    this.outcome = null;
+    this.onClock = null;
+    this.draft = null;
+    this.pendingNominations = { p1: null, p2: null };
+    this.customOwners = new Map();
+    this.preps = { p1: null, p2: null };
+    this.prepReady = { p1: false, p2: false };
+    this.prepEntered = false;
+    this.wildcardEntered = false;
+    this.wcChoices = { p1: undefined, p2: undefined };
+    this.customWildcards = [];
+    this.customWcUsed = { p1: false, p2: false };
+    this.revealed = false;
+    if (this.battle?.interval) clearInterval(this.battle.interval);
+    this.battle = null;
+    this.phase = 'lobby';
   }
 
   private spent(seat: Seat): number {
