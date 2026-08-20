@@ -1,0 +1,15 @@
+# Render.com blueprint for the Infinite Arena room server (free tier compatible).
+# In the Render dashboard: New → Blueprint → point at this repo.
+services:
+  - type: web
+    name: infinite-arena-server
+    runtime: docker
+    dockerfilePath: infra/server/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ARENA_PORT
+        value: "8790"
+      # - key: ANTHROPIC_API_KEY   # add via dashboard secret to enable LLM compilation
+      #   sync: false

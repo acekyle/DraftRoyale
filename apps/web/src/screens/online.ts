@@ -152,16 +152,51 @@ function renderPhase() {
 
 // ---------------------------------------------------------------------------
 
+/** Join deep link: #join=<base64url({s: serverUrl, r: roomId})> — open a link, land in the room. */
+export function encodeJoinLink(serverUrl: string, roomId: string): string {
+  const payload = btoa(JSON.stringify({ s: serverUrl, r: roomId }))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${location.origin}${location.pathname}#join=${payload}`;
+}
+
+export function decodeJoinHash(): { s: string; r: string } | null {
+  const m = location.hash.match(/#join=([A-Za-z0-9_-]+)/);
+  if (!m) return null;
+  try {
+    return JSON.parse(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')));
+  } catch {
+    return null;
+  }
+}
+
+function savedServerUrl(): string {
+  try {
+    return localStorage.getItem('ia_server_url') || defaultServerUrl();
+  } catch {
+    return defaultServerUrl();
+  }
+}
+
 function renderConnect() {
+  const join = decodeJoinHash();
   const node = el(`
   <div>
-    ${topbar('Online Room — LAN / self-hosted alpha')}
+    ${topbar('Online Room — join or host')}
     <div class="screen">
+      ${join ? `
+      <div class="panel champion-banner mb">
+        <h3>⚔ Room invite</h3>
+        <p class="small">You've been invited to room <b class="gold">${esc(join.r)}</b>. Join as a player if a seat is free, or watch as a spectator.</p>
+        <div class="row mt">
+          <button class="primary" id="btn-join-invite">Join as player</button>
+          <button id="btn-spectate-invite">Watch as spectator</button>
+        </div>
+      </div>` : ''}
       <div class="panel mb">
         <h3>Connect to an arena server</h3>
-        <p class="muted small mb">Run one with <code>npm run server</code> — free, local, server-authoritative. Public hosting is a pending Founder gate.</p>
+        <p class="muted small mb">Self-host with <code>npm run server</code> (use <b>wss://</b> for remote servers — https pages cannot open plain ws:// to non-localhost hosts).</p>
         <div class="row wrap">
-          <input type="text" id="srv" value="${esc(defaultServerUrl())}" style="min-width:280px"/>
+          <input type="text" id="srv" value="${esc(join?.s ?? savedServerUrl())}" style="min-width:280px"/>
           <span class="muted small">Playing as <b>${esc(state.players[0].name || 'Challenger')}</b></span>
         </div>
       </div>
@@ -191,12 +226,31 @@ function renderConnect() {
     msg.textContent = 'Connecting…';
     try {
       if (net.status !== 'open') await net.connect(url, state.players[0].name || 'Challenger');
+      try {
+        localStorage.setItem('ia_server_url', url);
+      } catch { /* private mode */ }
       msg.textContent = '';
       after();
     } catch {
-      msg.textContent = 'Could not reach the server. Is `npm run server` running on that address?';
+      msg.textContent = 'Could not reach the server. Check the address (wss:// for remote hosts) and that it is running.';
     }
   };
+  node.querySelector('#btn-join-invite')?.addEventListener('click', () =>
+    connectThen(() => {
+      resetLocal();
+      net.send({ t: 'join_room', roomId: join!.r.toUpperCase(), as: 'player' });
+      history.replaceState(null, '', location.pathname);
+      track('guest_joined', { mode: 'online', via: 'link' });
+    }),
+  );
+  node.querySelector('#btn-spectate-invite')?.addEventListener('click', () =>
+    connectThen(() => {
+      resetLocal();
+      net.send({ t: 'join_room', roomId: join!.r.toUpperCase(), as: 'spectator' });
+      history.replaceState(null, '', location.pathname);
+      track('guest_joined', { mode: 'online', via: 'link', spectator: true });
+    }),
+  );
   q(node, '#btn-create').addEventListener('click', () =>
     connectThen(() => {
       resetLocal();
@@ -232,6 +286,8 @@ function renderLobby(snap: RoomSnapshot) {
         ${snap.experimental ? ' · <span class="badge-exp">EXPERIMENTAL</span> custom creation enabled' : ''}</p>
         ${net.amHost() ? `<button class="primary mt" id="btn-start" style="width:100%" ${players.length >= 2 ? '' : 'disabled'}>
           ${players.length >= 2 ? 'Start the Market Draft' : 'Waiting for a second player…'}</button>` : '<p class="muted small mt">Waiting for the host to start the draft…</p>'}
+        <button class="small mt" id="btn-copy-join" style="width:100%">Copy join link</button>
+        <span class="muted small" id="join-note"></span>
       </div>
       <div class="panel">
         <h3>In the room</h3>
@@ -246,6 +302,12 @@ function renderLobby(snap: RoomSnapshot) {
       </div>
     </div>`);
   node.querySelector('#btn-start')?.addEventListener('click', () => net.send({ t: 'start_draft' }));
+  node.querySelector('#btn-copy-join')?.addEventListener('click', async () => {
+    const url = savedServerUrl();
+    await navigator.clipboard.writeText(encodeJoinLink(url, snap.roomId));
+    q(node, '#join-note').textContent = 'Join link copied — it carries the server address and room code.';
+    track('challenge_link_created', { kind: 'join' });
+  });
   const bar = q(node, '#lobby-emotes');
   for (const e of ['🔥', '😂', '👏', '⚡']) {
     const b = document.createElement('button');

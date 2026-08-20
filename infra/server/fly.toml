@@ -1,0 +1,27 @@
+# Fly.io config for the Infinite Arena room server.
+# From the repo root:  fly launch --copy-config --config infra/server/fly.toml --dockerfile infra/server/Dockerfile
+app = "infinite-arena-server"
+primary_region = "iad"
+
+[build]
+  dockerfile = "infra/server/Dockerfile"
+
+[env]
+  ARENA_PORT = "8790"
+
+[http_service]
+  internal_port = 8790
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "3s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

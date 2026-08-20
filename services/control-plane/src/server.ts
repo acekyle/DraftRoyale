@@ -11,6 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomInt, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
+import { createServer as createHttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { WebSocketServer, WebSocket } from 'ws';
 import {
@@ -72,9 +73,20 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
   const conns = new Map<WebSocket, ConnState>();
   const socketByGuest = new Map<string, WebSocket>();
 
-  const wss = new WebSocketServer({ port: opts.port ?? DEFAULT_SERVER_PORT, maxPayload: MAX_PAYLOAD_BYTES });
-  await once(wss, 'listening');
-  const port = (wss.address() as AddressInfo).port;
+  // HTTP wrapper: /health for PaaS health checks and tunnel probes; WS upgrades ride the same port.
+  const httpServer = createHttpServer((req, res) => {
+    if (req.url === '/health' || req.url === '/') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, service: 'infinite-arena-control-plane', rooms: rooms.size }));
+    } else {
+      res.writeHead(404);
+      res.end();
+    }
+  });
+  const wss = new WebSocketServer({ server: httpServer, maxPayload: MAX_PAYLOAD_BYTES });
+  httpServer.listen(opts.port ?? DEFAULT_SERVER_PORT);
+  await once(httpServer, 'listening');
+  const port = (httpServer.address() as AddressInfo).port;
 
   function send(guestId: string, msg: ServerMessage) {
     const ws = socketByGuest.get(guestId);
@@ -346,6 +358,7 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
       rooms.clear();
       for (const ws of wss.clients) ws.terminate();
       await new Promise<void>((resolve, reject) => wss.close((err) => (err ? reject(err) : resolve())));
+      await new Promise<void>((resolve, reject) => httpServer.close((err) => (err ? reject(err) : resolve())));
     },
   };
 }
