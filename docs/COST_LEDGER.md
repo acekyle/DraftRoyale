@@ -17,9 +17,13 @@
 | Date | Item | Amount | Approved by |
 |------|------|--------|-------------|
 | 2026-08-19 | Hosting: GitHub Pages + trycloudflare tunnel (both free tiers) | **$0.00** | Founder (Gate 1) |
-| 2026-08-19 | LLM API usage (no key provisioned yet — fallback path only) | **$0.00** | Founder (Gate 2) |
+| 2026-08-19 | LLM API: key provisioned by the Founder; smoke test run (3 live calls, ~$0.15–0.40 est.) — Gate 2 ACTIVE | **<$1** | Founder (Gate 2) |
 
 Total spent: **$0.00**. Recurring commitments: **none** (both gates currently on $0 tiers).
+
+**Security note (2026-08-19):** the first key transited a chat transcript during
+provisioning; the Founder was advised to rotate it after testing and provision
+replacements directly into terminal/secret stores only.
 
 ## Unit economics — first real numbers
 
