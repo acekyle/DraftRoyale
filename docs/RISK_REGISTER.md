@@ -4,7 +4,7 @@
 
 | ID | Risk | Impact | Likelihood | Mitigation / trigger | Owner |
 |----|------|--------|------------|----------------------|-------|
-| R-1 | **No online multiplayer yet** — the 10-friend-group acceptance test cannot run on local modes alone; the product thesis (social replay) is unproven until rooms exist | Critical | Certain (current state) | Online-rooms milestone is next: control-plane bake-off (ADR-0002) → guest rooms → deploy gate. Hotseat + dethrone links exercise parts of the loop early | Backend Lead |
+| R-1 | **No public deployment** — online rooms are built, tested, and live-verified (ADR-0006/0007) but LAN/self-hosted only; the 10-friend-group test still cannot run remotely until the hosting Founder Gate is approved | High | Certain until approved | Gate raised in Executive Digest with $0 free-tier options; everything else is ready — deployment is the last blocker to Stage 1 testing | EP |
 | R-2 | **Engine bake-off half-complete** — Unity side unmeasured; a late Unity win would strand client work | High | Medium | Renderer-independent event contract bounds rework to the client package; revisit wired to Phase 4 perf gate (ADR-0001) | Tech Architect |
 | R-3 | **Deployment & hosting are Founder-gated** — no alpha link can exist until approved; testing stalls at the gate | High | Certain until approved | Founder Gate raised in Executive Digest with free-tier options and exact costs | EP |
 | R-4 | **Price compression** — Season 0 prices cluster ~$29–40M, weakening draft-economy expression (cheap-depth vs stars tension) | Medium | High | Widen formula spread or attribute variance next balance pass; draft-order sim shows fairness holds regardless | Draft Designer |

@@ -138,3 +138,29 @@ wildcard factors, transcript) → champion record → run-it-back restart. Polis
       camera framing bias
 - [ ] [frontend] Inspect-drawer clicks can land on re-flowed cards after background scroll —
       lock body scroll while the drawer is open
+
+---
+
+## Online milestone — landed 2026-08-19 (second wave)
+
+- [x] [multiplayer] Control plane: rooms, guest sessions + token reconnect, server-authoritative draft/prep/wildcard/battle, spectators (20), reactions, rate limits, JSONL persistence (ADR-0006)
+- [x] [multiplayer] Lockstep-deterministic clients with server hash authority (ADR-0007); live two-client match verified
+- [x] [compiler] Deterministic character + wildcard compilers, 15-family taxonomy, corrections, IP/real-person transforms, unbounded-clause normalization (ADR-0008); live nomination + typed custom wildcard flows in local AND online modes
+- [x] [qa] Playwright E2E (6 specs, chromium+webkit); schedule-randomized balance harness; combat-variety analyzer (0 repetition findings after commentary phrase memory)
+- [x] [qa] Replay Original for custom content: match records persist compiled contracts; replay-to-hash test
+- [x] [gameplay] Balance pass with trustworthy cross-schedule evidence; Orrin reviewer override (D-013); Ember gap-closer (D-014); AI-drafter soft-lock fix
+- [x] [frontend] Champion card PNG export, accessibility settings, crash capture, challenge-under-current-rules, drawer scroll-lock
+- [x] Governance: CODEOWNERS, protected main with required CI check
+
+### Next free work (no gates)
+- [ ] [multiplayer] Online rematch/run-it-back within a finished room; dedicated room_closed signal; protocol rev-2 items from ADR-0006
+- [ ] [gameplay] Basic 4-player bracket (local room sequencing first)
+- [ ] [gameplay] AI opponent wildcard selection should score against both drafts
+- [ ] [qa] Safari/JavaScriptCore lockstep divergence trial (two-browser matrix)
+- [ ] [frontend] Team Readout axis bar scaling; camera corner-drift bias; escalation-vs-sustain tuning experiment (healing damp)
+
+### Founder-gated (spend/accounts — the current stop-line)
+- [ ] [founder-gate] Alpha hosting/deployment (static client + room server) → unlocks Stage 1 friend-group testing
+- [ ] [founder-gate] LLM API budget → semantic-fidelity upgrade for both compilers behind existing signatures
+- [ ] [founder-gate] 3D generation bake-off credits → real fighter models/preview
+- [ ] [founder-gate] Unity tooling → completes the deferred engine bake-off half (ADR-0001)
