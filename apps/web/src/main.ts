@@ -1,4 +1,5 @@
 import './styles.css';
+import './hero.css';
 import { applySettings, installCrashCapture } from './settings';
 import { initTelemetry } from './telemetry';
 import { bindRenderer, go, track, type Screen } from './state';

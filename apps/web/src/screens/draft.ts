@@ -1,8 +1,10 @@
 import { RULESET_S0, minRosterReserve, type FighterFile } from '@arena/contracts';
 import { createRng, type Rng } from '@arena/combat-sim';
 import { compileFighterFromText, applySemanticCorrection, applyVisualCorrection } from '@arena/character-compiler';
-import { DNA_BY_ID, FIGHTERS, FILE_BY_ID, ROLE_COLORS, money, registerCustomFighter } from '../content';
+import { DNA_BY_ID, FIGHTERS, FILE_BY_ID, money, registerCustomFighter } from '../content';
 import { aiDraftPick } from '../opponentAI';
+import { mountPedestal } from '../pedestalPreview';
+import { namePlate, roleColor, roleIcon } from '../roleTheme';
 import { go, state, track } from '../state';
 import { el, esc, mount, q, qa, topbar } from '../ui';
 
@@ -225,12 +227,15 @@ function fighterCard(f: FighterFile, taken: Set<string>, p: 'p1' | 'p2', isAITur
   const custom = state.draft!.customFighters.find((c) => c.file.dna.identity.fighterId === id);
   const cls = [
     'fighter-card',
+    'role-edged',
     taken.has(id) ? 'taken' : '',
     !taken.has(id) && !affordable && !isAITurn ? 'unaffordable' : '',
   ].join(' ');
+  const role = f.dna.identity.role;
+  const rc = roleColor(role);
   const badge = custom ? `<div style="margin-bottom:4px"><span class="badge-exp">EXPERIMENTAL · ${custom.nominator === p ? 'YOUR NOMINEE' : 'RIVAL NOMINEE'}</span></div>` : '';
   return `
-  <div class="${cls}" data-id="${esc(id)}" tabindex="0" role="button" style="--accent:${esc(f.dna.presentation.primaryColor)}">
+  <div class="${cls}" data-id="${esc(id)}" tabindex="0" role="button" style="--accent:${esc(f.dna.presentation.primaryColor)};--role:${rc}">
     ${badge}
     <div class="portrait">
       ${silhouette(f)}
@@ -238,7 +243,7 @@ function fighterCard(f: FighterFile, taken: Set<string>, p: 'p1' | 'p2', isAITur
     </div>
     <div class="name">${esc(f.contract.identity.displayName)}</div>
     <div class="meta">
-      <span class="role-badge" style="--accent:${ROLE_COLORS[f.dna.identity.role] ?? '#888'}">${esc(f.dna.identity.role)}</span>
+      <span class="role-badge" style="--accent:${rc}">${roleIcon(role)}<span>${esc(role)}</span></span>
       <span>${esc(f.dna.identity.chassis)}</span>
     </div>
     <div class="meta mt" style="margin-top:6px">
@@ -399,17 +404,18 @@ function openInspect(root: HTMLElement, fighterId: string, p: 'p1' | 'p2', isAIT
 
   const slot = q(root, '#inspect-slot');
   slot.innerHTML = '';
+  const rc = roleColor(dna.identity.role);
   const drawer = el(`
-  <div class="inspect" style="--accent:${esc(dna.presentation.primaryColor)}">
+  <div class="inspect" style="--accent:${esc(dna.presentation.primaryColor)};--role:${rc}">
     <button class="close small">✕</button>
-    <div class="row">
-      <div style="width:70px">${silhouette(f)}</div>
-      <div>
-        <h2>${esc(f.contract.identity.displayName)}</h2>
-        <span class="role-badge" style="--accent:${ROLE_COLORS[dna.identity.role] ?? '#888'}">${esc(dna.identity.role)}</span>
-        <span class="role-badge">${esc(dna.identity.chassis)}</span>
-        <span class="role-badge">${esc(dna.identity.division)}</span>
-      </div>
+    <div class="hero-stage">
+      <div class="stage-fallback">${silhouette(f)}</div>
+    </div>
+    ${namePlate(f.contract.identity.displayName, dna.identity.role)}
+    <div class="row wrap" style="gap:6px">
+      <span class="role-badge" style="--accent:${rc}">${roleIcon(dna.identity.role)}<span>${esc(dna.identity.role)}</span></span>
+      <span class="role-badge">${esc(dna.identity.chassis)}</span>
+      <span class="role-badge">${esc(dna.identity.division)}</span>
     </div>
     <p class="muted small mt">${esc(f.contract.canon.summary)}</p>
 
@@ -446,6 +452,7 @@ function openInspect(root: HTMLElement, fighterId: string, p: 'p1' | 'p2', isAIT
   </div>`);
   const closeDrawer = () => {
     document.body.style.overflow = '';
+    preview?.dispose();
     drawer.remove();
   };
   q(drawer, '.close').addEventListener('click', closeDrawer);
@@ -455,4 +462,10 @@ function openInspect(root: HTMLElement, fighterId: string, p: 'p1' | 'p2', isAIT
     renderDraft();
   });
   slot.appendChild(drawer);
+
+  // Live 3D pedestal turntable (shared renderer; falls back to the 2D
+  // silhouette when WebGL is unavailable, e.g. blocked contexts).
+  const stage = q(drawer, '.hero-stage');
+  const preview = mountPedestal(stage, dna);
+  if (preview) q<HTMLElement>(drawer, '.stage-fallback').style.display = 'none';
 }

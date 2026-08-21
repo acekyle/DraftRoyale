@@ -277,9 +277,13 @@ export function mountOnlineBattle(
       if (wcBtn) wcBtn.disabled = !sim.wildcardAvailable(mySeat) || sim.over;
     }
     const alpha = Math.min(1, (now - lastStepAt) / RULESET_S0.tickMs);
-    view.frame(16, alpha);
+    // Real elapsed time (not a fixed 16 ms) so the renderer's 60 fps cap and
+    // wall-clock animation decay behave identically on 120 Hz displays.
+    view.frame(lastFrameAt ? now - lastFrameAt : 16, alpha);
+    lastFrameAt = now;
     requestAnimationFrame(loop);
   };
+  let lastFrameAt = 0;
   requestAnimationFrame(loop);
 
   return {

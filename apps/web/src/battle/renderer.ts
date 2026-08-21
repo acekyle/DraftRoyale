@@ -1,19 +1,28 @@
 /**
  * Battle renderer — thin simulation, thick cinema. Consumes semantic events and
- * interpolated sim state; never influences outcomes. Fighters are stylized
- * procedural chassis (collectible-statue placeholders until the 3D pipeline
- * phase); VFX/camera react to the authoritative event stream.
+ * interpolated sim state; never influences outcomes. Fighters are sculpted
+ * procedural hero meshes (see heroMeshes.ts — the "living collectible" pass);
+ * VFX/camera react to the authoritative event stream. The arena reads as a
+ * miniature diorama: tiled plaza slab, recessed fountain basin, fluted columns
+ * that break to rubble, bench/planter dressing on the outer apron.
  */
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { MatchEvent } from '@arena/contracts';
 import type { FighterRt, MatchSim } from '@arena/combat-sim';
 import { DNA_BY_ID, FILE_BY_ID } from '../content';
 import { loadSettings, type Settings } from '../settings';
+import {
+  buildHeroMesh, poseForIntent, poseHeroMesh, type HeroMeshHandle, type HeroPose,
+} from './heroMeshes';
+
+/** Reused per-frame scratch vector — the frame loop must not allocate (perf baseline flag #3). */
+const SCRATCH_A = new THREE.Vector3();
 
 interface FighterVisual {
-  group: THREE.Group;
-  body: THREE.Mesh[];
-  energy: THREE.Mesh | null;
+  group: THREE.Group; // outer: position + facing + team ring (stays level)
+  hero: HeroMeshHandle; // hero root: KO tilt + joint poses
+  ringMat: THREE.MeshBasicMaterial;
   prev: { x: number; z: number; alt: number };
   curr: { x: number; z: number; alt: number };
   lunge: { dx: number; dz: number; t: number } | null;
@@ -22,6 +31,9 @@ interface FighterVisual {
   label: HTMLDivElement;
   baseY: number;
   bobPhase: number;
+  bobAmp: number;
+  pose: HeroPose;
+  poseT: number; // 1 → 0 pose envelope
 }
 
 interface Vfx {
@@ -45,6 +57,7 @@ export class BattleView {
   private renderer: THREE.WebGLRenderer;
   private hemi: THREE.HemisphereLight;
   private sun: THREE.DirectionalLight;
+  private rimLight: THREE.DirectionalLight;
   private fighters = new Map<string, FighterVisual>();
   private featureMeshes = new Map<string, THREE.Object3D>();
   private wildcardMeshes = new Map<string, THREE.Object3D>();
@@ -82,14 +95,19 @@ export class BattleView {
 
     this.scene.background = new THREE.Color(0x0e1526);
     this.scene.fog = new THREE.Fog(0x0e1526, 70, 190);
-    this.hemi = new THREE.HemisphereLight(0xcfe4ff, 0x30281c, 1.0);
+    // Collectible-diorama lighting: cool key + warm rim + soft ambient bounce.
+    // Tuned bright enough that outcome readability never suffers (Art Bible §4).
+    this.hemi = new THREE.HemisphereLight(0xbcd2ff, 0x2c2418, 0.85);
     this.scene.add(this.hemi);
-    this.sun = new THREE.DirectionalLight(0xfff2d0, 2.2);
-    this.sun.position.set(30, 55, 20);
+    this.sun = new THREE.DirectionalLight(0xe4eeff, 2.0);
+    this.sun.position.set(26, 50, 24);
     this.sun.castShadow = true;
     this.sun.shadow.camera.left = -45; this.sun.shadow.camera.right = 45;
     this.sun.shadow.camera.top = 45; this.sun.shadow.camera.bottom = -45;
     this.scene.add(this.sun);
+    this.rimLight = new THREE.DirectionalLight(0xffa661, 1.15);
+    this.rimLight.position.set(-30, 34, -42);
+    this.scene.add(this.rimLight);
 
     this.buildArena();
     for (const f of sim.fighters) this.buildFighter(f);
@@ -110,52 +128,166 @@ export class BattleView {
 
   // -------------------------------------------------------------------------
 
+  // ---- Meridian Plaza diorama -------------------------------------------
+
+  /** Extra visual apron beyond the mechanical play bounds (dressing lives there). */
+  private static APRON = 6;
+
+  /**
+   * Procedural plaza tiling, generated on a canvas at runtime (code-only, no
+   * external asset): stone tiles with deterministic per-tile tinting, a
+   * darker channel band under the fountain, the painted play-bound line, and
+   * a soft vignette toward the diorama edges.
+   */
+  private makePlazaTexture(sizeX: number, sizeZ: number): THREE.CanvasTexture | null {
+    const pad = BattleView.APRON;
+    const worldW = sizeX + pad * 2, worldH = sizeZ + pad * 2;
+    const W = 1024, H = Math.round((W * worldH) / worldW);
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const g = canvas.getContext('2d');
+    if (!g) return null; // headless edge case — plain material still renders
+    const ppu = W / worldW; // pixels per world unit
+    const wx = (x: number) => (x + worldW / 2) * ppu;
+    const wz = (z: number) => (z + worldH / 2) * ppu;
+
+    g.fillStyle = '#262d40';
+    g.fillRect(0, 0, W, H);
+
+    // Stone tiles (4×4 world units), deterministic tint per tile.
+    const tile = 4;
+    for (let ix = 0; ix < Math.ceil(worldW / tile); ix++) {
+      for (let iz = 0; iz < Math.ceil(worldH / tile); iz++) {
+        const n = ((ix * 73856093) ^ (iz * 19349663)) >>> 0;
+        const v = 44 + (n % 11); // 44..54 brightness band — readability floor (Art Bible §4)
+        g.fillStyle = `rgb(${v},${v + 5},${v + 16})`;
+        g.fillRect(ix * tile * ppu + 1, iz * tile * ppu + 1, tile * ppu - 2, tile * ppu - 2);
+        if (n % 7 === 0) { // occasional cracked tile
+          g.strokeStyle = 'rgba(10,12,20,0.55)';
+          g.lineWidth = 1.5;
+          g.beginPath();
+          g.moveTo((ix * tile + 0.6) * ppu, (iz * tile + 0.4) * ppu);
+          g.lineTo((ix * tile + 2.2) * ppu, (iz * tile + 2.1) * ppu);
+          g.lineTo((ix * tile + 2.9) * ppu, (iz * tile + 3.5) * ppu);
+          g.stroke();
+        }
+      }
+    }
+
+    // Flooded fountain channel: darker wet band running east–west + basin pool shadow.
+    const water = this.sim.features.find((f) => f.type === 'water');
+    if (water) {
+      const bandH = 5 * ppu;
+      const grad = g.createLinearGradient(0, wz(water.z) - bandH, 0, wz(water.z) + bandH);
+      grad.addColorStop(0, 'rgba(20,40,70,0)');
+      grad.addColorStop(0.5, 'rgba(18,42,78,0.55)');
+      grad.addColorStop(1, 'rgba(20,40,70,0)');
+      g.fillStyle = grad;
+      g.fillRect(wx(-sizeX / 2), wz(water.z) - bandH, sizeX * ppu, bandH * 2);
+      g.fillStyle = 'rgba(8,18,36,0.7)';
+      g.beginPath();
+      g.ellipse(wx(water.x), wz(water.z), (water.radius + 0.4) * ppu, (water.radius + 0.4) * ppu, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+
+    // Painted play-bound line (the mechanical wall — always legible).
+    g.strokeStyle = 'rgba(245,185,60,0.5)';
+    g.lineWidth = Math.max(2, 0.25 * ppu);
+    g.strokeRect(wx(-sizeX / 2), wz(-sizeZ / 2), sizeX * ppu, sizeZ * ppu);
+
+    // Vignette toward the diorama edge.
+    const vig = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.32, W / 2, H / 2, Math.max(W, H) * 0.62);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(4,6,12,0.72)');
+    g.fillStyle = vig;
+    g.fillRect(0, 0, W, H);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    return tex;
+  }
+
   private buildArena() {
     const { sizeX, sizeZ } = this.sim.arena;
+    const pad = BattleView.APRON;
+
+    // Plaza floor (play field + dressing apron) over a diorama slab skirt.
+    const tex = this.makePlazaTexture(sizeX, sizeZ);
     const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(sizeX, sizeZ),
-      new THREE.MeshStandardMaterial({ color: 0x232a3c, roughness: 0.92 }),
+      new THREE.PlaneGeometry(sizeX + pad * 2, sizeZ + pad * 2),
+      tex
+        ? new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, metalness: 0.04 })
+        : new THREE.MeshStandardMaterial({ color: 0x232a3c, roughness: 0.92 }),
     );
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     this.scene.add(ground);
 
-    const grid = new THREE.GridHelper(Math.max(sizeX, sizeZ), 24, 0x38445f, 0x2a3450);
-    grid.position.y = 0.02;
-    (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.35;
-    this.scene.add(grid);
-
-    const rim = new THREE.Mesh(
-      new THREE.RingGeometry(Math.max(sizeX, sizeZ) * 0.62, Math.max(sizeX, sizeZ) * 0.64, 64),
-      new THREE.MeshBasicMaterial({ color: 0xf5b93c, transparent: true, opacity: 0.35, side: THREE.DoubleSide }),
+    const skirt = new THREE.Mesh(
+      new THREE.BoxGeometry(sizeX + pad * 2, 1.1, sizeZ + pad * 2),
+      new THREE.MeshStandardMaterial({ color: 0x0c101c, roughness: 0.85, metalness: 0.2 }),
     );
-    rim.rotation.x = -Math.PI / 2;
-    rim.position.y = 0.03;
-    this.scene.add(rim);
+    skirt.position.y = -0.57;
+    this.scene.add(skirt);
 
+    // Features: fluted columns, transit wrecks, recessed fountain basin.
+    const stoneMat = new THREE.MeshStandardMaterial({ color: 0x707c94, roughness: 0.72, flatShading: true });
+    const wreckMat = new THREE.MeshStandardMaterial({ color: 0x74553c, roughness: 0.8, metalness: 0.3 });
     for (const feat of this.sim.features) {
       let mesh: THREE.Object3D | null = null;
       if (feat.type === 'pillar') {
-        mesh = new THREE.Mesh(
-          new THREE.CylinderGeometry(feat.radius * 0.8, feat.radius, 7, 10),
-          new THREE.MeshStandardMaterial({ color: 0x5a6680, roughness: 0.7 }),
+        const r = feat.radius;
+        const column = new THREE.Mesh(
+          new THREE.LatheGeometry(
+            [
+              [r * 1.2, 0], [r * 1.2, 0.4], [r * 0.86, 0.55], [r * 0.7, 0.75],
+              [r * 0.62, 5.9], [r * 0.78, 6.2], [r * 1.02, 6.45], [r * 1.02, 7], [0, 7],
+            ].map(([px, py]) => new THREE.Vector2(px, py)),
+            9, // low radial count + flat shading ⇒ faceted flutes
+          ),
+          stoneMat,
         );
-        mesh.position.set(feat.x, 3.5, feat.z);
+        column.position.set(feat.x, 0, feat.z);
+        mesh = column;
       } else if (feat.type === 'cover') {
-        mesh = new THREE.Mesh(
-          new THREE.BoxGeometry(feat.radius * 2, 2, feat.radius * 1.4),
-          new THREE.MeshStandardMaterial({ color: 0x74553c, roughness: 0.85 }),
+        const wreck = new THREE.Group();
+        const hull = new THREE.Mesh(new THREE.BoxGeometry(feat.radius * 2, 1.5, feat.radius * 1.3), wreckMat);
+        hull.position.y = 0.85;
+        hull.rotation.z = 0.08;
+        wreck.add(hull);
+        const cab = new THREE.Mesh(new THREE.BoxGeometry(feat.radius * 0.9, 0.8, feat.radius * 1.1), wreckMat);
+        cab.position.set(feat.radius * 0.62, 1.75, 0);
+        cab.rotation.z = 0.14;
+        wreck.add(cab);
+        const under = new THREE.Mesh(
+          new THREE.BoxGeometry(feat.radius * 1.9, 0.35, feat.radius * 1.2),
+          new THREE.MeshStandardMaterial({ color: 0x241b12, roughness: 0.95 }),
         );
-        mesh.position.set(feat.x, 1, feat.z);
-        mesh.rotation.y = 0.4;
+        under.position.y = 0.2;
+        wreck.add(under);
+        wreck.position.set(feat.x, 0, feat.z);
+        wreck.rotation.y = 0.4;
+        mesh = wreck;
       } else if (feat.type === 'water') {
-        mesh = new THREE.Mesh(
-          new THREE.CircleGeometry(feat.radius, 28),
-          new THREE.MeshStandardMaterial({ color: 0x2b6fa8, transparent: true, opacity: 0.75, roughness: 0.2, metalness: 0.4 }),
+        // Recessed reflective basin: stone lip + wet wall + mirror-blue pool.
+        const basin = new THREE.Group();
+        const lip = new THREE.Mesh(new THREE.TorusGeometry(feat.radius + 0.15, 0.26, 8, 40), stoneMat);
+        lip.rotation.x = Math.PI / 2;
+        lip.position.y = 0.14;
+        basin.add(lip);
+        const pool = new THREE.Mesh(
+          new THREE.CircleGeometry(feat.radius + 0.05, 36),
+          new THREE.MeshStandardMaterial({
+            color: 0x2b6fa8, emissive: 0x0a2438, emissiveIntensity: 0.5,
+            transparent: true, opacity: 0.9, roughness: 0.06, metalness: 0.85,
+          }),
         );
-        mesh.rotation.x = -Math.PI / 2;
-        mesh.position.set(feat.x, 0.05, feat.z);
+        pool.rotation.x = -Math.PI / 2;
+        pool.position.y = 0.055;
+        basin.add(pool);
+        basin.position.set(feat.x, 0, feat.z);
+        mesh = basin;
       }
       if (mesh) {
         mesh.traverse((o) => { if (o instanceof THREE.Mesh) { o.castShadow = true; o.receiveShadow = true; } });
@@ -163,65 +295,124 @@ export class BattleView {
         this.featureMeshes.set(feat.id, mesh);
       }
     }
+
+    this.buildDressing(sizeX, sizeZ);
+  }
+
+  /**
+   * Bench + planter dressing on the apron ring outside the play bounds,
+   * merged into three static meshes (one per material) to keep draw calls low.
+   */
+  private buildDressing(sizeX: number, sizeZ: number) {
+    const woodParts: THREE.BufferGeometry[] = [];
+    const stoneParts: THREE.BufferGeometry[] = [];
+    const leafParts: THREE.BufferGeometry[] = [];
+    const put = (arr: THREE.BufferGeometry[], geo: THREE.BufferGeometry, x: number, y: number, z: number, ry = 0) => {
+      const g = geo.clone();
+      g.applyMatrix4(new THREE.Matrix4().compose(
+        new THREE.Vector3(x, y, z),
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, 0)),
+        new THREE.Vector3(1, 1, 1),
+      ));
+      arr.push(g);
+    };
+
+    const seat = new THREE.BoxGeometry(2.6, 0.14, 0.7);
+    const legGeo = new THREE.BoxGeometry(0.16, 0.42, 0.6);
+    const bench = (x: number, z: number, ry: number) => {
+      put(woodParts, seat, x, 0.48, z, ry);
+      const dx = Math.cos(ry), dz = -Math.sin(ry);
+      put(stoneParts, legGeo, x - dx * 1.05, 0.21, z - dz * 1.05, ry);
+      put(stoneParts, legGeo, x + dx * 1.05, 0.21, z + dz * 1.05, ry);
+    };
+    const planterBox = new THREE.BoxGeometry(1.5, 0.6, 1.5);
+    const bush = new THREE.IcosahedronGeometry(0.62, 0);
+    const planter = (x: number, z: number) => {
+      put(stoneParts, planterBox, x, 0.3, z);
+      put(leafParts, bush, x, 0.95, z, (x * 7 + z * 13) % 3);
+    };
+
+    const bz = sizeZ / 2 + 3;
+    const bx = sizeX / 2 + 3;
+    for (const x of [-16, 0, 16]) {
+      bench(x, bz, 0);
+      bench(x, -bz, Math.PI);
+    }
+    for (const z of [-9, 9]) {
+      planter(bx, z);
+      planter(-bx, z);
+    }
+    planter(bx - 4, bz - 0.5);
+    planter(-(bx - 4), -(bz - 0.5));
+
+    const add = (parts: THREE.BufferGeometry[], mat: THREE.MeshStandardMaterial) => {
+      if (!parts.length) return;
+      const merged = mergeGeometries(parts);
+      if (!merged) return;
+      const m = new THREE.Mesh(merged, mat);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      this.scene.add(m);
+    };
+    add(woodParts, new THREE.MeshStandardMaterial({ color: 0x6b4a2e, roughness: 0.8 }));
+    add(stoneParts, new THREE.MeshStandardMaterial({ color: 0x3a4258, roughness: 0.85 }));
+    add(leafParts, new THREE.MeshStandardMaterial({ color: 0x2e6b40, roughness: 0.9, flatShading: true }));
+  }
+
+  /** Persistent rubble where a destructible feature used to stand. */
+  private spawnRubble(feat: { id: string; x: number; z: number; radius: number; type: string }) {
+    const rubble = new THREE.Group();
+    const mat = feat.type === 'pillar'
+      ? new THREE.MeshStandardMaterial({ color: 0x5c6980, roughness: 0.85, flatShading: true })
+      : new THREE.MeshStandardMaterial({ color: 0x4a3826, roughness: 0.9, flatShading: true });
+    let n = 0;
+    for (const ch of feat.id) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
+    const chunks = 5;
+    for (let i = 0; i < chunks; i++) {
+      const a = ((n >> (i * 3)) % 32) / 32 * Math.PI * 2;
+      const d = 0.4 + ((n >> (i * 2)) % 16) / 16 * feat.radius * 1.1;
+      const r = feat.radius * (0.22 + ((n >> i) % 8) / 8 * 0.2);
+      const chunk = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), mat);
+      chunk.position.set(feat.x + Math.sin(a) * d, r * 0.7, feat.z + Math.cos(a) * d);
+      chunk.rotation.set(a, a * 2.3, a * 0.7);
+      chunk.castShadow = true;
+      chunk.receiveShadow = true;
+      rubble.add(chunk);
+    }
+    if (feat.type === 'pillar') {
+      // Broken stump.
+      const stump = new THREE.Mesh(new THREE.CylinderGeometry(feat.radius * 0.62, feat.radius * 0.8, 0.9, 9), mat);
+      stump.position.set(feat.x, 0.45, feat.z);
+      stump.rotation.y = (n % 7) / 7;
+      stump.castShadow = true;
+      stump.receiveShadow = true;
+      rubble.add(stump);
+    }
+    this.scene.add(rubble);
   }
 
   private buildFighter(f: FighterRt) {
     const dna = f.dna;
-    const primary = new THREE.Color(dna.presentation.primaryColor);
-    const secondary = new THREE.Color(dna.presentation.secondaryColor);
-    const energy = new THREE.Color(dna.presentation.energyColor);
     const s = dna.identity.scale;
     const group = new THREE.Group();
-    const bodyMat = new THREE.MeshStandardMaterial({ color: primary, roughness: 0.45, metalness: 0.25 });
-    const trimMat = new THREE.MeshStandardMaterial({ color: secondary, roughness: 0.5 });
-    const energyMat = new THREE.MeshStandardMaterial({
-      color: energy, emissive: energy, emissiveIntensity: 1.6, roughness: 0.3,
+
+    // Sculpted hero mesh (shared module — same statue the draft pedestal shows).
+    const hero = buildHeroMesh(dna);
+    hero.group.scale.setScalar(s);
+    group.add(hero.group);
+    const baseY = hero.baseY * s;
+
+    // Team indicator ring under the fighter — team color stays distinct from
+    // role color (Art Bible §4); it rides the outer group so it never tilts.
+    const isTeamA = f.teamId === this.sim.teams[0].playerId;
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: isTeamA ? 0x4a9dd0 : 0xe0524a, transparent: true, opacity: 0.55, side: THREE.DoubleSide,
     });
-    const body: THREE.Mesh[] = [];
-    let energyMesh: THREE.Mesh | null = null;
-    let baseY = 0;
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.62 * s, 0.76 * s, 26), ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.06 - baseY; // rests on the ground at hover height
+    group.add(ring);
 
-    const add = (m: THREE.Mesh, x: number, y: number, z: number) => {
-      m.position.set(x, y, z);
-      m.castShadow = true;
-      group.add(m);
-      body.push(m);
-      return m;
-    };
-
-    switch (dna.identity.chassis) {
-      case 'heavy':
-      case 'humanoid': {
-        const heavy = dna.identity.chassis === 'heavy';
-        const torsoH = heavy ? 1.5 : 1.2;
-        add(new THREE.Mesh(new THREE.CapsuleGeometry(heavy ? 0.62 : 0.42, torsoH, 6, 12), bodyMat), 0, 1.15, 0);
-        add(new THREE.Mesh(new THREE.SphereGeometry(heavy ? 0.34 : 0.28, 14, 12), trimMat), 0, heavy ? 2.35 : 2.15, 0);
-        add(new THREE.Mesh(new THREE.BoxGeometry(heavy ? 1.5 : 1.05, 0.22, 0.5), trimMat), 0, heavy ? 1.95 : 1.78, 0); // shoulders
-        energyMesh = add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 10), energyMat), 0, 1.35, heavy ? 0.62 : 0.44);
-        baseY = 0;
-        break;
-      }
-      case 'quadruped': {
-        add(new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1.5, 6, 12), bodyMat), 0, 0.85, 0).rotation.z = Math.PI / 2;
-        add(new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), trimMat), 1.05, 1.05, 0);
-        for (const [lx, lz] of [[-0.6, 0.3], [-0.6, -0.3], [0.6, 0.3], [0.6, -0.3]] as const)
-          add(new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.8, 8), bodyMat), lx, 0.4, lz);
-        energyMesh = add(new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), energyMat), 1.2, 1.12, 0);
-        baseY = 0;
-        break;
-      }
-      case 'floating': {
-        add(new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 14), bodyMat), 0, 1.7, 0);
-        const skirt = add(new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.3, 12, 1, true), trimMat), 0, 0.85, 0);
-        skirt.rotation.x = Math.PI;
-        const ring = add(new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.05, 8, 24), energyMat), 0, 1.0, 0);
-        ring.rotation.x = Math.PI / 2;
-        energyMesh = add(new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), energyMat), 0, 1.7, 0.42);
-        baseY = 0.45;
-        break;
-      }
-    }
-    group.scale.setScalar(s);
     group.position.set(f.x, baseY, f.z);
     group.visible = f.status === 'active';
     this.scene.add(group);
@@ -238,11 +429,13 @@ export class BattleView {
     this.labelLayer.appendChild(label);
 
     this.fighters.set(f.fighterId, {
-      group, body, energy: energyMesh,
+      group, hero, ringMat,
       prev: { x: f.x, z: f.z, alt: f.alt },
       curr: { x: f.x, z: f.z, alt: f.alt },
       lunge: null, flash: 0, ko: 0, label, baseY,
       bobPhase: Math.random() * Math.PI * 2,
+      bobAmp: hero.bobAmp,
+      pose: 'idle', poseT: 0,
     });
   }
 
@@ -273,8 +466,9 @@ export class BattleView {
     // Environment mood.
     const wantDark = this.sim.matchContext.has('darkness') ? 1 : 0;
     this.dark += (wantDark - this.dark) * 0.08;
-    this.hemi.intensity = 1.0 - this.dark * 0.72;
-    this.sun.intensity = 2.2 - this.dark * 1.9;
+    this.hemi.intensity = 0.6 - this.dark * 0.44;
+    this.sun.intensity = 2.0 - this.dark * 1.7;
+    this.rimLight.intensity = 1.15 - this.dark * 0.6;
     (this.scene.background as THREE.Color).setHex(this.dark > 0.5 ? 0x070a14 : 0x0e1526);
 
     // Flood plane.
@@ -295,6 +489,7 @@ export class BattleView {
         const m = this.featureMeshes.get(feat.id)!;
         this.scene.remove(m);
         this.featureMeshes.delete(feat.id);
+        this.spawnRubble(feat); // visible, persistent break state
         this.burst(feat.x, feat.z, 0x8a7a5c, 14);
         this.shake = Math.max(this.shake, 0.5);
       }
@@ -355,6 +550,9 @@ export class BattleView {
           this.ring(cx, cz, ability.radius ?? 4, energyColor.getHex());
           this.shake = Math.max(this.shake, 0.35);
         }
+        // Authored animation-intent grammar → procedural pose atom.
+        actor.pose = poseForIntent(ability?.animationIntent, ability?.kind);
+        actor.poseT = 1;
         this.focusOn(sf.x, sf.z, ability && ability.power >= 30 ? 24 : 10);
         break;
       }
@@ -531,9 +729,19 @@ export class BattleView {
   // Frame loop
   // -------------------------------------------------------------------------
 
+  /** Wall-clock accumulator for the ~60fps render cap. */
+  private renderAccumMs = 0;
+
   frame(dtMs: number, alpha: number) {
     if (this.disposed) return;
-    const dt = Math.min(0.05, dtMs / 1000);
+    // Render cap: the sim ticks at 4 Hz and interpolation reads identically
+    // at 60 fps — drawing at 120 Hz on ProMotion displays is pure heat
+    // (flagged by the perf baseline). Accumulate skipped time so animation
+    // decay stays wall-clock correct.
+    this.renderAccumMs += dtMs;
+    if (this.renderAccumMs < 15.5) return;
+    const dt = Math.min(0.05, this.renderAccumMs / 1000);
+    this.renderAccumMs = 0;
 
     for (const [id, v] of this.fighters) {
       const sf = this.sim.byId(id);
@@ -542,7 +750,7 @@ export class BattleView {
       const z = v.prev.z + (v.curr.z - v.prev.z) * alpha;
       const alt = v.prev.alt + (v.curr.alt - v.prev.alt) * alpha;
       v.bobPhase += dt * 2.2;
-      const bob = this.motion.reducedMotion ? 0 : Math.sin(v.bobPhase) * (alt > 0 ? 0.28 : 0.06);
+      const bob = this.motion.reducedMotion ? 0 : Math.sin(v.bobPhase) * (alt > 0 ? 0.28 : v.bobAmp);
       let lx = 0, lz = 0;
       if (v.lunge) {
         v.lunge.t -= dt * 4;
@@ -555,30 +763,40 @@ export class BattleView {
       }
       if (v.ko > 0 && v.ko < 1) v.ko = Math.min(1, v.ko + dt * 1.6);
       v.group.position.set(x + lx, v.baseY + alt + bob - v.ko * 0.6, z + lz);
-      v.group.rotation.z = -v.ko * Math.PI * 0.45;
+      // KO tilt lives on the hero root; the outer group (team ring) stays level.
+      v.hero.group.rotation.z = -v.ko * Math.PI * 0.45;
       const targetId = sf.currentTargetId;
       const target = targetId ? this.sim.byId(targetId) : null;
       if (target && v.ko === 0) v.group.rotation.y = Math.atan2(target.x - x, target.z - z);
 
-      if (v.flash > 0) {
-        v.flash = Math.max(0, v.flash - dt * 5);
-        for (const m of v.body) {
-          const mat = m.material as THREE.MeshStandardMaterial;
-          mat.emissive.setRGB(v.flash * 0.8, v.flash * 0.15, v.flash * 0.1);
-        }
+      // Procedural pose: ability intents ramp in/out; KO slumps the rig.
+      let pose = v.pose, poseK = 0;
+      if (v.ko > 0) {
+        pose = 'ko';
+        poseK = Math.min(1, v.ko);
+      } else if (v.poseT > 0) {
+        v.poseT = Math.max(0, v.poseT - dt * 1.4);
+        poseK = this.motion.reducedMotion
+          ? (v.poseT > 0 ? 0.7 : 0) // held pose, no animated sweep
+          : Math.sin((1 - v.poseT) * Math.PI);
       }
+      poseHeroMesh(v.hero.rig, poseK > 0 ? pose : 'idle', poseK);
+      if (v.hero.rig.hover && !this.motion.reducedMotion) v.hero.rig.hover.rotation.y += dt * 0.9;
+
+      if (v.flash > 0) v.flash = Math.max(0, v.flash - dt * 5);
+      v.hero.setFlash(v.flash);
       const opacity = sf.stealthed ? 0.3 : 1;
-      for (const m of v.body) {
-        const mat = m.material as THREE.MeshStandardMaterial;
-        mat.transparent = opacity < 1;
-        mat.opacity = opacity;
+      v.hero.setGhost(opacity);
+      v.ringMat.opacity = 0.55 * opacity;
+      if (sf.windup) {
+        v.hero.setEnergyPulse(this.motion.reducedMotion ? 0.8 : 0.5 + Math.sin(v.bobPhase * 6) * 0.5);
+      } else {
+        v.hero.setEnergyPulse(0);
       }
-      if (v.energy && sf.windup) v.energy.scale.setScalar(1.6 + Math.sin(v.bobPhase * 6) * 0.4);
-      else if (v.energy) v.energy.scale.setScalar(1);
 
       // Label + health bar.
       if (v.group.visible && sf.status === 'active') {
-        const pos = new THREE.Vector3(x, v.baseY + alt + 3.1 * sf.dna.identity.scale, z).project(this.camera);
+        const pos = SCRATCH_A.set(x, v.baseY + alt + 3.1 * sf.dna.identity.scale, z).project(this.camera);
         const sx = (pos.x * 0.5 + 0.5) * this.container.clientWidth;
         const sy = (-pos.y * 0.5 + 0.5) * this.container.clientHeight;
         v.label.style.display = pos.z < 1 ? 'block' : 'none';
@@ -595,8 +813,7 @@ export class BattleView {
     this.projectiles = this.projectiles.filter((p) => {
       const t = this.sim.byId(p.targetId);
       if (!t) { this.scene.remove(p.mesh); return false; }
-      const dest = new THREE.Vector3(t.x, 1.6 + t.alt, t.z);
-      const dir = dest.clone().sub(p.mesh.position);
+      const dir = SCRATCH_A.set(t.x, 1.6 + t.alt, t.z).sub(p.mesh.position);
       const dist = dir.length();
       if (dist < 0.8) { this.scene.remove(p.mesh); return false; }
       p.mesh.position.add(dir.normalize().multiplyScalar(Math.min(dist, p.speed * dt)));
@@ -615,7 +832,7 @@ export class BattleView {
     this.floaters = this.floaters.filter((f) => {
       f.age += dt;
       if (f.age > 1.1) { f.div.remove(); return false; }
-      const pos = new THREE.Vector3(f.x, f.y + f.age * 1.6, f.z).project(this.camera);
+      const pos = SCRATCH_A.set(f.x, f.y + f.age * 1.6, f.z).project(this.camera);
       f.div.style.left = `${(pos.x * 0.5 + 0.5) * this.container.clientWidth}px`;
       f.div.style.top = `${(-pos.y * 0.5 + 0.5) * this.container.clientHeight}px`;
       f.div.style.opacity = String(1 - f.age / 1.1);
@@ -647,14 +864,14 @@ export class BattleView {
     let tx = cx * (1 - focusMix) + this.focus.x * focusMix;
     let tz = cz * (1 - focusMix) + this.focus.z * focusMix;
 
-    // Framing bias for corner fights: pull the camera target softly toward
-    // arena center so the walls never fill the frame (render-only).
+    // Framing bias for corner fights: slide the CAMERA toward center so the
+    // walls stay out of frame, but keep the look target ON the fight — a
+    // biased target pushed edge fights to the frame border and made them
+    // read tiny (verified live 2026-08-20).
     const hx = this.sim.arena.sizeX / 2;
     const hz = this.sim.arena.sizeZ / 2;
     const edge = Math.min(1, Math.max(Math.abs(tx) / hx, Math.abs(tz) / hz));
-    const pull = 0.3 * edge * edge;
-    tx *= 1 - pull;
-    tz *= 1 - pull;
+    const pull = 0.25 * edge * edge;
 
     let desired: THREE.Vector3;
     let look: THREE.Vector3;
@@ -663,7 +880,7 @@ export class BattleView {
       look = new THREE.Vector3(0, 0, 0);
     } else {
       const dist = 20 + spread * 1.5 - focusMix * 8;
-      desired = new THREE.Vector3(tx, 14 + spread * 0.8, tz + dist);
+      desired = new THREE.Vector3(tx * (1 - pull), 14 + spread * 0.8, tz * (1 - pull) + dist);
       look = new THREE.Vector3(tx, 1.5, tz);
     }
     this.camera.position.lerp(desired, 0.045);

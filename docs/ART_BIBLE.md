@@ -99,23 +99,36 @@ pillars) is the shipped reference arena.
 
 ## 8. Current visual reality vs target
 
-**Implemented today (honest status):**
+**Implemented today (honest status, updated 2026-08-20 — procedural hero pass, D-023):**
 
-- No 3D art assets exist in this repository. The in-progress web client renders fighters as
-  **stylized procedural chassis primitives** (parameterized by chassis type — humanoid /
-  heavy / quadruped / floating — plus scale and the DNA presentation colors). This is a
-  deliberate placeholder that proves the data pipeline: silhouette class, palette, and
-  animation intents all flow from content files.
-- Arena rendering is similarly schematic: floor plane, feature markers, destructibility state.
-- All direction in §1–§7 is the target; none of it should be described as shipped visuals.
+- Still no authored 3D art assets — but the client now renders **sculpted procedural hero
+  meshes** (`apps/web/src/battle/heroMeshes.ts`): four authored chassis silhouettes
+  (humanoid ~6.5-head heroic stance / bulked heavy / predatory quadruped / hovering
+  floating with ring + shards), deterministic per-fighter variation (proportions, head
+  variants, 1–2 accessories hashed from fighterId), stylized-PBR materials with rim-light
+  shells, all palette-driven from each DNA's presentation block.
+- **Collectible-pedestal draft presentation is live**: turntable pedestal viewer in the
+  inspect drawer with role-colored ring inlay, angular name plate, hexagonal role icon
+  chip; the §3 role color language + 8 inline SVG role glyphs ship on draft/prep cards
+  (`roleTheme.ts`; color always paired with icon per §4).
+- **Meridian Plaza renders as a diorama**: procedural canvas plaza tiling, recessed
+  fountain basin, fluted destructible columns that break to rubble, apron dressing,
+  cool-key/warm-rim collectible lighting tuned to the §4 readability floor.
+- Poses are 4 procedural blend atoms (attack/cast/guard/KO) driven by `animationIntent`.
+  This is still procedural placeholder art in the §8 sense — it respects silhouette, role
+  color, and readability rules, but §1–§7's "collectible statue" bar requires modeled
+  characters.
 
-**Path to target (Planned, phased):**
+**Path to target (updated):**
 
-1. Placeholder chassis primitives (current).
-2. Authored animation-atom grammar mapped to `animationIntent` hints (partially in data now).
-3. Stylized modeled characters for the Season 0 roster — production approach (hand-modeled vs
-   3D-generation bake-off) is a Founder Gate because candidate tools may cost money.
-4. Diorama arena art pass and collectible-pedestal draft presentation.
+1. ~~Placeholder chassis primitives~~ → **sculpted procedural heroes + pedestal
+   presentation + diorama arena (shipped 2026-08-20)**.
+2. Authored animation-atom grammar mapped to `animationIntent` hints (4 blend atoms
+   shipped; per-intent unique animations remain).
+3. Stylized modeled characters for the Season 0 roster — production approach (hand-modeled
+   vs 3D-generation bake-off) is a Founder Gate; decision brief prepared at
+   `docs/proposals/3d-generation-bakeoff-proposal.md` ($0 spent, awaiting Founder).
+4. Full diorama arena art pass beyond Meridian Plaza + realm-portal presentation.
 
 **Placeholder rule:** placeholder visuals must still respect silhouette, role color, and
 readability rules so playtests measure the real game, not the missing art.

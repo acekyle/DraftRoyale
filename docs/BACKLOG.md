@@ -97,8 +97,12 @@ Phase 2 remainder (online layer — not started):
 - [x] Moderation basics live (D-021): reporting + rate caps, client-side blocking,
       `npm run moderation` review queue, append-only audit log. Deferred until accounts
       exist: enforcement (kick/ban), person-level blocks, reviewer RBAC — see ledger
-- [ ] Performance baseline measured on reference hardware (720p30 integrated /
-      1080p60 recommended; load budgets) — no performance claims before this
+- [~] Performance baseline: repeatable harness (`npm run perf`) + first measured
+      baseline recorded in docs/PERF_BASELINE.md (M1 Pro: vsync-limited at both
+      720p and 1080p, 242 KB gzip bundle, ~11 MB heap). Gate line stays OPEN —
+      the 720p30 integrated-graphics floor still needs a representative low-end
+      machine (listed in the doc). Cheap wins identified: frame cap for the 4 Hz
+      sim, DPR raster cost, per-frame vector allocations
 - [x] Session-integrity hardening: room/guest tokens, rate limits, payload caps
       (ADR-0006)
 
@@ -186,7 +190,20 @@ wildcard factors, transcript) → champion record → run-it-back restart. Polis
       seats report; funnel dedupes per room)
 - [x] [analytics] Online nominations emit `custom_correction`/`fighter_approved`
 
-### Rev-2 + cap-lock wave — landed 2026-08-20 (same day, second wave)
+## Hero visuals + Phase-4 closeout wave — landed 2026-08-20 (third wave)
+
+- [x] [frontend] **Procedural hero pass** (D-023): sculpted chassis silhouettes, pedestal
+      draft presentation with role rings/plates, role color+icon language, Meridian Plaza
+      diorama, pose atoms — Art Bible §8 step 1→2; free path; modeled characters remain
+      behind the 3D bake-off Founder Gate (proposal ready in docs/proposals/)
+- [x] [frontend] Camera framing bias corrected (position-biased, target stays on the
+      fight); 60 fps render cap; frame-loop allocation cleanup (perf baseline offsets)
+- [x] [qa] Perf baseline harness `npm run perf` + docs/PERF_BASELINE.md (gate line stays
+      open pending reference low-end hardware)
+- [x] [moderation] Reporting/blocking/queue/audit (D-021) + online draft void backstop
+      (D-022), protocol 0.3.0
+
+### Rev-2 + cap-lock wave — landed 2026-08-20 (second wave)
 - [x] [multiplayer] Protocol rev-2 (0.2.0): typed `room_closed`, `battle_wildcard` carries
       a validated `wildcardId`, declined nominations keep the nomination right (D-019)
 - [x] [gameplay] **Cap-lock guard** (D-020): live repro found the AI (and any player)

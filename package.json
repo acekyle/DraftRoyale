@@ -18,9 +18,11 @@
     "validate": "tsx tools/validate-content.ts",
     "server": "tsx services/control-plane/src/main.ts",
     "funnel": "tsx tools/funnel-report.ts",
+    "moderation": "tsx tools/moderation-queue.ts",
     "variety": "tsx tools/variety.ts",
     "compiler:smoke": "tsx tools/llm-smoke.ts",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "perf": "PERF=1 playwright test --config=playwright.perf.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

@@ -1,0 +1,80 @@
+/* Hero presentation layer — pedestal viewer, name plates, role identity.
+   Owned by the client visual workstream; styles.css is owned by another
+   workstream and is only *extended* here, never overridden destructively. */
+
+/* ---- Pedestal viewer (inspect drawer) ---- */
+.hero-stage {
+  position: relative;
+  height: 320px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  border: 1px solid var(--line-bright);
+  background:
+    radial-gradient(120% 90% at 50% 8%, #223052 0%, #10162a 55%, #070a13 100%);
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+}
+.hero-stage canvas { display: block; width: 100%; height: 100%; }
+.hero-stage .stage-fallback {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.hero-stage .stage-fallback .silhouette { width: 92px; height: 132px; }
+
+/* ---- Collectible name plate ---- */
+.name-plate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, #171e33, #0c1120);
+  border: 1px solid var(--line-bright);
+  border-left: 3px solid var(--role, var(--gold));
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+.name-plate .hex-chip { width: 36px; height: 36px; flex: none; filter: drop-shadow(0 0 7px var(--role, transparent)); }
+.name-plate .plate-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.name-plate .plate-role {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--role, var(--text-dim));
+  margin-top: 2px;
+}
+
+/* ---- Role iconography (color never alone: icon + text always paired) ---- */
+.role-icon {
+  width: 11px;
+  height: 11px;
+  vertical-align: -1px;
+  margin-right: 4px;
+  color: var(--accent, currentColor);
+  flex: none;
+}
+.role-badge .role-icon { color: var(--accent, #8892aa); }
+
+/* ---- Card role identity ---- */
+.fighter-card.role-edged::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--role, transparent), transparent 85%);
+  opacity: 0.95;
+  pointer-events: none;
+}
+/* Selected roster cards glow in their role color (reference roster strip). */
+.fighter-card.role-glow.selected {
+  border-color: var(--role, var(--gold));
+  box-shadow: 0 0 0 1px var(--role, var(--gold)), 0 0 22px var(--role-glow, var(--gold-soft));
+}

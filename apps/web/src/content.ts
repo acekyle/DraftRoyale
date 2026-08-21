@@ -32,16 +32,9 @@ export const ARENA: ArenaDef = ARENAS.find((a) => a.arenaId === 'meridian-plaza'
 
 export const SIM_CONTENT: SimContent = { fighters: DNA_BY_ID, wildcards: WILDCARD_BY_ID, arena: ARENA };
 
-export const ROLE_COLORS: Record<string, string> = {
-  vanguard: '#e8a41f',
-  defender: '#4a7bd0',
-  bruiser: '#e0524a',
-  skirmisher: '#3ecfb2',
-  artillery: '#f57a3c',
-  controller: '#9b6ef3',
-  support: '#58c470',
-  tactician: '#e8d44f',
-};
+// Role colors now live in roleTheme.ts (Art Bible §3 families, shared with
+// role icons and pedestal name plates); re-exported to keep existing imports.
+export { ROLE_COLORS } from './roleTheme';
 
 export function displayName(fighterId: string): string {
   return FILE_BY_ID.get(fighterId)?.contract.identity.displayName ?? fighterId;

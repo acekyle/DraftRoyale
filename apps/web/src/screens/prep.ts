@@ -2,6 +2,7 @@ import type { FormationId, ReinforcementTrigger, TeamSetup } from '@arena/contra
 import { computeTeamReadout, createRng } from '@arena/combat-sim';
 import { ARENA, DNA_BY_ID, FILE_BY_ID } from '../content';
 import { aiPrep } from '../opponentAI';
+import { roleColor, roleIcon } from '../roleTheme';
 import { go, state, track, type PrepState } from '../state';
 import { el, esc, interstitial, mount, q, qa, topbar } from '../ui';
 
@@ -93,10 +94,16 @@ function renderFor(pid: 'p1' | 'p2') {
                 const f = FILE_BY_ID.get(id)!;
                 const active = prep.activeFighterIds.includes(id);
                 const captain = prep.captainId === id;
+                const role = f.dna.identity.role;
+                const rc = roleColor(role);
                 return `
-                <div class="fighter-card ${active ? 'selected' : ''}" data-id="${esc(id)}" style="--accent:${esc(f.dna.presentation.primaryColor)}">
+                <div class="fighter-card role-edged role-glow ${active ? 'selected' : ''}" data-id="${esc(id)}"
+                  style="--accent:${esc(f.dna.presentation.primaryColor)};--role:${rc};--role-glow:${rc}55">
                   <div class="name">${captain ? '★ ' : ''}${esc(f.contract.identity.displayName)}</div>
-                  <div class="meta"><span>${esc(f.dna.identity.role)}</span><span>${active ? 'ACTIVE' : 'RESERVE'}</span></div>
+                  <div class="meta">
+                    <span class="role-badge" style="--accent:${rc}">${roleIcon(role)}<span>${esc(role)}</span></span>
+                    <span>${active ? 'ACTIVE' : 'RESERVE'}</span>
+                  </div>
                   <button class="small mt" data-captain="${esc(id)}">Make captain</button>
                 </div>`;
               }).join('')}
