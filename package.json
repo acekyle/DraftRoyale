@@ -24,7 +24,9 @@
     "bakeoff": "tsx tools/bakeoff/run.ts",
     "bakeoff:sheets": "node tools/bakeoff/concept-sheets.mjs",
     "e2e": "playwright test",
-    "perf": "PERF=1 playwright test --config=playwright.perf.config.ts"
+    "perf": "PERF=1 playwright test --config=playwright.perf.config.ts",
+    "heroforge": "tsx tools/heroforge/run.ts",
+    "heroforge:promote": "tsx tools/heroforge/promote.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

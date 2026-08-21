@@ -12,3 +12,4 @@ coverage/
 .vite/
 *.tsbuildinfo
 /out/
+tools/heroforge/results/

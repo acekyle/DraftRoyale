@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import type { CombatDNA } from '@arena/contracts';
 import { buildHeroMesh } from './battle/heroMeshes';
+import { loadHeroModel } from './heroModels';
 import { roleColor } from './roleTheme';
 import { loadSettings } from './settings';
 
@@ -123,6 +124,29 @@ export function mountPedestal(host: HTMLElement, dna: CombatDNA): PedestalPrevie
   st.heroSlot.add(hero.group);
   st.heroSlot.rotation.y = -0.5; // three-quarter hero angle at rest
 
+  // Generated statue (Season-0 production pass): swap in asynchronously when
+  // published for this fighter; the procedural hero stays if none arrives.
+  let statueBounds: THREE.Box3 | null = null;
+  let statueFit = 1;
+  let statue: THREE.Group | null = null;
+  void loadHeroModel(dna.identity.fighterId).then((model) => {
+    if (!model || gen !== generation || !st.renderer.domElement.isConnected) return;
+    const b = new THREE.Box3().setFromObject(model);
+    const s = b.getSize(new THREE.Vector3());
+    const f = Math.min(
+      1.15,
+      2.35 / Math.max(0.001, s.y),
+      2.1 / Math.max(0.001, s.x, s.z),
+    );
+    model.scale.setScalar(f);
+    model.position.y = -b.min.y * f;
+    st.heroSlot.clear();
+    st.heroSlot.add(model);
+    statue = model;
+    statueBounds = b;
+    statueFit = f;
+  });
+
   // Role-color the ring inlay + under-glow.
   const rc = new THREE.Color(roleColor(dna.identity.role));
   st.ringMat.color.copy(rc);
@@ -149,10 +173,14 @@ export function mountPedestal(host: HTMLElement, dna: CombatDNA): PedestalPrevie
     last = now;
     if (!reduced) {
       st.heroSlot.rotation.y += dt * 0.55; // slow turntable
-      if (hero.rig.hover) hero.rig.hover.rotation.y -= dt * 0.8;
+      if (!statue && hero.rig.hover) hero.rig.hover.rotation.y -= dt * 0.8;
       if (dna.identity.chassis === 'floating') {
         bobT += dt * 2;
-        hero.group.position.y = -bounds.min.y * fit + hero.baseY * fit + Math.sin(bobT) * 0.05;
+        if (statue && statueBounds) {
+          statue.position.y = -statueBounds.min.y * statueFit + Math.sin(bobT) * 0.05;
+        } else {
+          hero.group.position.y = -bounds.min.y * fit + hero.baseY * fit + Math.sin(bobT) * 0.05;
+        }
       }
     }
     st.renderer.render(st.scene, st.camera);
