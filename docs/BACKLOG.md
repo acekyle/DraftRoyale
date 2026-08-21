@@ -256,7 +256,7 @@ lean-into-travel with flight banking (superhero flight read), lunge lean,
 hit recoil, KO hop + eased slump, damage-type projectiles (fireballs/
 beams/bolts/wavefronts/tracers).
 
-**Tier 2 — procedural physics polish (next free work):** impact debris and
+**Tier 2 — procedural physics polish (SHIPPED 2026-08-21, same session):** impact debris and
 ground scorch decals per damage type, knock-down vs knock-back distinction
 for heavy hits (brief floor bounce before recovery), landing dust + takeoff
 crouch-spring for fliers on the 0.3.0 duty cycle, cloth-like lag on capes/

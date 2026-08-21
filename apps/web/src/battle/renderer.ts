@@ -43,6 +43,15 @@ interface FighterVisual {
   /** Smoothed velocity for the athletic movement lean. */
   velX: number;
   velZ: number;
+  /** Heavy-hit knock-down: 0 = none, then 0→1 fall / floor / get-up arc. */
+  knockdown: number;
+  /** Landing/takeoff squash-and-spring (1 → 0). */
+  squash: number;
+  /** Rendered altitude last frame — detects flier landings/takeoffs. */
+  lastAlt: number;
+  /** Smoothed yaw rate — head/tail secondary-motion lag. */
+  yawRate: number;
+  lastYaw: number;
 }
 
 interface Vfx {
@@ -459,6 +468,7 @@ export class BattleView {
       bobAmp: hero.bobAmp,
       pose: 'idle', poseT: 0,
       shudder: 0, lastX: f.x, lastZ: f.z, velX: 0, velZ: 0,
+      knockdown: 0, squash: 0, lastAlt: f.alt, yawRate: 0, lastYaw: 0,
     });
   }
 
@@ -566,12 +576,16 @@ export class BattleView {
         if (ability?.kind === 'melee' && target) {
           const d = Math.hypot(target.x - sf.x, target.z - sf.z) || 1;
           actor.lunge = { dx: ((target.x - sf.x) / d) * 1.2, dz: ((target.z - sf.z) / d) * 1.2, t: 1 };
+          this.swingTrail(sf, target, energyColor);
         } else if ((ability?.kind === 'ranged' || ability?.kind === 'control') && target) {
           if (ability.damageType === 'energy') this.spawnBeam(sf, target, energyColor);
           else this.spawnProjectile(sf, target.fighterId, energyColor, ability.damageType);
         } else if (ability?.kind === 'area') {
           const cx = target?.x ?? sf.x, cz = target?.z ?? sf.z;
           this.ring(cx, cz, ability.radius ?? 4, energyColor.getHex());
+          // Area strikes mark the ground: burns burn, the rest glows.
+          if (ability.damageType === 'thermal') this.scorch(cx, cz, 0x120a05, Math.min(2.4, (ability.radius ?? 4) * 0.5), false);
+          else this.scorch(cx, cz, energyColor.getHex(), Math.min(2, (ability.radius ?? 4) * 0.4));
           this.shake = Math.max(this.shake, 0.35);
         }
         // Authored animation-intent grammar → procedural pose atom.
@@ -600,6 +614,16 @@ export class BattleView {
               const d = Math.hypot(vf.x - attacker.x, vf.z - attacker.z) || 1;
               const mag = Math.min(0.65, 0.22 + amount * 0.011);
               victim.lunge = { dx: ((vf.x - attacker.x) / d) * mag, dz: ((vf.z - attacker.z) / d) * mag, t: 0.65 };
+            }
+            // Heavy physical hits FLOOR an unguarded grounded fighter: fall,
+            // floor beat, get back up (knock-down vs mere knock-back).
+            if (
+              amount >= 28 && (dtype === 'kinetic' || dtype === 'thermal') &&
+              !vf.guarding && vf.alt === 0 && victim.knockdown === 0 && victim.ko === 0 &&
+              !this.motion.reducedMotion
+            ) {
+              victim.knockdown = 0.001;
+              this.dust(vf.x, vf.z, 7);
             }
           }
           if (amount >= 25) {
@@ -762,6 +786,7 @@ export class BattleView {
       },
     });
     this.burst(to.x, to.z, color.getHex(), 8);
+    this.scorch(to.x, to.z, color.getHex(), 0.9); // glowing beam residue
     this.shake = Math.max(this.shake, 0.25);
   }
 
@@ -799,6 +824,74 @@ export class BattleView {
         const k = v.age / v.ttl;
         v.mesh.scale.setScalar(1 + k * radius * 1.8);
         (v.mesh as THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>).material.opacity = 0.9 * (1 - k);
+      },
+    });
+  }
+
+  /** Ground scorch/residue decals, capped so long matches never accumulate. */
+  private decals: { mesh: THREE.Mesh; mat: THREE.MeshBasicMaterial; base: number; ttl: number; age: number }[] = [];
+  private scorch(x: number, z: number, color: number, radius: number, additive = true) {
+    if (this.motion.reducedMotion) return;
+    // additive = glowing residue (energy/psychic); normal = dark burn/stain.
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: additive ? 0.4 : 0.55, depthWrite: false,
+      blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    });
+    const mesh = new THREE.Mesh(new THREE.CircleGeometry(radius, 20), mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(x, 0.05 + this.decals.length * 0.0005, z); // tiny y-stagger avoids z-fighting
+    this.scene.add(mesh);
+    this.decals.push({ mesh, mat, base: mat.opacity, ttl: 9, age: 0 });
+    if (this.decals.length > 20) {
+      const old = this.decals.shift()!;
+      this.scene.remove(old.mesh);
+    }
+  }
+
+  /** Soft grey dust ring — landings, knock-downs, ground scrapes. */
+  private dust(x: number, z: number, count: number) {
+    if (this.motion.reducedMotion) return;
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+      const mat = new THREE.MeshBasicMaterial({ color: 0x9a917f, transparent: true, opacity: 0.5, depthWrite: false });
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.16 + Math.random() * 0.1, 6, 6), mat);
+      mesh.position.set(x + Math.cos(a) * 0.4, 0.25, z + Math.sin(a) * 0.4);
+      const vx = Math.cos(a) * (2.2 + Math.random() * 1.4), vz = Math.sin(a) * (2.2 + Math.random() * 1.4);
+      this.scene.add(mesh);
+      this.vfx.push({
+        mesh, ttl: 0.55, age: 0,
+        update: (v, dt) => {
+          v.mesh.position.x += vx * dt * (1 - v.age / v.ttl);
+          v.mesh.position.z += vz * dt * (1 - v.age / v.ttl);
+          v.mesh.position.y += dt * 0.5;
+          const fade = 1 - v.age / v.ttl;
+          mat.opacity = 0.5 * fade;
+          v.mesh.scale.setScalar(1 + v.age * 2.4);
+        },
+      });
+    }
+  }
+
+  /** Sweeping arc trail for melee swings, in the attacker's energy color. */
+  private swingTrail(from: FighterRt, to: FighterRt, color: THREE.Color) {
+    if (this.motion.reducedMotion) return;
+    const yaw = Math.atan2(to.x - from.x, to.z - from.z);
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: 0.75, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    // Partial ring ≈ the blade's sweep plane, tilted like a diagonal slash.
+    const mesh = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.7, 24, 1, 0, Math.PI * 0.75), mat);
+    mesh.position.set(from.x, 1.5 + from.alt, from.z);
+    mesh.rotation.set(-0.9, yaw, 0.5, 'YXZ');
+    this.scene.add(mesh);
+    this.vfx.push({
+      mesh, ttl: 0.22, age: 0,
+      update: (v) => {
+        const k = v.age / v.ttl;
+        mat.opacity = 0.75 * (1 - k);
+        v.mesh.rotation.z = 0.5 - k * 1.6; // the arc sweeps through the slash
+        v.mesh.scale.setScalar(1 + k * 0.35);
       },
     });
   }
@@ -915,6 +1008,17 @@ export class BattleView {
       // (the old linear tip-over looked like a toy being laid down).
       const koEase = v.ko * v.ko * (3 - 2 * v.ko);
       const koHop = this.motion.reducedMotion ? 0 : Math.sin(Math.min(1, v.ko * 2.4) * Math.PI) * 0.5 * (1 - koEase);
+      // Knock-down arc: fast fall onto the back, a beat on the floor, get up.
+      const sstep = (t: number) => { const c = THREE.MathUtils.clamp(t, 0, 1); return c * c * (3 - 2 * c); };
+      let kdFall = 0;
+      if (v.knockdown > 0 && v.ko === 0) {
+        v.knockdown = Math.min(1, v.knockdown + dt / 1.15);
+        const kd = v.knockdown;
+        kdFall = kd < 0.3 ? sstep(kd / 0.3) : kd < 0.55 ? 1 : 1 - sstep((kd - 0.55) / 0.45);
+        if (kd >= 1) v.knockdown = 0;
+      }
+      const kdRot = -1.3 * kdFall;
+      const kdDrop = 0.55 * kdFall;
       // Sonic shudder: brief whole-figure vibration.
       let sx = 0, sz = 0;
       if (v.shudder > 0) {
@@ -924,7 +1028,17 @@ export class BattleView {
           sz = (Math.random() - 0.5) * v.shudder * 0.16;
         }
       }
-      v.group.position.set(x + lx + sx, v.baseY + alt + bob + koHop - koEase * 0.6, z + lz + sz);
+      // Flier landing/takeoff: dust on touchdown, squash-spring both ways.
+      if (!this.motion.reducedMotion && v.ko === 0) {
+        if (v.lastAlt > 1.2 && alt < 0.6) { this.dust(x, z, 8); v.squash = 1; }
+        else if (v.lastAlt < 0.6 && alt > 1.2) v.squash = 1;
+      }
+      v.lastAlt = alt;
+      if (v.squash > 0) v.squash = Math.max(0, v.squash - dt * 2.2);
+      const squashK = Math.sin(v.squash * Math.PI) * 0.14;
+      v.hero.group.scale.set(1 + squashK * 0.5, 1 - squashK, 1 + squashK * 0.5);
+
+      v.group.position.set(x + lx + sx, v.baseY + alt + bob + koHop - koEase * 0.6 - kdDrop, z + lz + sz);
       // Athletic movement lean: pitch into travel, bank into turns — fliers
       // hardest (superhero flight), grounded fighters subtly.
       const instVx = (x - v.lastX) / dt, instVz = (z - v.lastZ) / dt;
@@ -955,6 +1069,9 @@ export class BattleView {
       if (v.ko > 0) {
         pose = 'ko';
         poseK = Math.min(1, v.ko);
+      } else if (kdFall > 0) {
+        pose = 'ko'; // prone slump while floored by a knock-down
+        poseK = kdFall;
       } else if (v.poseT > 0) {
         v.poseT = Math.max(0, v.poseT - dt * 1.4);
         if (this.motion.reducedMotion) {
@@ -976,8 +1093,28 @@ export class BattleView {
         if (rig.armR) rig.armR.rotation.z -= br * 0.035;
         if (rig.head) rig.head.rotation.y += Math.sin(v.bobPhase * 0.33) * 0.07;
       }
-      // Lean into melee lunges and travel instead of gliding rigidly.
-      v.hero.group.rotation.x = lungeK * 0.16 + pitchLean;
+      // Secondary motion: head and tail lag behind turns, tails trail speed —
+      // cloth-and-mass follow-through on the existing joints.
+      {
+        const yaw = v.group.rotation.y;
+        let dYaw = yaw - v.lastYaw;
+        dYaw = Math.atan2(Math.sin(dYaw), Math.cos(dYaw));
+        v.lastYaw = yaw;
+        v.yawRate += (dYaw / Math.max(dt, 1e-4) - v.yawRate) * Math.min(1, dt * 6);
+        if (v.ko === 0 && kdFall === 0 && !this.motion.reducedMotion) {
+          const rig = v.hero.rig;
+          const lag = THREE.MathUtils.clamp(v.yawRate * 0.1, -0.35, 0.35);
+          if (rig.head) rig.head.rotation.y -= lag * 0.45;
+          if (rig.tail) {
+            rig.tail.rotation.y -= lag * 1.5;
+            const speedMag = Math.hypot(v.velX, v.velZ);
+            rig.tail.rotation.x += Math.min(0.45, speedMag * 0.055); // streams out at speed
+          }
+        }
+      }
+      // Lean into melee lunges and travel instead of gliding rigidly;
+      // a knock-down rotation overrides the athletic lean while floored.
+      v.hero.group.rotation.x = kdFall > 0 ? kdRot : lungeK * 0.16 + pitchLean;
       if (v.hero.rig.hover && !this.motion.reducedMotion) v.hero.rig.hover.rotation.y += dt * 0.9;
 
       if (v.flash > 0) v.flash = Math.max(0, v.flash - dt * 5);
@@ -1013,11 +1150,19 @@ export class BattleView {
       const dir = SCRATCH_A.set(t.x, 1.6 + t.alt, t.z).sub(p.mesh.position);
       const dist = dir.length();
       if (dist < 0.8) {
-        // Impact reads by type: fireballs detonate, the rest spark.
+        // Impact reads by type: fireballs detonate and scorch, toxic stains,
+        // psychic leaves glow residue, the rest spark.
         if (p.kind === 'fireball') {
           this.burst(t.x, t.z, p.color.getHex(), 18);
           this.ring(t.x, t.z, 2.2, p.color.getHex());
+          this.scorch(t.x, t.z, 0x120a05, 1.5, false); // burnt ground
           this.shake = Math.max(this.shake, 0.45);
+        } else if (p.kind === 'toxic') {
+          this.burst(t.x, t.z, p.color.getHex(), 5);
+          this.scorch(t.x, t.z, 0x1c3312, 1.1, false); // lingering puddle
+        } else if (p.kind === 'psychic') {
+          this.burst(t.x, t.z, p.color.getHex(), 6);
+          this.scorch(t.x, t.z, p.color.getHex(), 0.8);
         } else if (p.kind !== 'sonic') {
           this.burst(t.x, t.z, p.color.getHex(), 6);
         }
@@ -1054,6 +1199,14 @@ export class BattleView {
       v.age += dt;
       if (v.age >= v.ttl) { this.scene.remove(v.mesh); return false; }
       v.update(v, dt);
+      return true;
+    });
+
+    // Ground decals fade slowly and are hard-capped at spawn.
+    this.decals = this.decals.filter((d) => {
+      d.age += dt;
+      if (d.age >= d.ttl) { this.scene.remove(d.mesh); return false; }
+      d.mat.opacity = d.base * (1 - d.age / d.ttl);
       return true;
     });
 
