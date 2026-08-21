@@ -159,7 +159,14 @@
       "semanticRevisionCount": 0,
       "visualRevisionCount": 0,
       "eligibility": "ranked_eligible"
-    }
+    },
+    "knownIssues": [
+      {
+        "id": "grimspike-s0-correction-2",
+        "date": "2026-08-21",
+        "note": "Season-0 correction (D-027): boulder-hurl gains a 1 s wind-up (interruptible via stability break) and a longer cooldown. Root cause: a 16-range no-telegraph answer on a 420-vitality chassis removed every approach cost the rest of the roster pays; he held >62% in every schedule of every battery (66.9-71.3%) through bulk nerfs, healing damp, the 0.3.0 approach/flight rebalance, and a +20% price override."
+      }
+    ]
   },
   "dna": {
     "schemaVersion": "0.1.0",
@@ -264,15 +271,15 @@
             "resource": "stamina",
             "amount": 14
           },
-          "cooldownTicks": 36,
-          "windupTicks": 2,
+          "cooldownTicks": 44,
+          "windupTicks": 4,
           "tags": [
             "stone",
             "kinetic",
             "projectile"
           ],
           "animationIntent": "boulder_throw",
-          "description": "He tears a piece off himself — or the street, whichever is closer — and mails it downrange."
+          "description": "He tears a piece off himself — or the street, whichever is closer — and mails it downrange. Geology telegraphs: the wind-up is long enough to see coming, and breaking his stability mid-throw stops it."
         },
         {
           "id": "crystal-bulwark",
@@ -477,9 +484,9 @@
       "versatilityScore": 86,
       "reliabilityScore": 80,
       "counterabilityScore": 50,
-      "draftPrice": 37500000,
+      "draftPrice": 45000000,
       "priceVersion": "S0",
-      "priceRationale": "elite raw combat output, broad kit versatility, dependable in any conditions increased the price; serious exploitable weaknesses reduced it. Scores — capability 67, versatility 86, reliability 80, counterability 50."
+      "priceRationale": "Reviewer override +$7.5M (D-027): stat-bulk endurance (420 vitality, shield, 16-range answer to every approach) is undervalued by pricing formula v1; the only fighter to hold >62% in every schedule of every battery ever run (66.9% baseline, 69.1% after the 0.3.0 approach/flight rebalance). Price-integrated evidence: the win rates that flagged him already include his old price in team construction. Formula baseline: elite raw combat output, broad kit versatility, dependable in any conditions increased the price; serious exploitable weaknesses reduced it. Scores — capability 67, versatility 86, reliability 80, counterability 50."
     },
     "presentation": {
       "primaryColor": "#6b6f76",

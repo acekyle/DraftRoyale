@@ -61,6 +61,8 @@ export interface FighterRt {
     | { mode: 'hold' };
   guarding: boolean;
   stealthed: boolean;
+  /** Tick on which this fighter broke stealth by attacking (ambush window). */
+  ambushTick: number | null;
   lastCombatTick: number;
   recentAbilities: string[];
   currentTargetId: string | null;
@@ -230,6 +232,7 @@ export class MatchSim {
           moveIntent: { mode: 'hold' },
           guarding: false,
           stealthed: stealthy,
+          ambushTick: null,
           lastCombatTick: 0,
           recentAbilities: [],
           currentTargetId: null,
@@ -585,7 +588,18 @@ export class MatchSim {
   private tickResources() {
     for (const f of this.fighters) {
       if (f.status !== 'active') continue;
-      f.stamina = Math.min(f.dna.resources.stamina, f.stamina + f.dna.resources.staminaRegenPerTick);
+      // Flight upkeep (ruleset 0.3.0): no catching your breath in the air —
+      // airborne stamina drains instead of regenerating; a drained flier is
+      // forced into a grounded recovery window (melee can finally answer).
+      if (this.ruleset.flightStaminaUpkeep > 0 && f.alt > 0) {
+        f.stamina -= this.ruleset.flightStaminaUpkeep;
+        if (f.stamina <= 0) {
+          f.stamina = 0;
+          this.applyCondition(f, { kind: 'grounded', magnitude: 0, durationTicks: 24 }, 'flight-fatigue', false);
+        }
+      } else {
+        f.stamina = Math.min(f.dna.resources.stamina, f.stamina + f.dna.resources.staminaRegenPerTick);
+      }
       if (!this.hasCondition(f, 'stagger') && !this.hasCondition(f, 'stun'))
         f.stability = Math.min(f.dna.resources.stability, f.stability + f.dna.attributes.recovery * 0.12);
       const spec = f.dna.resources.primary;
@@ -933,6 +947,25 @@ export class MatchSim {
     });
   }
 
+  /**
+   * Static maximum offensive reach of a fighter's whole kit (cooldowns and
+   * suppression ignored — deterministic and stable across a match). Drives
+   * the approach guard: beyond this distance the fighter cannot answer back.
+   */
+  private kitRangeCache = new Map<string, number>();
+  private kitMaxRange(f: FighterRt): number {
+    let r = this.kitRangeCache.get(f.fighterId);
+    if (r === undefined) {
+      const caps = f.dna.capabilities;
+      r = 0;
+      for (const a of [...caps.foundational, ...caps.signature, ...caps.contextual, caps.escalation]) {
+        if ((a.kind === 'melee' || a.kind === 'ranged' || a.kind === 'area') && a.range > r) r = a.range;
+      }
+      this.kitRangeCache.set(f.fighterId, r);
+    }
+    return r;
+  }
+
   private bestAttackRange(f: FighterRt, suppressed: Set<string>): number {
     const offensive = this.usableAbilities(f, suppressed).filter((a) => a.kind === 'melee' || a.kind === 'ranged' || a.kind === 'area');
     if (offensive.length === 0) return MELEE_RANGE;
@@ -1065,6 +1098,9 @@ export class MatchSim {
     }
     if (f.stealthed && a.kind !== 'movement') {
       f.stealthed = false;
+      // Strike from the dark (ruleset 0.3.0): this resolution's hits are an
+      // ambush for stealth_field fighters (applyHit reads the tick marker).
+      f.ambushTick = this.tick;
     }
     f.lastCombatTick = this.tick;
 
@@ -1160,6 +1196,14 @@ export class MatchSim {
     for (const c of f.conditions) if (c.kind === 'empower') empower *= 1 + c.magnitude;
     let raw = a.power * (0.7 + f.dna.attributes.forceOutput * 0.06) * empower * this.escalationMult * f.envDamageMult * f.synergyDamageMult;
 
+    // Strike from the dark (ruleset 0.3.0): a stealth_field fighter's hits on
+    // the resolution that broke stealth land as an ambush.
+    const ambush =
+      this.ruleset.stealthAmbushBonus > 0 &&
+      f.ambushTick === this.tick &&
+      f.dna.capabilities.passives.some((p) => p.kind === 'stealth_field' && !this.passiveSuppressed(f, p.tags));
+    if (ambush) raw *= 1 + this.ruleset.stealthAmbushBonus;
+
     // resistances
     let resist = 1;
     if (a.damageType) {
@@ -1196,6 +1240,20 @@ export class MatchSim {
     // cover vs ranged
     if ((a.kind === 'ranged' || a.kind === 'area') && this.distTo(f, v) > 6 && this.nearIntactCover(v)) taken *= 0.75;
 
+    // approach guard (ruleset 0.3.0): a fighter closing on the enemy while
+    // out-gunned — attacker beyond the fighter's own maximum kit range —
+    // takes reduced ranged/area fire (the melee approach-tax counterweight)
+    let approachGuarded = false;
+    if (
+      this.ruleset.approachGuardReduction > 0 &&
+      (a.kind === 'ranged' || a.kind === 'area') &&
+      v.moveIntent.mode === 'approach' &&
+      this.distTo(f, v) > this.kitMaxRange(v)
+    ) {
+      taken *= 1 - this.ruleset.approachGuardReduction;
+      approachGuarded = true;
+    }
+
     let final = raw * resist * weaknessMult * taken;
     let stabilityDmg = final * 0.5;
     if (v.guarding) {
@@ -1223,6 +1281,8 @@ export class MatchSim {
     const cmd = this.commandFor(f);
     if (cmd) cmd.damageDuring += final;
 
+    // approachGuarded only exists when the guard fired — pre-0.3.0 manifests
+    // (guard reduction 0) must replay to byte-identical events and hashes.
     this.emit('DAMAGE_APPLIED', {
       attacker: f.fighterId,
       target: v.fighterId,
@@ -1230,6 +1290,8 @@ export class MatchSim {
       amount: Math.round(final),
       damageType: a.damageType,
       guarded: v.guarding,
+      ...(approachGuarded ? { approachGuarded: true } : {}),
+      ...(ambush ? { ambush: true } : {}),
     });
 
     for (const e of a.effects ?? []) this.applyCondition(v, e, f.fighterId, false);
@@ -1382,9 +1444,13 @@ export class MatchSim {
   private moveFighter(f: FighterRt) {
     if (this.hasCondition(f, 'stun') || this.hasCondition(f, 'root') || this.hasCondition(f, 'stagger')) return;
     const mods = this.wildcardMods(f);
-    const canFly = f.dna.movementModes.some((m) => m === 'flight' || m === 'hover') &&
-      !mods.grounded && !this.hasCondition(f, 'grounded');
-    // Altitude preference: fliers stay up unless grounded.
+    // Hover stays a hand's breadth up (ruleset 0.3.0): melee-reachable ground
+    // altitude; only true flight climbs. Pre-0.3.0 counted hover as flight.
+    const airMode = f.dna.movementModes.includes('flight') ||
+      (!this.ruleset.hoverStaysLow && f.dna.movementModes.includes('hover'));
+    const canFly = airMode && !mods.grounded && !this.hasCondition(f, 'grounded');
+    // Altitude preference: fliers stay up unless grounded (flight-fatigue
+    // grounding is applied in tickResources — stamina upkeep, ruleset 0.3.0).
     f.alt = canFly ? 3 : 0;
 
     let speed = (1.5 + f.dna.attributes.travelSpeed * 0.45) * f.envSpeedMult * mods.speedMult;
@@ -1392,8 +1458,10 @@ export class MatchSim {
       if (c.kind === 'slow') speed *= 1 - c.magnitude;
       if (c.kind === 'haste') speed *= 1 + c.magnitude;
     }
-    // terrain: water slows non-fliers without aquatic affinity
-    if (f.alt === 0 && !f.dna.interactions.powerTags.includes('hydro')) {
+    // terrain: water slows non-fliers without aquatic affinity (hover floats
+    // above it when hoverStaysLow keeps hoverers at ground altitude)
+    const hoverExempt = this.ruleset.hoverStaysLow && f.dna.movementModes.includes('hover');
+    if (f.alt === 0 && !hoverExempt && !f.dna.interactions.powerTags.includes('hydro')) {
       const inWater = this.features.some(
         (feat) => !feat.destroyed && feat.type === 'water' && dist2(f.x, f.z, feat.x, feat.z) <= feat.radius ** 2,
       ) || this.wildcardInstances.some(
@@ -1403,7 +1471,7 @@ export class MatchSim {
       );
       if (inWater) speed *= 0.65;
     }
-    const stepLen = speed * (this.ruleset.tickMs / 1000);
+    let stepLen = speed * (this.ruleset.tickMs / 1000);
 
     let dx = 0, dz = 0;
     const mi = f.moveIntent;
@@ -1411,6 +1479,11 @@ export class MatchSim {
       const t = this.byId(mi.targetId);
       if (t && t.status === 'active') {
         const d = this.distTo(f, t);
+        // approach surge (ruleset 0.3.0): the out-gunned closer crosses dead
+        // ground faster — same trigger condition as the approach damage guard
+        if (this.ruleset.approachSpeedSurge > 0 && d > this.kitMaxRange(f)) {
+          stepLen *= 1 + this.ruleset.approachSpeedSurge;
+        }
         if (d > mi.desiredRange) { dx = t.x - f.x; dz = t.z - f.z; }
         else if (d < mi.desiredRange * 0.5 && f.dna.identity.role === 'artillery') { dx = f.x - t.x; dz = f.z - t.z; }
       }

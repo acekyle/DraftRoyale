@@ -273,7 +273,7 @@ describe('escalation healing damp', () => {
     expect(escalations.length).toBeGreaterThan(0);
     for (const e of escalations) expect('healingMult' in e.data).toBe(false);
 
-    // Under 0.2.0 the same seed+teams produce a different, damped run.
+    // Under the current ruleset the same seed+teams produce a different, damped run.
     const current = buildManifest({
       matchId: 'legacy-replay',
       roomId: 'test',
@@ -285,7 +285,7 @@ describe('escalation healing damp', () => {
       teams: [makeTeam('A', A), makeTeam('B', B)],
       content: c,
     });
-    expect(current.rulesetVersion).toBe('0.2.0');
+    expect(current.rulesetVersion).toBe(RULESET_S0.version);
     const r3 = runManifest(current, c);
     expect(r3.events.filter((e) => e.type === 'ESCALATION').every((e) => 'healingMult' in e.data)).toBe(true);
   });

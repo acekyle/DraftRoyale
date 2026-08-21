@@ -11,10 +11,12 @@
  * each fighter's cross-schedule spread (min/max per-schedule win rate) so
  * slate-driven artifacts are visible instead of hidden.
  *
- * Usage: npm run simulate [-- --seeds 8 --schedules 6 --healdamp 0.15]
+ * Usage: npm run simulate [-- --seeds 8 --schedules 6 --healdamp 0.15 --approachguard 0.3]
  *
  * --healdamp overrides RULESET_S0.escalationHealingDamp for this process only
  * (A/B lever for the escalation-vs-sustain experiment; 0 = damp off).
+ * --approachguard overrides RULESET_S0.approachGuardReduction the same way
+ * (A/B lever for the melee approach-tax experiment; 0 = guard off).
  */
 import { RULESET_S0, type TeamSetup } from '@arena/contracts';
 import { buildManifest, runManifest, verifyReplay, type SimContent } from '@arena/combat-sim';
@@ -34,6 +36,15 @@ const SEEDS = intArg('--seeds', 8); // seeds per matchup
 const SCHEDULES = intArg('--schedules', 6); // distinct deterministic schedules
 const HEAL_DAMP = floatArg('--healdamp', RULESET_S0.escalationHealingDamp);
 RULESET_S0.escalationHealingDamp = HEAL_DAMP; // in-process override; replay path reads the same object
+const APPROACH_GUARD = floatArg('--approachguard', RULESET_S0.approachGuardReduction);
+RULESET_S0.approachGuardReduction = APPROACH_GUARD;
+const APPROACH_SURGE = floatArg('--approachsurge', RULESET_S0.approachSpeedSurge);
+RULESET_S0.approachSpeedSurge = APPROACH_SURGE;
+const FLIGHT_UPKEEP = floatArg('--flightupkeep', RULESET_S0.flightStaminaUpkeep);
+RULESET_S0.flightStaminaUpkeep = FLIGHT_UPKEEP;
+if (process.argv.includes('--hover-high')) RULESET_S0.hoverStaysLow = false; // pre-0.3.0 hover behavior
+const AMBUSH = floatArg('--ambush', RULESET_S0.stealthAmbushBonus);
+RULESET_S0.stealthAmbushBonus = AMBUSH;
 
 const content = loadContent();
 const arena = content.arenas.get('meridian-plaza')!;
@@ -195,7 +206,7 @@ for (let k = 0; k < SCHEDULES; k++) {
 durations.sort((x, y) => x - y);
 const median = durations[Math.floor(durations.length / 2)] ?? 0;
 const pct = (r: number) => (r * 100).toFixed(1);
-console.log(`\n=== Balance harness: ${matches} matches (${SCHEDULES} schedules × ${SEEDS} seeds/matchup) | escalationHealingDamp=${HEAL_DAMP} ===`);
+console.log(`\n=== Balance harness: ${matches} matches (${SCHEDULES} schedules × ${SEEDS} seeds/matchup) | escalationHealingDamp=${HEAL_DAMP} | approachGuard=${APPROACH_GUARD} | approachSurge=${APPROACH_SURGE} | flightUpkeep=${FLIGHT_UPKEEP} | hoverStaysLow=${RULESET_S0.hoverStaysLow} ===`);
 console.log(`avg duration ${(totalTicks / matches / 4).toFixed(0)}s | median ${(median / 4).toFixed(0)}s | eliminations ${eliminations} | decisions ${decisions} (${pct(decisions / matches)}%) | zero-KO decisions ${zeroKoDecisions} (${pct(zeroKoDecisions / matches)}%) | hard-limit stalemates ${stalemates}`);
 console.log(`determinism failures: ${determinismFailures}\n`);
 console.log('per schedule:');

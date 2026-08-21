@@ -14,6 +14,14 @@ import { loadContent } from './load-content';
  * override may move a price at most ±25% from the formula value.
  */
 const REVIEWER_OVERRIDES: Record<string, { price: number; rationale: string }> = {
+  grimspike: {
+    price: 45_000_000,
+    rationale:
+      'Reviewer override +$7.5M (D-027): stat-bulk endurance (420 vitality, shield, 16-range answer to every ' +
+      'approach) is undervalued by pricing formula v1; the only fighter to hold >62% in every schedule of every ' +
+      'battery ever run (66.9% baseline, 69.1% after the 0.3.0 approach/flight rebalance). Price-integrated ' +
+      'evidence: the win rates that flagged him already include his old price in team construction.',
+  },
   orrin: {
     price: 31_000_000,
     rationale:

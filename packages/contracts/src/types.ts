@@ -551,6 +551,41 @@ export interface Ruleset {
    * 0 = damp off (healing unaffected by escalation).
    */
   escalationHealingDamp: number;
+  /**
+   * Approach guard (melee approach-tax counterweight). While a fighter is in
+   * approach movement AND the attacker is beyond the fighter's own maximum
+   * offensive ability range (out-gunned while closing), incoming ranged/area
+   * damage is multiplied by (1 - approachGuardReduction).
+   * 0 = guard off (pre-0.3.0 behavior).
+   */
+  approachGuardReduction: number;
+  /**
+   * Companion lever to approachGuardReduction, same trigger condition:
+   * while out-gunned and approaching, movement speed is multiplied by
+   * (1 + approachSpeedSurge) — the closer crosses dead ground faster.
+   * 0 = surge off (pre-0.3.0 behavior).
+   */
+  approachSpeedSurge: number;
+  /**
+   * Air-superiority counterweights (ruleset 0.3.0 — with permanent altitude,
+   * melee fighters could never contest fliers at all):
+   * flightStaminaUpkeep drains stamina per airborne tick; a drained flier is
+   * forced into a grounded recovery window (existing `grounded` condition).
+   * 0 = flight is free (pre-0.3.0 behavior).
+   */
+  flightStaminaUpkeep: number;
+  /**
+   * When true, `hover` movement keeps a fighter at ground altitude (a
+   * hand's-breadth float — melee-reachable); only true `flight` climbs.
+   * False = pre-0.3.0 behavior (hover counted as full flight).
+   */
+  hoverStaysLow: boolean;
+  /**
+   * Ambush payoff for stealth archetypes (ruleset 0.3.0): hits on the
+   * resolution that breaks a `stealth_field` fighter's stealth deal
+   * (1 + stealthAmbushBonus)× damage. 0 = stealth is defense-only.
+   */
+  stealthAmbushBonus: number;
   division: Division;
 }
 
