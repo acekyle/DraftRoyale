@@ -18,6 +18,7 @@ import {
 
 /** Reused per-frame scratch vector — the frame loop must not allocate (perf baseline flag #3). */
 const SCRATCH_A = new THREE.Vector3();
+const SCRATCH_B = new THREE.Vector3();
 
 interface FighterVisual {
   group: THREE.Group; // outer: position + facing + team ring (stays level)
@@ -44,9 +45,15 @@ interface Vfx {
 }
 
 interface Projectile {
-  mesh: THREE.Mesh;
+  mesh: THREE.Object3D;
   targetId: string;
   speed: number;
+  /** Damage-type family — drives trail, flight style, and impact. */
+  kind: 'tracer' | 'fireball' | 'psychic' | 'sonic' | 'toxic';
+  color: THREE.Color;
+  /** Seconds until the next trail puff is emitted. */
+  trailT: number;
+  wobblePhase: number;
 }
 
 export class BattleView {
@@ -69,7 +76,14 @@ export class BattleView {
   private focus = new THREE.Vector3(0, 0, 0);
   private focusHold = 0;
   private shake = 0;
-  private tactical = false;
+  /**
+   * ringside = low side-on fighting-game framing (default, Founder request
+   * 2026-08-21); broadcast = the original raised three-quarter view;
+   * tactical = top-down map.
+   */
+  private cameraMode: 'ringside' | 'broadcast' | 'tactical' = 'ringside';
+  /** Which side of the team axis the ringside camera sits on (kept stable). */
+  private ringsideSide = 1;
   private placing = false;
   private raycaster = new THREE.Raycaster();
   private groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -544,7 +558,8 @@ export class BattleView {
           const d = Math.hypot(target.x - sf.x, target.z - sf.z) || 1;
           actor.lunge = { dx: ((target.x - sf.x) / d) * 1.2, dz: ((target.z - sf.z) / d) * 1.2, t: 1 };
         } else if ((ability?.kind === 'ranged' || ability?.kind === 'control') && target) {
-          this.spawnProjectile(sf, target.fighterId, energyColor);
+          if (ability.damageType === 'energy') this.spawnBeam(sf, target, energyColor);
+          else this.spawnProjectile(sf, target.fighterId, energyColor, ability.damageType);
         } else if (ability?.kind === 'area') {
           const cx = target?.x ?? sf.x, cz = target?.z ?? sf.z;
           this.ring(cx, cz, ability.radius ?? 4, energyColor.getHex());
@@ -563,6 +578,14 @@ export class BattleView {
         if (victim && vf) {
           victim.flash = 1;
           this.floater(vf.x, vf.z, 2.6, `-${amount}`, amount >= 25 ? '#ff7a5e' : '#ffd166', amount >= 25 ? 17 : 13);
+          // Hit recoil: shove the victim away from the attacker so impacts
+          // land with weight (render-only; the sim's positions are untouched).
+          const attacker = this.sim.byId(String(e.data.attacker));
+          if (attacker && vf.status === 'active' && !victim.lunge) {
+            const d = Math.hypot(vf.x - attacker.x, vf.z - attacker.z) || 1;
+            const mag = Math.min(0.65, 0.22 + amount * 0.011);
+            victim.lunge = { dx: ((vf.x - attacker.x) / d) * mag, dz: ((vf.z - attacker.z) / d) * mag, t: 0.65 };
+          }
           if (amount >= 25) {
             this.shake = Math.max(this.shake, 0.6);
             this.focusOn(vf.x, vf.z, 20);
@@ -626,14 +649,118 @@ export class BattleView {
   // VFX helpers
   // -------------------------------------------------------------------------
 
-  private spawnProjectile(from: FighterRt, targetId: string, color: THREE.Color) {
-    const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.18, 8, 8),
-      new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2 }),
-    );
+  /**
+   * Damage-type-keyed projectiles (Founder art note 2026-08-21: "dragon ball z
+   * type of fire balls and laser shoots… not so much like galactica bullets").
+   * energy fires an instant beam via spawnBeam; everything else travels.
+   */
+  private spawnProjectile(from: FighterRt, targetId: string, color: THREE.Color, damageType?: string) {
+    const kind: Projectile['kind'] =
+      damageType === 'thermal' ? 'fireball'
+      : damageType === 'psychic' ? 'psychic'
+      : damageType === 'sonic' ? 'sonic'
+      : damageType === 'toxic' ? 'toxic'
+      : 'tracer';
+    let mesh: THREE.Object3D;
+    let speed: number;
+    if (kind === 'fireball') {
+      const group = new THREE.Group();
+      const core = new THREE.Mesh(
+        new THREE.SphereGeometry(0.42, 12, 12),
+        new THREE.MeshStandardMaterial({ color: 0xfff3c0, emissive: color, emissiveIntensity: 3.2, roughness: 0.4 }),
+      );
+      const halo = new THREE.Mesh(
+        new THREE.SphereGeometry(0.72, 12, 12),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      group.add(core, halo);
+      mesh = group;
+      speed = 24;
+    } else if (kind === 'psychic') {
+      mesh = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.3),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2.6, roughness: 0.25 }),
+      );
+      speed = 38;
+    } else if (kind === 'sonic') {
+      mesh = new THREE.Mesh(
+        new THREE.TorusGeometry(0.5, 0.06, 8, 24),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      speed = 30;
+    } else if (kind === 'toxic') {
+      mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.26, 10, 10),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.6, roughness: 0.6 }),
+      );
+      speed = 28;
+    } else {
+      // kinetic tracer: a motion-stretched bolt, not a floating orb
+      mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.09, 0.09, 0.95),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2.2 }),
+      );
+      speed = 60;
+    }
     mesh.position.set(from.x, 1.6 + from.alt, from.z);
     this.scene.add(mesh);
-    this.projectiles.push({ mesh, targetId, speed: 46 });
+    this.projectiles.push({ mesh, targetId, speed, kind, color: color.clone(), trailT: 0, wobblePhase: Math.random() * Math.PI * 2 });
+  }
+
+  /** Instant laser beam (energy damage): muzzle→target flash that fades. */
+  private spawnBeam(from: FighterRt, to: FighterRt, color: THREE.Color) {
+    const a = new THREE.Vector3(from.x, 1.7 + from.alt, from.z);
+    const b = new THREE.Vector3(to.x, 1.5 + to.alt, to.z);
+    const len = a.distanceTo(b);
+    if (len < 0.5) return;
+    const mid = a.clone().lerp(b, 0.5);
+    const group = new THREE.Group();
+    const core = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.07, 0.07, len, 8, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1 }),
+    );
+    const sheath = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.22, len, 8, 1, true),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }),
+    );
+    group.add(core, sheath);
+    group.position.copy(mid);
+    // Cylinder axis is +Y: orient it along the beam.
+    group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+    this.scene.add(group);
+    const coreMat = core.material as THREE.MeshBasicMaterial;
+    const sheathMat = sheath.material as THREE.MeshBasicMaterial;
+    this.vfx.push({
+      mesh: group, ttl: 0.3, age: 0,
+      update: (v) => {
+        const fade = 1 - v.age / v.ttl;
+        coreMat.opacity = fade;
+        sheathMat.opacity = 0.45 * fade;
+        group.scale.x = group.scale.z = 0.6 + 0.4 * fade;
+      },
+    });
+    this.burst(to.x, to.z, color.getHex(), 8);
+    this.shake = Math.max(this.shake, 0.25);
+  }
+
+  /** Short-lived additive trail puff behind fireballs/psychic bolts. */
+  private trailPuff(at: THREE.Vector3, color: THREE.Color, size: number, ttl: number, fall = 0) {
+    const puff = new THREE.Mesh(
+      new THREE.SphereGeometry(size, 8, 8),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }),
+    );
+    puff.position.copy(at);
+    this.scene.add(puff);
+    const mat = puff.material as THREE.MeshBasicMaterial;
+    this.vfx.push({
+      mesh: puff, ttl, age: 0,
+      update: (v, dt) => {
+        const fade = 1 - v.age / v.ttl;
+        mat.opacity = 0.5 * fade;
+        puff.scale.setScalar(Math.max(0.05, fade));
+        if (fall > 0) puff.position.y -= fall * dt;
+      },
+    });
   }
 
   private ring(x: number, z: number, radius: number, color: number) {
@@ -751,14 +878,14 @@ export class BattleView {
       const alt = v.prev.alt + (v.curr.alt - v.prev.alt) * alpha;
       v.bobPhase += dt * 2.2;
       const bob = this.motion.reducedMotion ? 0 : Math.sin(v.bobPhase) * (alt > 0 ? 0.28 : v.bobAmp);
-      let lx = 0, lz = 0;
+      let lx = 0, lz = 0, lungeK = 0;
       if (v.lunge) {
         v.lunge.t -= dt * 4;
         if (v.lunge.t <= 0) v.lunge = null;
         else {
-          const k = Math.sin(v.lunge.t * Math.PI);
-          lx = v.lunge.dx * k;
-          lz = v.lunge.dz * k;
+          lungeK = Math.sin(v.lunge.t * Math.PI);
+          lx = v.lunge.dx * lungeK;
+          lz = v.lunge.dz * lungeK;
         }
       }
       if (v.ko > 0 && v.ko < 1) v.ko = Math.min(1, v.ko + dt * 1.6);
@@ -770,17 +897,35 @@ export class BattleView {
       if (target && v.ko === 0) v.group.rotation.y = Math.atan2(target.x - x, target.z - z);
 
       // Procedural pose: ability intents ramp in/out; KO slumps the rig.
+      // Anticipation curve (anti-stiffness pass 2026-08-21): a brief wind-back
+      // before the pose snaps in, then a longer settle out.
       let pose = v.pose, poseK = 0;
       if (v.ko > 0) {
         pose = 'ko';
         poseK = Math.min(1, v.ko);
       } else if (v.poseT > 0) {
         v.poseT = Math.max(0, v.poseT - dt * 1.4);
-        poseK = this.motion.reducedMotion
-          ? (v.poseT > 0 ? 0.7 : 0) // held pose, no animated sweep
-          : Math.sin((1 - v.poseT) * Math.PI);
+        if (this.motion.reducedMotion) {
+          poseK = v.poseT > 0 ? 0.7 : 0; // held pose, no animated sweep
+        } else {
+          const u = 1 - v.poseT;
+          poseK = u < 0.16
+            ? -0.4 * (u / 0.16) // anticipation: pull against the pose
+            : Math.sin(Math.pow((u - 0.16) / 0.84, 0.75) * Math.PI); // fast in, slow settle
+        }
       }
-      poseHeroMesh(v.hero.rig, poseK > 0 ? pose : 'idle', poseK);
+      poseHeroMesh(v.hero.rig, poseK !== 0 ? pose : 'idle', poseK);
+      if (poseK === 0 && v.ko === 0 && !this.motion.reducedMotion) {
+        // idle life: breathing torso, arm sway, a slow look-around
+        const br = Math.sin(v.bobPhase * 0.9);
+        const rig = v.hero.rig;
+        if (rig.torso) rig.torso.rotation.x += br * 0.022;
+        if (rig.armL) rig.armL.rotation.z += br * 0.035;
+        if (rig.armR) rig.armR.rotation.z -= br * 0.035;
+        if (rig.head) rig.head.rotation.y += Math.sin(v.bobPhase * 0.33) * 0.07;
+      }
+      // Lean into melee lunges (and hit recoils) instead of gliding rigidly.
+      v.hero.group.rotation.x = lungeK * 0.16;
       if (v.hero.rig.hover && !this.motion.reducedMotion) v.hero.rig.hover.rotation.y += dt * 0.9;
 
       if (v.flash > 0) v.flash = Math.max(0, v.flash - dt * 5);
@@ -809,14 +954,46 @@ export class BattleView {
       }
     }
 
-    // Projectiles.
+    // Projectiles — typed flight (trails, wobble, orientation) + typed impact.
     this.projectiles = this.projectiles.filter((p) => {
       const t = this.sim.byId(p.targetId);
       if (!t) { this.scene.remove(p.mesh); return false; }
       const dir = SCRATCH_A.set(t.x, 1.6 + t.alt, t.z).sub(p.mesh.position);
       const dist = dir.length();
-      if (dist < 0.8) { this.scene.remove(p.mesh); return false; }
-      p.mesh.position.add(dir.normalize().multiplyScalar(Math.min(dist, p.speed * dt)));
+      if (dist < 0.8) {
+        // Impact reads by type: fireballs detonate, the rest spark.
+        if (p.kind === 'fireball') {
+          this.burst(t.x, t.z, p.color.getHex(), 18);
+          this.ring(t.x, t.z, 2.2, p.color.getHex());
+          this.shake = Math.max(this.shake, 0.45);
+        } else if (p.kind !== 'sonic') {
+          this.burst(t.x, t.z, p.color.getHex(), 6);
+        }
+        this.scene.remove(p.mesh);
+        return false;
+      }
+      dir.normalize();
+      p.mesh.position.addScaledVector(dir, Math.min(dist, p.speed * dt));
+      if (p.kind === 'psychic') {
+        // slight serpentine drift — psychic bolts curve, they don't fly straight
+        p.wobblePhase += dt * 10;
+        p.mesh.position.y += Math.sin(p.wobblePhase) * dt * 1.6;
+        p.mesh.rotation.x += dt * 9;
+        p.mesh.rotation.y += dt * 7;
+      }
+      if (p.kind === 'tracer' || p.kind === 'sonic') {
+        // orient along the flight path (tracer bolt length / ring facing)
+        SCRATCH_B.copy(p.mesh.position).add(dir);
+        p.mesh.lookAt(SCRATCH_B);
+        if (p.kind === 'sonic') p.mesh.scale.multiplyScalar(1 + dt * 1.4); // widening wavefront
+      }
+      p.trailT -= dt;
+      if (p.trailT <= 0 && !this.motion.reducedMotion) {
+        if (p.kind === 'fireball') { this.trailPuff(p.mesh.position, p.color, 0.34, 0.4); p.trailT = 0.03; }
+        else if (p.kind === 'psychic') { this.trailPuff(p.mesh.position, p.color, 0.16, 0.25); p.trailT = 0.045; }
+        else if (p.kind === 'toxic') { this.trailPuff(p.mesh.position, p.color, 0.14, 0.5, 2.2); p.trailT = 0.07; }
+        else p.trailT = 1e9; // tracers/sonic carry no trail
+      }
       return true;
     });
 
@@ -875,15 +1052,45 @@ export class BattleView {
 
     let desired: THREE.Vector3;
     let look: THREE.Vector3;
-    if (this.tactical) {
+    let lerpK = 0.045;
+    if (this.cameraMode === 'tactical') {
       desired = new THREE.Vector3(0, 62, 6);
       look = new THREE.Vector3(0, 0, 0);
+    } else if (this.cameraMode === 'ringside') {
+      // Fighting-game framing: a low camera perpendicular to the team-vs-team
+      // axis, so exchanges read side-on like a versus screen.
+      const teamA = this.sim.teams[0]?.playerId;
+      let ax = 0, az = 0, bx = 0, bz = 0, an = 0, bn = 0;
+      for (const f of active) {
+        if (f.teamId === teamA) { ax += f.x; az += f.z; an++; }
+        else { bx += f.x; bz += f.z; bn++; }
+      }
+      let axisX = 1, axisZ = 0;
+      if (an > 0 && bn > 0) {
+        const dx = bx / bn - ax / an, dz = bz / bn - az / an;
+        const dl = Math.hypot(dx, dz);
+        if (dl > 0.5) { axisX = dx / dl; axisZ = dz / dl; }
+      }
+      // Perpendicular, on a stable side (flipping mid-fight is nauseating).
+      let px = -axisZ, pz = axisX;
+      const camSide = (this.camera.position.x - tx) * px + (this.camera.position.z - tz) * pz;
+      if (camSide < -2) this.ringsideSide = -1;
+      else if (camSide > 2) this.ringsideSide = 1;
+      px *= this.ringsideSide; pz *= this.ringsideSide;
+      const dist = 11 + spread * 1.15 - focusMix * 3;
+      desired = new THREE.Vector3(
+        tx * (1 - pull) + px * dist,
+        4.6 + spread * 0.38,
+        tz * (1 - pull) + pz * dist,
+      );
+      look = new THREE.Vector3(tx, 2.1, tz);
+      lerpK = 0.06;
     } else {
       const dist = 20 + spread * 1.5 - focusMix * 8;
       desired = new THREE.Vector3(tx * (1 - pull), 14 + spread * 0.8, tz * (1 - pull) + dist);
       look = new THREE.Vector3(tx, 1.5, tz);
     }
-    this.camera.position.lerp(desired, 0.045);
+    this.camera.position.lerp(desired, lerpK);
     if (this.shake > 0) {
       this.shake = Math.max(0, this.shake - dt * 2.4);
       if (this.motion.cameraShake && !this.motion.reducedMotion) {
@@ -897,7 +1104,10 @@ export class BattleView {
   // -------------------------------------------------------------------------
 
   setTactical(on: boolean) {
-    this.tactical = on;
+    this.cameraMode = on ? 'tactical' : 'ringside';
+  }
+  setCameraMode(mode: 'ringside' | 'broadcast' | 'tactical') {
+    this.cameraMode = mode;
   }
   setPlacing(on: boolean) {
     this.placing = on;

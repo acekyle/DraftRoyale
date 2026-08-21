@@ -201,11 +201,15 @@ export function renderBattle() {
   qa(node, '[data-speed]').forEach((b) =>
     b.addEventListener('click', () => { speed = Number(b.dataset.speed); }),
   );
-  let tactical = false;
+  const CAMERA_MODES = ['ringside', 'broadcast', 'tactical'] as const;
+  const CAMERA_LABELS = { ringside: 'Ringside cam', broadcast: 'Broadcast cam', tactical: 'Tactical cam' };
+  let cameraIdx = 0; // ringside is the default framing
+  q(node, '#btn-tactical').textContent = `${CAMERA_LABELS.ringside} ▸`;
   q(node, '#btn-tactical').addEventListener('click', () => {
-    tactical = !tactical;
-    view.setTactical(tactical);
-    q(node, '#btn-tactical').textContent = tactical ? 'Broadcast view' : 'Tactical view';
+    cameraIdx = (cameraIdx + 1) % CAMERA_MODES.length;
+    const mode = CAMERA_MODES[cameraIdx];
+    view.setCameraMode(mode);
+    q(node, '#btn-tactical').textContent = `${CAMERA_LABELS[mode]} ▸`;
   });
   node.querySelector('#btn-exit')?.addEventListener('click', () => {
     stopped = true;
