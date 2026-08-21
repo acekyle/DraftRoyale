@@ -21,6 +21,8 @@
     "moderation": "tsx tools/moderation-queue.ts",
     "variety": "tsx tools/variety.ts",
     "compiler:smoke": "tsx tools/llm-smoke.ts",
+    "bakeoff": "tsx tools/bakeoff/run.ts",
+    "bakeoff:sheets": "node tools/bakeoff/concept-sheets.mjs",
     "e2e": "playwright test",
     "perf": "PERF=1 playwright test --config=playwright.perf.config.ts"
   },

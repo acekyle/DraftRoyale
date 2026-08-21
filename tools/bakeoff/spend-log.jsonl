@@ -1,0 +1,1 @@
+{"at":"2026-08-20T00:00:00Z","action":"meta","note":"bake-off spend log (append-only JSONL). Real entries: {at, provider, fighter, action: generation|artifact|failed, mode, taskRef, credits, artifactPath}. EP reconciles this into docs/COST_LEDGER.md."}

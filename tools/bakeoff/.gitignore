@@ -1,0 +1,4 @@
+# Bake-off outputs — generated locally, never committed.
+# spend-log.jsonl is deliberately NOT ignored (ledger law: every credit spent is recorded).
+results/
+concept-sheets/

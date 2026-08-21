@@ -339,8 +339,8 @@ function buildQuadruped(root: THREE.Group, c: Ctx): HeroRig {
   const bodyMesh = mesh(torso, latheG(`quad:${r3(snout)}`, [
     [0.02, 0], [0.3, 0.14], [0.38, 0.5], [0.44, 1.05], [0.4, 1.5], [0.02, 1.7],
   ], 11), m.body);
-  bodyMesh.rotation.x = Math.PI / 2; // lathe axis Y → Z
-  bodyMesh.position.z = 0.85; // profile ran tail→chest
+  bodyMesh.rotation.x = Math.PI / 2; // lathe axis Y → Z (profile runs tail→chest)
+  bodyMesh.position.z = -0.85; // center the 0..1.7 span so chest meets the head joint at +0.98
   rimShell(bodyMesh, m.rim, 1.06);
 
   // Chest ruff mass + haunches.
@@ -371,8 +371,8 @@ function buildQuadruped(root: THREE.Group, c: Ctx): HeroRig {
   }
   if (earIdx === 2) mesh(head, boxG(0.035, 0.14, 0.3), m.trim, 0, 0.22, -0.04);
 
-  // Tail.
-  const tail = joint(torso, 0, 0.16, -0.98);
+  // Tail — pivot inside the rump mass so the cone emerges from the body.
+  const tail = joint(torso, 0, 0.1, -0.68);
   const tailMesh = mesh(tail, coneG(0.07, 0.6, 7), m.body, 0, 0.1, -0.26);
   tailMesh.rotation.x = -Math.PI / 2 - 0.45;
 
@@ -401,7 +401,8 @@ function buildQuadruped(root: THREE.Group, c: Ctx): HeroRig {
         }
         break;
       case 'tailClub':
-        mesh(tail, sphG(0.11, 8, 6), m.trim, 0, 0.28, -0.55);
+        // At the tail cone's apex (cone points down-back from the rump).
+        mesh(tail, sphG(0.11, 8, 6), m.trim, 0, -0.06, -0.56);
         break;
       case 'chestPlate':
         mesh(torso, boxG(0.5, 0.34, 0.1), m.trim, 0, -0.06, 0.92).rotation.x = 0.35;
