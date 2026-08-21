@@ -50,7 +50,7 @@ in docs/DEPLOY.md; the fix is GitHub → Settings → Billing.
 |------|---------|---------------|----------------|------------------------------|
 | Alpha hosting | Deploy private alpha (static client + small WS room server) for friend-group tests | $0 | $0–5/mo | Static client on GitHub Pages/Netlify free tier is $0; a room server needs a free-tier Fly.io/Render instance — still $0 on starter tiers, listed because *any* hosting account is a gate item |
 | LLM API budget | Character/wildcard compiler + commentary polish (Claude API) | — | est. $5–30/mo at alpha volumes | Rule-based compiler (current state) — works but cannot honor "type any character" |
-| 3D generation bake-off credits | Provider bake-off for generated fighter models | est. $50–150 one-time | usage-based later | Procedural chassis primitives (current state) |
+| 3D generation bake-off credits | **APPROVED by Founder 2026-08-20** (D-024): $100 HARD CEILING, $69.90 planned (1 mo each: Meshy Pro $20, Tripo Pro $19.90, Rodin Creator $30). Founder creates the accounts/subscriptions personally; keys provisioned as env vars, never through chat. $0 spent as of approval; every credit spent gets logged here | $69.90–100 one-time | none (cancel after bake-off) | Procedural hero pass (shipped, D-023) remains the fallback if no candidate passes the ≥18/30 rubric gate |
 | Unity tooling | Second half of engine bake-off | $0 (Personal tier likely sufficient) | $0 | Deferred; browser-native provisional winner (ADR-0001) |
 
 ## Unit-economics placeholders (to be measured before any monetization phase)
