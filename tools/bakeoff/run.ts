@@ -24,12 +24,20 @@
  *   npm run bakeoff -- --dry-run                       # plan for all 9 pairs, $0
  *   npm run bakeoff -- --provider meshy --fighter ember-ronin            # 1 image-to-3D gen
  *   npm run bakeoff -- --provider tripo --fighter razorback --mode text  # 1 text-to-3D gen
+ *   npm run bakeoff -- --provider meshy --fighter razorback \
+ *     --brief tools/bakeoff/briefs/iterations/razorback-v2.md            # iteration brief override
+ *
+ * Finish pipeline (Meshy only; same one-paid-call-per-invocation law):
+ *   npm run bakeoff -- --action remesh --provider meshy --task <taskRef> \
+ *     [--target-polycount 38000 --topology quad]       # retopo an existing generation
+ *   npm run bakeoff -- --action rig --provider meshy --task <taskRef> \
+ *     [--height 1.7]                                   # auto-rig — HUMANOID ONLY per Meshy docs
  *
  * Prereqs for image mode (the protocol's primary path):
  *   npm run bakeoff:sheets   # $0 concept sheets from our procedural heroes
  *   (Tripo image mode additionally needs BAKEOFF_SHEETS_BASE_URL — see its adapter.)
  */
-import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -39,6 +47,9 @@ const RESULTS_DIR = join(HERE, 'results');
 const SPEND_LOG = join(HERE, 'spend-log.jsonl');
 
 const TOTAL_GENERATION_CAP = 45; // 9 pairs × 5 iterations — the protocol maximum
+// Finish tasks (remesh/rig) are cheap (5 cr each per Meshy's API pricing page)
+// but still paid: cap them at 2 per possible generation, same refusal style.
+const TOTAL_FINISH_CAP = 90;
 const POLL_TIMEOUT_MS = 25 * 60 * 1000;
 
 const FIGHTERS = ['ember-ronin', 'razorback', 'orrin'] as const;
@@ -59,6 +70,8 @@ type Mode = 'image' | 'text';
 
 interface Brief {
   fighter: Fighter;
+  /** The brief file actually read (default or --brief override) — logged to spend-log. */
+  path: string;
   prompt: string;
   negative: string;
   /** prompt + " Avoid: " + negative — for providers without a negative field. */
@@ -71,8 +84,11 @@ function section(md: string, name: string): string {
   return m[1].trim().replace(/\s+/g, ' ');
 }
 
-function loadBrief(fighter: Fighter): Brief {
-  const path = join(HERE, 'briefs', `${fighter}.md`);
+function loadBrief(fighter: Fighter, briefOverride?: string): Brief {
+  // --brief lets iteration briefs live in briefs/iterations/ without touching
+  // the frozen round-1 files; default stays briefs/<fighter>.md.
+  const path = briefOverride ? resolve(briefOverride) : join(HERE, 'briefs', `${fighter}.md`);
+  if (briefOverride && !existsSync(path)) throw new Error(`--brief file not found: ${path}`);
   const md = readFileSync(path, 'utf8');
   const prompt = section(md, 'Prompt');
   const negative = section(md, 'Negative prompt');
@@ -81,7 +97,7 @@ function loadBrief(fighter: Fighter): Brief {
   if (combined.length > 600) throw new Error(`${path}: combined prompt ${combined.length} chars > 600 (Meshy limit)`);
   if (prompt.length > 1024) throw new Error(`${path}: prompt ${prompt.length} chars > 1024 (Tripo limit)`);
   if (negative.length > 255) throw new Error(`${path}: negative ${negative.length} chars > 255 (Tripo limit)`);
-  return { fighter, prompt, negative, combined };
+  return { fighter, path, prompt, negative, combined };
 }
 
 function sheetPath(fighter: Fighter, view: 'front' | 'side' | 'quarter'): string {
@@ -105,13 +121,15 @@ interface SpendEntry {
   at: string;
   provider: ProviderName;
   fighter: Fighter;
-  action: 'generation' | 'artifact' | 'failed';
+  action: 'generation' | 'remesh' | 'rig' | 'artifact' | 'failed';
   mode?: Mode;
   taskRef?: string;
   credits?: number | null;
   dollars?: number | null;
   estimatedCredits?: string;
   artifactPath?: string | null;
+  /** Brief file used (generate action only) — tracks iteration briefs. */
+  brief?: string;
   detail?: string;
 }
 
@@ -119,8 +137,8 @@ function appendSpend(entry: SpendEntry): void {
   appendFileSync(SPEND_LOG, `${JSON.stringify(entry)}\n`);
 }
 
-function loggedGenerations(): number {
-  if (!existsSync(SPEND_LOG)) return 0;
+function spendEntries(): SpendEntry[] {
+  if (!existsSync(SPEND_LOG)) return [];
   return readFileSync(SPEND_LOG, 'utf8')
     .split('\n')
     .filter((l) => l.trim())
@@ -131,7 +149,15 @@ function loggedGenerations(): number {
         return null;
       }
     })
-    .filter((e) => e?.action === 'generation').length;
+    .filter((e): e is SpendEntry => e !== null);
+}
+
+function loggedGenerations(): number {
+  return spendEntries().filter((e) => e.action === 'generation').length;
+}
+
+function loggedFinishTasks(): number {
+  return spendEntries().filter((e) => e.action === 'remesh' || e.action === 'rig').length;
 }
 
 // ---------------------------------------------------------------------------
@@ -218,10 +244,30 @@ interface Adapter {
 
 const MESHY_BASE = 'https://api.meshy.ai';
 
+/** Free status polling shared by every Meshy task family (generate/remesh/rig). */
+async function pollMeshyTask(base: string, id: string, headers: Record<string, string>): Promise<any> {
+  const start = Date.now();
+  for (;;) {
+    const task = await pollJson(() => oneShotJson(`${base}/${id}`, { headers }));
+    console.log(`[bakeoff] meshy ${id}: ${task.status} ${task.progress ?? 0}%`);
+    if (task.status === 'SUCCEEDED') return task;
+    if (['FAILED', 'CANCELED'].includes(task.status)) {
+      throw new Error(`meshy task ${id} ended ${task.status}: ${JSON.stringify(task.task_error ?? {})}`);
+    }
+    if (Date.now() - start > POLL_TIMEOUT_MS) throw new Error(`meshy task ${id} poll timeout`);
+    await sleep(10_000);
+  }
+}
+
 const meshy: Adapter = {
   name: 'meshy',
   envKey: 'MESHY_API_KEY',
-  docs: ['https://docs.meshy.ai/en/api/text-to-3d', 'https://docs.meshy.ai/en/api/image-to-3d'],
+  docs: [
+    'https://docs.meshy.ai/en/api/text-to-3d',
+    'https://docs.meshy.ai/en/api/image-to-3d',
+    'https://docs.meshy.ai/en/api/remesh',
+    'https://docs.meshy.ai/en/api/rigging-and-animation',
+  ],
 
   plan(brief, mode) {
     const poseMode = CHASSIS[brief.fighter] === 'humanoid' ? 'a-pose' : '';
@@ -303,19 +349,7 @@ const meshy: Adapter = {
     const headers = { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
     const poseMode = CHASSIS[brief.fighter] === 'humanoid' ? 'a-pose' : '';
 
-    const pollTask = async (base: string, id: string): Promise<any> => {
-      const start = Date.now();
-      for (;;) {
-        const task = await pollJson(() => oneShotJson(`${base}/${id}`, { headers }));
-        console.log(`[bakeoff] meshy ${id}: ${task.status} ${task.progress ?? 0}%`);
-        if (task.status === 'SUCCEEDED') return task;
-        if (['FAILED', 'CANCELED'].includes(task.status)) {
-          throw new Error(`meshy task ${id} ended ${task.status}: ${JSON.stringify(task.task_error ?? {})}`);
-        }
-        if (Date.now() - start > POLL_TIMEOUT_MS) throw new Error(`meshy task ${id} poll timeout`);
-        await sleep(10_000);
-      }
-    };
+    const pollTask = (base: string, id: string): Promise<any> => pollMeshyTask(base, id, headers);
 
     let finalTask: any;
     let credits = 0;
@@ -391,6 +425,213 @@ const meshy: Adapter = {
     return { taskRef, credits, artifacts };
   },
 };
+
+// ---------------------------------------------------------------------------
+// Meshy finish pipeline — remesh (retopo/polycount) then auto-rig
+//
+// Round-1 text-to-3D outputs came back ~72–77k tris and unrigged (GLB parse),
+// against a ≤40k budget and a rig-usability rubric line. Meshy exposes both
+// fixes as separate paid tasks that take an existing task id.
+//
+// API shape verified against public docs, accessed 2026-08-21:
+//   https://docs.meshy.ai/en/api/remesh
+//     (POST/GET /openapi/v1/remesh; exactly one of input_task_id — a completed
+//      Text/Image-to-3D task — or model_url; target_formats subset of
+//      glb|fbx|obj|usdz|blend|stl|3mf (default ["glb"]); topology
+//      quad|triangle (default triangle); target_polycount 100–300,000
+//      (default 30,000); create returns { result: "<task-id>" }; statuses
+//      PENDING/IN_PROGRESS/SUCCEEDED/FAILED; task carries model_urls +
+//      consumed_credits; credits refunded on failure)
+//   https://docs.meshy.ai/en/api/rigging-and-animation
+//     (POST/GET /openapi/v1/rigging; exactly one of input_task_id or
+//      model_url — public URL or data URI of a .glb; height_meters (number,
+//      default 1.7, must be positive); optional texture_image_url;
+//      result.rigged_character_glb_url / rigged_character_fbx_url +
+//      result.basic_animations (walking/running, GLB+FBX);
+//      CONSTRAINT quoted from the docs: "programmatic rigging currently only
+//      works well with standard humanoid (bipedal) assets" — unsupported:
+//      non-humanoid assets, untextured meshes, unclear limb/body structure,
+//      >300k faces, models not facing +Z. For this bake-off that means ONLY
+//      ember-ronin (humanoid) is auto-riggable; razorback (quadruped) and
+//      orrin (floating robe) must be scored on external riggability
+//      (Blender/AccuRIG), same as the Rodin path.)
+//   https://docs.meshy.ai/en/api/pricing (accessed 2026-08-21: Remesh 5 cr,
+//      Auto-Rigging 5 cr, Animation 3 cr)
+// ---------------------------------------------------------------------------
+
+const REMESH_ESTIMATE = '5 cr (https://docs.meshy.ai/en/api/pricing, 2026-08-21) ≈ $0.10 at Pro';
+const RIG_ESTIMATE = '5 cr auto-rigging (https://docs.meshy.ai/en/api/pricing, 2026-08-21) ≈ $0.10 at Pro';
+
+interface FinishOpts {
+  taskRef: string;
+  targetPolycount: number;
+  topology: 'quad' | 'triangle';
+  heightMeters: number;
+}
+
+/** Locate which fighter's results dir holds artifacts for a task ref. */
+function findMeshyTask(taskRef: string): { fighter: Fighter; dir: string } | null {
+  for (const f of FIGHTERS) {
+    const dir = join(RESULTS_DIR, 'meshy', f);
+    if (!existsSync(dir)) continue;
+    if (readdirSync(dir).some((name) => name.startsWith(taskRef))) return { fighter: f, dir };
+  }
+  return null;
+}
+
+function meshyRemeshPlan(opts: FinishOpts): Plan {
+  return {
+    calls: [
+      {
+        title: 'create remesh task from a completed generation',
+        method: 'POST',
+        url: `${MESHY_BASE}/openapi/v1/remesh`,
+        payload: {
+          input_task_id: opts.taskRef,
+          target_formats: ['glb'],
+          topology: opts.topology,
+          target_polycount: opts.targetPolycount,
+        },
+      },
+      {
+        title: 'poll until SUCCEEDED, then download model_urls.glb as <taskRef>.remesh.glb',
+        method: 'GET',
+        url: `${MESHY_BASE}/openapi/v1/remesh/{id}`,
+        payload: null,
+      },
+    ],
+    estimatedCredits: REMESH_ESTIMATE,
+    notes: [
+      'input_task_id must be a COMPLETED Meshy text/image-to-3D task id (the taskRef in spend-log/results)',
+      `target_polycount ${opts.targetPolycount} leaves headroom under the 40k-tri budget (docs range 100–300,000)`,
+      'output lands alongside the original as <taskRef>.remesh.glb; meta keeps the remesh task id for the rig step',
+    ],
+  };
+}
+
+function meshyRigPlan(opts: FinishOpts, located: { fighter: Fighter; dir: string } | null): Plan {
+  const remeshGlb = located ? join(located.dir, `${opts.taskRef}.remesh.glb`) : null;
+  const useLocalRemesh = remeshGlb !== null && existsSync(remeshGlb);
+  const payload = useLocalRemesh
+    ? {
+        model_url: `<base64 data URI of ${remeshGlb} (${sheetStatus(remeshGlb)})>`,
+        height_meters: opts.heightMeters,
+      }
+    : { input_task_id: opts.taskRef === '<taskRef>' ? '<taskRef of a completed Meshy task>' : opts.taskRef, height_meters: opts.heightMeters };
+  return {
+    calls: [
+      {
+        title: `create auto-rig task (${useLocalRemesh ? 'from local remeshed GLB via data URI' : 'from task id — remesh first for a budget-fit rig'})`,
+        method: 'POST',
+        url: `${MESHY_BASE}/openapi/v1/rigging`,
+        payload,
+      },
+      {
+        title: 'poll until SUCCEEDED, then download result.rigged_character_{glb,fbx}_url as <taskRef>.rigged.<ext>',
+        method: 'GET',
+        url: `${MESHY_BASE}/openapi/v1/rigging/{id}`,
+        payload: null,
+      },
+    ],
+    estimatedCredits: RIG_ESTIMATE,
+    notes: [
+      'DOCS CONSTRAINT: "programmatic rigging currently only works well with standard humanoid (bipedal) assets"',
+      'bake-off applicability: ember-ronin (humanoid) YES; razorback (quadruped) NO; orrin (floating robe) NO —',
+      '  the two non-humanoids are scored on EXTERNAL riggability (Blender/AccuRIG), like the Rodin path',
+      'basic walking/running animations come back free with the rig (result.basic_animations) and are downloaded too',
+    ],
+  };
+}
+
+async function meshyRemesh(opts: FinishOpts, key: string, dir: string): Promise<GenResult> {
+  const headers = { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+  const created = await oneShotJson(`${MESHY_BASE}/openapi/v1/remesh`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      input_task_id: opts.taskRef,
+      target_formats: ['glb'],
+      topology: opts.topology,
+      target_polycount: opts.targetPolycount,
+    }),
+  });
+  const remeshId: string = created.result;
+  if (!remeshId) throw new Error(`meshy remesh create returned no id: ${JSON.stringify(created).slice(0, 300)}`);
+  const finalTask = await pollMeshyTask(`${MESHY_BASE}/openapi/v1/remesh`, remeshId, headers);
+
+  const artifacts: string[] = [];
+  // Meta first — it carries the remesh task id the rig step chains from.
+  const metaPath = join(dir, `${opts.taskRef}.remesh.meta.json`);
+  writeFileSync(metaPath, JSON.stringify(finalTask, null, 2));
+  artifacts.push(metaPath);
+  if (finalTask.model_urls?.glb) {
+    const glb = join(dir, `${opts.taskRef}.remesh.glb`);
+    await downloadTo(finalTask.model_urls.glb, glb);
+    artifacts.push(glb);
+  }
+  return { taskRef: remeshId, credits: finalTask.consumed_credits ?? null, artifacts };
+}
+
+async function meshyRig(opts: FinishOpts, key: string, dir: string): Promise<GenResult> {
+  const headers = { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+  // Prefer the local remeshed GLB (docs: model_url accepts a data URI to a
+  // .glb) so the rig lands on the budget-fit mesh; otherwise rig the original
+  // generation by task id.
+  const remeshGlb = join(dir, `${opts.taskRef}.remesh.glb`);
+  const body = existsSync(remeshGlb)
+    ? {
+        model_url: `data:model/gltf-binary;base64,${readFileSync(remeshGlb).toString('base64')}`,
+        height_meters: opts.heightMeters,
+      }
+    : { input_task_id: opts.taskRef, height_meters: opts.heightMeters };
+  if (!existsSync(remeshGlb)) {
+    console.log(`[bakeoff] no ${opts.taskRef}.remesh.glb found — rigging the ORIGINAL (possibly over-budget) mesh by task id`);
+  }
+
+  const created = await oneShotJson(`${MESHY_BASE}/openapi/v1/rigging`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+  const rigId: string = created.result;
+  if (!rigId) throw new Error(`meshy rigging create returned no id: ${JSON.stringify(created).slice(0, 300)}`);
+  const finalTask = await pollMeshyTask(`${MESHY_BASE}/openapi/v1/rigging`, rigId, headers);
+
+  const artifacts: string[] = [];
+  const metaPath = join(dir, `${opts.taskRef}.rigged.meta.json`);
+  writeFileSync(metaPath, JSON.stringify(finalTask, null, 2));
+  artifacts.push(metaPath);
+  const result = finalTask.result ?? {};
+  if (result.rigged_character_glb_url) {
+    const glb = join(dir, `${opts.taskRef}.rigged.glb`);
+    await downloadTo(result.rigged_character_glb_url, glb);
+    artifacts.push(glb);
+  }
+  if (result.rigged_character_fbx_url) {
+    const fbx = join(dir, `${opts.taskRef}.rigged.fbx`);
+    await downloadTo(result.rigged_character_fbx_url, fbx);
+    artifacts.push(fbx);
+  }
+  // basic_animations ships free with the rig (walking/running per docs); the
+  // exact nesting isn't pinned in the docs, so collect any URLs defensively.
+  const animUrls: Array<[string, string]> = [];
+  const collect = (node: unknown, trail: string): void => {
+    if (typeof node === 'string') {
+      if (/^https?:\/\//.test(node)) animUrls.push([trail, node]);
+    } else if (node && typeof node === 'object') {
+      for (const [k, v] of Object.entries(node)) collect(v, trail ? `${trail}-${k}` : k);
+    }
+  };
+  collect(result.basic_animations, '');
+  for (const [name, url] of animUrls.slice(0, 8)) {
+    const ext = url.split('?')[0].split('.').pop() || 'glb';
+    const safe = name.replace(/_?url$/i, '').replace(/[^\w.-]/g, '_') || 'anim';
+    const path = join(dir, `${opts.taskRef}.rigged.${safe}.${ext}`);
+    await downloadTo(url, path);
+    artifacts.push(path);
+  }
+  return { taskRef: rigId, credits: finalTask.consumed_credits ?? null, artifacts };
+}
 
 // ---------------------------------------------------------------------------
 // Tripo adapter
@@ -694,6 +935,9 @@ const ADAPTERS: Record<ProviderName, Adapter> = { meshy, tripo, rodin };
 // CLI
 // ---------------------------------------------------------------------------
 
+const ACTIONS = ['generate', 'remesh', 'rig'] as const;
+type Action = (typeof ACTIONS)[number];
+
 function parseArgs(argv: string[]) {
   const has = (f: string) => argv.includes(f);
   const val = (f: string): string | undefined => {
@@ -702,14 +946,22 @@ function parseArgs(argv: string[]) {
   };
   return {
     dryRun: has('--dry-run'),
+    action: (val('--action') ?? 'generate') as Action, // default: existing behavior
     provider: val('--provider') as ProviderName | undefined,
     fighter: val('--fighter') as Fighter | undefined,
     mode: (val('--mode') ?? 'image') as Mode,
     maxGenerations: Number(val('--max-generations') ?? '1'),
+    brief: val('--brief'), // generate only: iteration-brief override
+    task: val('--task'), // remesh/rig: taskRef of a completed Meshy generation
+    targetPolycount: Number(val('--target-polycount') ?? '38000'), // remesh (docs 100–300,000)
+    topology: (val('--topology') ?? 'quad') as 'quad' | 'triangle', // remesh
+    height: Number(val('--height') ?? '1.7'), // rig: height_meters (docs default 1.7)
+    // rig: spend on a non-humanoid anyway (docs say humanoid-only; refused otherwise)
+    forceNonHumanoid: has('--force-non-humanoid'),
   };
 }
 
-function printPlan(mode: Mode): void {
+function printPlan(mode: Mode, briefFor?: Fighter, briefPath?: string): void {
   console.log('='.repeat(76));
   console.log(`BAKE-OFF DRY RUN — full plan, ${mode}-to-3D mode, NO provider network calls`);
   console.log(`(use \`--mode ${mode === 'image' ? 'text' : 'image'}\` to see the other mode)`);
@@ -721,9 +973,10 @@ function printPlan(mode: Mode): void {
     console.log(`\n### provider: ${p}  [${a.envKey}: ${keySet ? 'set' : 'NOT SET — real runs blocked'}]`);
     console.log(`    docs: ${a.docs.join('\n          ')}`);
     for (const f of FIGHTERS) {
-      const brief = loadBrief(f);
+      const brief = loadBrief(f, f === briefFor ? briefPath : undefined);
       const plan = a.plan(brief, mode);
       console.log(`\n  -- ${p} × ${f} (${CHASSIS[f]}) --------------------------------`);
+      if (f === briefFor && briefPath) console.log(`     brief override: ${brief.path}`);
       console.log(`     estimated spend: ${plan.estimatedCredits}`);
       for (const note of plan.notes) console.log(`     note: ${note}`);
       for (const call of plan.calls) {
@@ -741,15 +994,182 @@ function printPlan(mode: Mode): void {
 
   const total = loggedGenerations();
   console.log(`\n${'='.repeat(76)}`);
-  console.log(`spend-log: ${total}/${TOTAL_GENERATION_CAP} generations recorded (${SPEND_LOG.replace(`${HERE}/`, '')})`);
+  console.log(
+    `spend-log: ${total}/${TOTAL_GENERATION_CAP} generations + ${loggedFinishTasks()}/${TOTAL_FINISH_CAP} finish tasks recorded ` +
+      `(${SPEND_LOG.replace(`${HERE}/`, '')})`,
+  );
   console.log('No network call was made to any provider. To run ONE real generation:');
   console.log('  npm run bakeoff -- --provider <meshy|tripo|rodin> --fighter <ember-ronin|razorback|orrin> [--mode image|text]');
+  console.log('Finish pipeline for a completed Meshy generation (generate → remesh → rig → score):');
+  console.log('  npm run bakeoff -- --action remesh --provider meshy --task <taskRef> [--target-polycount 38000 --topology quad]');
+  console.log('  npm run bakeoff -- --action rig    --provider meshy --task <taskRef> [--height 1.7]  # HUMANOID ONLY per docs');
+  console.log('  (add --dry-run to either to print the exact endpoint+payload, $0)');
+  console.log('  Rig constraint: Meshy auto-rig is humanoid-only → ember-ronin only; razorback/orrin need external rigging.');
   console.log('='.repeat(76));
+}
+
+function printFinishPlan(action: 'remesh' | 'rig', opts: FinishOpts): void {
+  const located = opts.taskRef === '<taskRef>' ? null : findMeshyTask(opts.taskRef);
+  const plan = action === 'remesh' ? meshyRemeshPlan(opts) : meshyRigPlan(opts, located);
+  console.log('='.repeat(76));
+  console.log(`BAKE-OFF DRY RUN — ${action} plan, NO provider network calls`);
+  console.log('='.repeat(76));
+  console.log(`docs: https://docs.meshy.ai/en/api/${action === 'remesh' ? 'remesh' : 'rigging-and-animation'}`);
+  console.log(`      https://docs.meshy.ai/en/api/pricing`);
+  console.log(`task ref: ${opts.taskRef}${located ? `  → results/meshy/${located.fighter}/ (${CHASSIS[located.fighter]})` : opts.taskRef === '<taskRef>' ? '  (pass --task <taskRef> of a completed Meshy generation)' : '  (NOT FOUND under results/meshy/*/ — check the taskRef)'}`);
+  if (action === 'rig' && located && CHASSIS[located.fighter] !== 'humanoid') {
+    console.log(`⚠ ${located.fighter} is ${CHASSIS[located.fighter]} — Meshy auto-rig is documented as humanoid-only; a real run will refuse. Score external riggability instead.`);
+  }
+  console.log(`estimated spend: ${plan.estimatedCredits}`);
+  for (const note of plan.notes) console.log(`note: ${note}`);
+  for (const call of plan.calls) {
+    console.log(`${call.method} ${call.url}   # ${call.title}`);
+    if (call.payload != null) console.log(JSON.stringify(call.payload, null, 2));
+  }
+  console.log('='.repeat(76));
+}
+
+/**
+ * remesh / rig — the Meshy finish pipeline. Same laws as generate: one paid
+ * call per invocation, spend logged BEFORE the call, no auto-retry, dry-run
+ * whenever the run is under-specified or the key is missing.
+ */
+async function runFinishTask(args: ReturnType<typeof parseArgs>): Promise<void> {
+  const action = args.action as 'remesh' | 'rig';
+  if (args.provider && args.provider !== 'meshy') {
+    console.error(
+      `[bakeoff] --action ${action} is implemented for meshy only. Tripo/Rodin outputs are finished ` +
+        'externally (Blender/AccuRIG) and scored on riggability per proposal §5 step 4.',
+    );
+    process.exit(1);
+  }
+  // Validate knobs against the documented ranges BEFORE any network thought.
+  if (!Number.isFinite(args.targetPolycount) || args.targetPolycount < 100 || args.targetPolycount > 300_000) {
+    console.error('[bakeoff] --target-polycount must be within 100–300000 (https://docs.meshy.ai/en/api/remesh)');
+    process.exit(1);
+  }
+  if (!['quad', 'triangle'].includes(args.topology)) {
+    console.error(`[bakeoff] unknown topology "${args.topology}" (expected: quad or triangle)`);
+    process.exit(1);
+  }
+  if (!Number.isFinite(args.height) || args.height <= 0) {
+    console.error('[bakeoff] --height (height_meters) must be positive (https://docs.meshy.ai/en/api/rigging-and-animation)');
+    process.exit(1);
+  }
+
+  const opts: FinishOpts = {
+    taskRef: args.task ?? '<taskRef>',
+    targetPolycount: args.targetPolycount,
+    topology: args.topology,
+    heightMeters: args.height,
+  };
+
+  // Dry-run when asked — or when no real run is fully specified.
+  if (args.dryRun || !args.task || !args.provider) {
+    if (!args.dryRun && (args.task || args.provider)) {
+      console.error(`[bakeoff] a real ${action} needs BOTH --provider meshy and --task <taskRef>; showing the dry-run plan instead.\n`);
+    }
+    printFinishPlan(action, opts);
+    return;
+  }
+
+  const key = process.env[meshy.envKey];
+  if (!key) {
+    console.error(
+      `[bakeoff] No key provisioned for meshy — set ${meshy.envKey} in the environment ` +
+        '(Founder provisions keys per docs/COST_LEDGER.md D-016 pattern; see tools/bakeoff/README.md). ' +
+        'Nothing was called, nothing was spent. Falling back to the dry-run plan:\n',
+    );
+    printFinishPlan(action, opts);
+    process.exit(1);
+  }
+
+  // Finish tasks run alongside the original artifacts — locate them (this
+  // also recovers the fighter for the ledger entry).
+  const located = findMeshyTask(args.task);
+  if (!located) {
+    console.error(
+      `[bakeoff] taskRef "${args.task}" not found under results/meshy/*/ — finish tasks land next to the ` +
+        'original artifacts. Check spend-log.jsonl for the right taskRef. Nothing was called, nothing was spent.',
+    );
+    process.exit(1);
+  }
+
+  // ---- HARD SAFETY RAILS ----------------------------------------------
+  const finishTotal = loggedFinishTasks();
+  if (finishTotal >= TOTAL_FINISH_CAP) {
+    console.error(
+      `[bakeoff] REFUSING to run: spend-log already records ${finishTotal} finish tasks ` +
+        `(cap ${TOTAL_FINISH_CAP} = 2 per possible generation). Get a new Founder gate before raising the cap.`,
+    );
+    process.exit(1);
+  }
+  if (action === 'rig' && CHASSIS[located.fighter] !== 'humanoid' && !args.forceNonHumanoid) {
+    console.error(
+      `[bakeoff] REFUSING to rig ${located.fighter} (${CHASSIS[located.fighter]}): Meshy's docs state ` +
+        '"programmatic rigging currently only works well with standard humanoid (bipedal) assets" and list ' +
+        'non-humanoid assets as unsupported (https://docs.meshy.ai/en/api/rigging-and-animation). ' +
+        'Score razorback/orrin on EXTERNAL riggability (Blender/AccuRIG) per proposal §5 step 4. ' +
+        'To spend the 5 credits anyway, pass --force-non-humanoid. Nothing was called, nothing was spent.',
+    );
+    process.exit(1);
+  }
+
+  const plan = action === 'remesh' ? meshyRemeshPlan(opts) : meshyRigPlan(opts, located);
+  console.log(`[bakeoff] ONE ${action} task: meshy × ${located.fighter} (input task ${args.task})`);
+  console.log(`[bakeoff] estimated spend: ${plan.estimatedCredits}`);
+  console.log(`[bakeoff] spend-log before this run: ${finishTotal}/${TOTAL_FINISH_CAP} finish tasks`);
+
+  // Spend record BEFORE the paid call — same conservative direction as generate.
+  appendSpend({
+    at: new Date().toISOString(),
+    provider: 'meshy',
+    fighter: located.fighter,
+    action,
+    taskRef: args.task,
+    estimatedCredits: plan.estimatedCredits,
+    credits: null,
+    artifactPath: null,
+  });
+
+  try {
+    const result = await (action === 'remesh' ? meshyRemesh : meshyRig)(opts, key, located.dir);
+    appendSpend({
+      at: new Date().toISOString(),
+      provider: 'meshy',
+      fighter: located.fighter,
+      action: 'artifact',
+      taskRef: result.taskRef,
+      credits: result.credits,
+      artifactPath: result.artifacts[0] ?? null,
+      detail: `${action} of ${args.task}: ${result.artifacts.length} file(s)`,
+    });
+    console.log(`[bakeoff] DONE ${action} for ${located.fighter} (${action} task ${result.taskRef}, input ${args.task})`);
+    console.log(`[bakeoff] credits reported: ${result.credits ?? 'not reported — reconcile in provider dashboard'}`);
+    for (const aPath of result.artifacts) console.log(`[bakeoff]   artifact: ${aPath}`);
+    console.log('[bakeoff] Remember: docs/COST_LEDGER.md is updated by the EP from spend-log.jsonl.');
+  } catch (err) {
+    appendSpend({
+      at: new Date().toISOString(),
+      provider: 'meshy',
+      fighter: located.fighter,
+      action: 'failed',
+      taskRef: args.task,
+      detail: `${action}: ${(err as Error).message.slice(0, 500)}`,
+    });
+    console.error(`[bakeoff] FAILED (no auto-retry, by law): ${(err as Error).message}`);
+    console.error('[bakeoff] The attempt is logged in spend-log.jsonl; a human decides whether to run again.');
+    process.exit(1);
+  }
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
 
+  if (!ACTIONS.includes(args.action)) {
+    console.error(`[bakeoff] unknown action "${args.action}" (expected: ${ACTIONS.join(', ')})`);
+    process.exit(1);
+  }
   if (args.provider && !PROVIDERS.includes(args.provider)) {
     console.error(`[bakeoff] unknown provider "${args.provider}" (expected: ${PROVIDERS.join(', ')})`);
     process.exit(1);
@@ -763,12 +1183,17 @@ async function main() {
     process.exit(1);
   }
 
+  if (args.action !== 'generate') {
+    await runFinishTask(args);
+    return;
+  }
+
   // Dry-run when asked — or when no real run is fully specified.
   if (args.dryRun || !args.provider || !args.fighter) {
     if (!args.dryRun && (args.provider || args.fighter)) {
       console.error('[bakeoff] a real run needs BOTH --provider and --fighter; showing the dry-run plan instead.\n');
     }
-    printPlan(args.mode);
+    printPlan(args.mode, args.fighter, args.brief);
     return;
   }
 
@@ -780,7 +1205,7 @@ async function main() {
         '(Founder provisions keys per docs/COST_LEDGER.md D-016 pattern; see tools/bakeoff/README.md). ' +
         'Nothing was called, nothing was spent. Falling back to the dry-run plan:\n',
     );
-    printPlan(args.mode);
+    printPlan(args.mode, args.fighter, args.brief);
     process.exit(1);
   }
 
@@ -801,12 +1226,13 @@ async function main() {
     process.exit(1);
   }
 
-  const brief = loadBrief(args.fighter);
+  const brief = loadBrief(args.fighter, args.brief);
   const outDir = join(RESULTS_DIR, args.provider, args.fighter);
   mkdirSync(outDir, { recursive: true });
 
   const plan = adapter.plan(brief, args.mode);
   console.log(`[bakeoff] ONE ${args.mode}-to-3D generation: ${args.provider} × ${args.fighter}`);
+  console.log(`[bakeoff] brief: ${brief.path}`);
   console.log(`[bakeoff] estimated spend: ${plan.estimatedCredits}`);
   console.log(`[bakeoff] spend-log before this run: ${total}/${TOTAL_GENERATION_CAP} generations`);
 
@@ -821,6 +1247,7 @@ async function main() {
     estimatedCredits: plan.estimatedCredits,
     credits: null,
     artifactPath: null,
+    brief: brief.path,
   });
 
   try {
@@ -834,6 +1261,7 @@ async function main() {
       taskRef: result.taskRef,
       credits: result.credits,
       artifactPath: result.artifacts[0] ?? null,
+      brief: brief.path,
       detail: `${result.artifacts.length} file(s)`,
     });
     console.log(`[bakeoff] DONE ${args.provider} × ${args.fighter} (task ${result.taskRef})`);

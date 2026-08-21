@@ -94,9 +94,48 @@ npm run bakeoff -- --provider meshy --fighter ember-ronin --mode text
 # … etc.
 
 # 4) Iterate ONLY where the first result is close-but-not-there, up to 5 total
-#    generations per pair. Check the running count any time:
-npm run bakeoff -- --dry-run     # footer shows N/45 generations logged
+#    generations per pair. Iteration briefs live in briefs/iterations/ and are
+#    passed with --brief so the frozen round-1 briefs stay untouched (the brief
+#    path used is logged in every spend-log entry):
+npm run bakeoff -- --provider meshy --fighter razorback \
+  --brief tools/bakeoff/briefs/iterations/razorback-v2.md
+
+# Check the running count any time:
+npm run bakeoff -- --dry-run     # footer shows N/45 generations + M/90 finish tasks logged
 ```
+
+## Step 3.5 — Finish pipeline (Meshy): generate → remesh → rig → score
+
+Round-1 Meshy outputs came back **~72–77k tris and unrigged** against a ≤40k budget and
+a rig-usability rubric line. Meshy sells both fixes as separate cheap tasks that take an
+existing task id (per API pricing, `docs.meshy.ai/en/api/pricing`, 2026-08-21: remesh
+5 cr, auto-rig 5 cr — ~$0.10 each at Pro). Same laws as generate: one paid call per
+invocation, spend logged before the call, no auto-retry, `--dry-run` prints the exact
+endpoint + payload for $0.
+
+```sh
+# 1) Remesh the best artifact per pair down under budget (quad topology, 38k target
+#    leaves headroom under the 40k line). <taskRef> = the generation's task id from
+#    spend-log.jsonl / results/meshy/<fighter>/. Output: <taskRef>.remesh.glb + meta.
+npm run bakeoff -- --action remesh --provider meshy --task <taskRef> \
+  [--target-polycount 38000 --topology quad]
+
+# 2) Auto-rig the remeshed model (uses the local <taskRef>.remesh.glb when present,
+#    else rigs the original by task id). Output: <taskRef>.rigged.glb/.fbx plus the
+#    free walking/running preview animations.
+npm run bakeoff -- --action rig --provider meshy --task <taskRef> [--height 1.7]
+```
+
+⚠ **Meshy auto-rig is humanoid-only.** The docs state programmatic rigging "only works
+well with standard humanoid (bipedal) assets" and list non-humanoid assets as
+unsupported (`docs.meshy.ai/en/api/rigging-and-animation`). For this bake-off that
+means only **ember-ronin** can be auto-rigged; **razorback** (quadruped) and **orrin**
+(floating robe) cannot — score them on *external* riggability (Blender/AccuRIG), the
+same axis Rodin is scored on. The runner refuses a non-humanoid rig unless you pass
+`--force-non-humanoid` (spends 5 cr on a documented-unsupported input — your call).
+
+Tripo has its own remesh/rig products but they are not wired into this runner; Rodin
+has no auto-rig at all.
 
 Per run the tool: creates ONE task → polls to completion → downloads the artifacts to
 `results/<provider>/<fighter>/` → appends to `spend-log.jsonl`
@@ -110,8 +149,10 @@ the ledger itself).
 ## Step 4 — Scoring
 
 1. Best artifact per pair goes through the provider's own retopo/remesh (≤40k tris,
-   ≤2K PBR) if not already applied by the run parameters, then auto-rig where offered
-   (Meshy, Tripo; Rodin is scored on external riggability).
+   ≤2K PBR) if not already applied by the run parameters — for Meshy that is
+   `--action remesh` then `--action rig` (Step 3.5; rig is ember-ronin-only) —
+   then auto-rig where offered (Tripo via its platform; Rodin and all non-humanoid
+   fighters are scored on external riggability).
 2. EP reviews each GLB in a viewer (e.g. the offline three.js gltf viewer or
    gltf-viewer.donmccurdy.com) AND loaded next to the procedural hero in our pedestal
    viewer (proposal §5 step 5).
@@ -134,7 +175,10 @@ the ledger itself).
 
 - No keys → dry-run only; explicit run without a key exits with "no key provisioned".
 - Exactly one generation per invocation; `--max-generations` guard (default 1).
-- Hard refusal at 45 logged generations (5 × 9 pairs; way inside the $100 ceiling).
+- Hard refusal at 45 logged generations (5 × 9 pairs; way inside the $100 ceiling),
+  and at 90 logged finish tasks (remesh/rig — 2 per possible generation, 5 cr each).
+- Non-humanoid auto-rig is refused (documented as unsupported by Meshy) unless
+  explicitly forced with `--force-non-humanoid`.
 - Paid calls are one-shot — no retry loops anywhere near a paid POST.
 - Spend intent is logged BEFORE the paid call, artifacts logged after: a crash
   mid-run over-counts rather than under-counts.
