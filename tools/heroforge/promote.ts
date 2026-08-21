@@ -32,11 +32,11 @@ const rigged = argv.includes('--rigged');
 mkdirSync(HEROES_DIR, { recursive: true });
 
 if (demote) {
-  const target = join(HEROES_DIR, `${demote}.glb`);
-  if (existsSync(target)) {
-    rmSync(target);
-    console.log(`[promote] removed ${target} — ${demote} ships procedural again`);
+  for (const ext of ['glb', 'webp']) {
+    const target = join(HEROES_DIR, `${demote}.${ext}`);
+    if (existsSync(target)) rmSync(target);
   }
+  console.log(`[promote] removed ${demote}.glb/.webp — ${demote} ships procedural again`);
 } else if (fighter && task) {
   const src = join(HERE, 'results', fighter, `${task}${rigged ? '.rigged' : ''}.glb`);
   if (!existsSync(src)) {
@@ -44,7 +44,10 @@ if (demote) {
     process.exit(1);
   }
   copyFileSync(src, join(HEROES_DIR, `${fighter}.glb`));
-  console.log(`[promote] ${fighter} ← ${src}`);
+  // The provider render doubles as the draft-card portrait.
+  const render = join(HERE, 'results', fighter, `${task}.render.webp`);
+  if (existsSync(render)) copyFileSync(render, join(HEROES_DIR, `${fighter}.webp`));
+  console.log(`[promote] ${fighter} ← ${src}${existsSync(render) ? ' (+portrait)' : ''}`);
 } else if (fighter || task) {
   console.error('[promote] need BOTH --fighter and --task (or --demote <fighter>, or no args to rebuild manifest)');
   process.exit(1);

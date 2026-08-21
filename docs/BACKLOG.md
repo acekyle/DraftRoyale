@@ -242,3 +242,34 @@ wildcard factors, transcript) → champion record → run-it-back restart. Polis
       guard/surge, flight stamina duty cycles, hover reclassified melee-reachable,
       stealth ambush payoff, grimspike telegraph + $45M override. Razorback
       26.6→46.8%; decisions 21%→~10%; watch items recorded honestly
+
+## Animation & physics roadmap (Founder question 2026-08-21: "physics all the way around")
+
+Three tiers, cheapest-first; each tier ships value on its own. Sim stays
+deterministic and untouched throughout — all of this is presentation.
+
+**Tier 1 — procedural reaction language (SHIPPED this wave):** typed hit
+reactions (flinch pose scaled by damage; psychic reels in place, sonic
+vibrates the figure, kinetic/thermal shove the victim), stagger pose on
+stability break, anticipation wind-back on attacks, idle breathing/sway,
+lean-into-travel with flight banking (superhero flight read), lunge lean,
+hit recoil, KO hop + eased slump, damage-type projectiles (fireballs/
+beams/bolts/wavefronts/tracers).
+
+**Tier 2 — procedural physics polish (next free work):** impact debris and
+ground scorch decals per damage type, knock-down vs knock-back distinction
+for heavy hits (brief floor bounce before recovery), landing dust + takeoff
+crouch-spring for fliers on the 0.3.0 duty cycle, cloth-like lag on capes/
+tails (secondary motion springs on existing joints), weapon trails on melee
+swings. All still on the procedural rigs — no external tools, $0.
+
+**Tier 3 — rigged clip animation (craft-work gate):** the generated GLBs are
+statues; real keyframed movement needs skeletons + clips. Assets in hand:
+Meshy auto-rigs + free walk/run clips for captain-meridian, aegis-9,
+ember-ronin (tools/heroforge/results/). Path: retarget a shared clip set
+(idle/walk/attack/cast/hit/KO) onto auto-rigged bipeds via Blender/AccuRIG
+(≈2h/hero craft work), THREE.AnimationMixer playback keyed by the same
+animationIntent grammar, procedural rigs remain the fallback and the
+quadruped/floater answer until they get bespoke rigs. This is a time gate,
+not a money gate — schedule it when a human animator (or a Founder Blender
+session) is available.

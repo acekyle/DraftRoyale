@@ -239,6 +239,8 @@ function fighterCard(f: FighterFile, taken: Set<string>, p: 'p1' | 'p2', isAITur
     ${badge}
     <div class="portrait">
       ${silhouette(f)}
+      <img class="card-portrait" alt="" loading="lazy" draggable="false"
+        src="${import.meta.env.BASE_URL ?? '/'}heroes/${esc(id)}.webp" onerror="this.remove()">
       <div class="pedestal"></div>
     </div>
     <div class="name">${esc(f.contract.identity.displayName)}</div>

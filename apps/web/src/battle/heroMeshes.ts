@@ -86,7 +86,7 @@ interface HeroMats {
   rim: THREE.MeshBasicMaterial;
 }
 
-export type HeroPose = 'idle' | 'attack' | 'cast' | 'guard' | 'ko';
+export type HeroPose = 'idle' | 'attack' | 'cast' | 'guard' | 'ko' | 'hit' | 'stagger';
 
 export interface HeroRig {
   kind: Chassis;
@@ -591,6 +591,10 @@ const BIPED_POSES: Record<Exclude<HeroPose, 'idle'>, PoseDelta> = {
   cast: { torso: [-0.1, 0, 0], armR: [-2.35, 0, -0.1], armL: [0.2, 0, 0.12], head: [-0.14, 0, 0] },
   guard: { torso: [0.12, 0, 0], armL: [-1.0, 0, 0.55], armR: [-0.85, 0, -0.5], head: [0.1, 0, 0] },
   ko: { torso: [0.55, 0, 0.08], head: [0.45, 0, 0.12], armL: [0.5, 0, 0.25], armR: [0.5, 0, -0.25] },
+  // Hit reaction: snap back from the blow, arms thrown out for balance.
+  hit: { torso: [-0.28, 0, 0.06], head: [-0.3, 0, 0.1], armL: [0.4, 0, 0.5], armR: [0.35, 0, -0.45] },
+  // Stability broken: doubled over and scrambling — clearly worse than a hit.
+  stagger: { torso: [0.42, 0.25, 0.12], head: [0.3, 0.2, 0], armL: [-0.5, 0, 0.7], armR: [0.6, 0, -0.6], legL: [0.3, 0, 0.1] },
 };
 
 const QUAD_POSES: Record<Exclude<HeroPose, 'idle'>, PoseDelta> = {
@@ -598,6 +602,8 @@ const QUAD_POSES: Record<Exclude<HeroPose, 'idle'>, PoseDelta> = {
   cast: { torso: [-0.1, 0, 0], head: [-0.6, 0, 0], tail: [0.25, 0, 0] },
   guard: { torso: [0.08, 0, 0], head: [0.2, 0, 0], legL: [0.28, 0, 0], legR: [0.28, 0, 0] },
   ko: { torso: [0, 0, 0.45], head: [0.35, 0, 0.2], tail: [0.4, 0, 0] },
+  hit: { torso: [-0.18, 0, 0.08], head: [-0.35, 0, 0.15], tail: [0.35, 0, 0], legL: [-0.2, 0, 0] },
+  stagger: { torso: [0.12, 0.3, 0.22], head: [0.4, 0.25, 0], tail: [0.5, 0.3, 0], legL: [0.35, 0, 0.15], legR: [-0.25, 0, -0.12] },
 };
 
 const FLOAT_POSES: Record<Exclude<HeroPose, 'idle'>, PoseDelta> = {
@@ -605,6 +611,8 @@ const FLOAT_POSES: Record<Exclude<HeroPose, 'idle'>, PoseDelta> = {
   cast: { torso: [-0.12, 0, 0], armR: [-2.1, 0, -0.1], armL: [-1.6, 0, 0.2], head: [-0.1, 0, 0] },
   guard: { torso: [-0.05, 0, 0], armL: [-1.1, 0, 0.6], armR: [-1.1, 0, -0.6] },
   ko: { torso: [0.7, 0, 0.15], head: [0.4, 0, 0] },
+  hit: { torso: [-0.35, 0, 0.1], head: [-0.25, 0, 0.12], armL: [0.5, 0, 0.4], armR: [0.45, 0, -0.4] },
+  stagger: { torso: [0.3, 0.35, 0.25], head: [0.25, 0.3, 0], armL: [-0.7, 0, 0.8], armR: [0.5, 0, -0.7] },
 };
 
 /**

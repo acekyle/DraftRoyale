@@ -35,6 +35,14 @@ interface FighterVisual {
   bobAmp: number;
   pose: HeroPose;
   poseT: number; // 1 → 0 pose envelope
+  /** Sonic hits vibrate the whole figure briefly (decays to 0). */
+  shudder: number;
+  /** Last rendered position — drives the movement lean/bank. */
+  lastX: number;
+  lastZ: number;
+  /** Smoothed velocity for the athletic movement lean. */
+  velX: number;
+  velZ: number;
 }
 
 interface Vfx {
@@ -450,6 +458,7 @@ export class BattleView {
       bobPhase: Math.random() * Math.PI * 2,
       bobAmp: hero.bobAmp,
       pose: 'idle', poseT: 0,
+      shudder: 0, lastX: f.x, lastZ: f.z, velX: 0, velZ: 0,
     });
   }
 
@@ -578,13 +587,20 @@ export class BattleView {
         if (victim && vf) {
           victim.flash = 1;
           this.floater(vf.x, vf.z, 2.6, `-${amount}`, amount >= 25 ? '#ff7a5e' : '#ffd166', amount >= 25 ? 17 : 13);
-          // Hit recoil: shove the victim away from the attacker so impacts
-          // land with weight (render-only; the sim's positions are untouched).
-          const attacker = this.sim.byId(String(e.data.attacker));
-          if (attacker && vf.status === 'active' && !victim.lunge) {
-            const d = Math.hypot(vf.x - attacker.x, vf.z - attacker.z) || 1;
-            const mag = Math.min(0.65, 0.22 + amount * 0.011);
-            victim.lunge = { dx: ((vf.x - attacker.x) / d) * mag, dz: ((vf.z - attacker.z) / d) * mag, t: 0.65 };
+          // Typed hit reaction (render-only; sim positions untouched):
+          // psychic reels in place, sonic vibrates, everything else flinches
+          // and gets shoved away from the attacker with weight ∝ damage.
+          const dtype = String(e.data.damageType ?? '');
+          if (vf.status === 'active') {
+            victim.pose = 'hit';
+            victim.poseT = Math.min(1, 0.55 + amount * 0.012);
+            if (dtype === 'sonic') victim.shudder = 0.5;
+            const attacker = this.sim.byId(String(e.data.attacker));
+            if (attacker && dtype !== 'psychic' && !victim.lunge) {
+              const d = Math.hypot(vf.x - attacker.x, vf.z - attacker.z) || 1;
+              const mag = Math.min(0.65, 0.22 + amount * 0.011);
+              victim.lunge = { dx: ((vf.x - attacker.x) / d) * mag, dz: ((vf.z - attacker.z) / d) * mag, t: 0.65 };
+            }
           }
           if (amount >= 25) {
             this.shake = Math.max(this.shake, 0.6);
@@ -608,7 +624,13 @@ export class BattleView {
       }
       case 'STABILITY_BROKEN': {
         const vf = this.sim.byId(String(e.data.fighterId));
+        const victim = this.fighters.get(String(e.data.fighterId));
         if (vf) this.burst(vf.x, vf.z, 0xffd166, 8);
+        if (victim && vf?.status === 'active') {
+          victim.pose = 'stagger'; // doubled over — clearly worse than a hit
+          victim.poseT = 1;
+          this.shake = Math.max(this.shake, 0.4);
+        }
         break;
       }
       case 'ATTACK_EVADED': {
@@ -893,9 +915,35 @@ export class BattleView {
       // (the old linear tip-over looked like a toy being laid down).
       const koEase = v.ko * v.ko * (3 - 2 * v.ko);
       const koHop = this.motion.reducedMotion ? 0 : Math.sin(Math.min(1, v.ko * 2.4) * Math.PI) * 0.5 * (1 - koEase);
-      v.group.position.set(x + lx, v.baseY + alt + bob + koHop - koEase * 0.6, z + lz);
+      // Sonic shudder: brief whole-figure vibration.
+      let sx = 0, sz = 0;
+      if (v.shudder > 0) {
+        v.shudder = Math.max(0, v.shudder - dt * 1.8);
+        if (!this.motion.reducedMotion) {
+          sx = (Math.random() - 0.5) * v.shudder * 0.16;
+          sz = (Math.random() - 0.5) * v.shudder * 0.16;
+        }
+      }
+      v.group.position.set(x + lx + sx, v.baseY + alt + bob + koHop - koEase * 0.6, z + lz + sz);
+      // Athletic movement lean: pitch into travel, bank into turns — fliers
+      // hardest (superhero flight), grounded fighters subtly.
+      const instVx = (x - v.lastX) / dt, instVz = (z - v.lastZ) / dt;
+      v.lastX = x; v.lastZ = z;
+      const smooth = Math.min(1, dt * 8);
+      v.velX += (instVx - v.velX) * smooth;
+      v.velZ += (instVz - v.velZ) * smooth;
+      let pitchLean = 0, bankLean = 0;
+      if (v.ko === 0 && !this.motion.reducedMotion) {
+        const yaw = v.group.rotation.y;
+        const fwd = v.velX * Math.sin(yaw) + v.velZ * Math.cos(yaw);
+        const side = v.velX * Math.cos(yaw) - v.velZ * Math.sin(yaw);
+        const leanF = alt > 0.5 ? 0.075 : 0.038;
+        const cap = alt > 0.5 ? 0.4 : 0.16;
+        pitchLean = THREE.MathUtils.clamp(fwd * leanF, -cap, cap);
+        bankLean = THREE.MathUtils.clamp(-side * leanF * 0.8, -cap * 0.7, cap * 0.7);
+      }
       // KO tilt lives on the hero root; the outer group (team ring) stays level.
-      v.hero.group.rotation.z = -koEase * Math.PI * 0.45;
+      v.hero.group.rotation.z = -koEase * Math.PI * 0.45 + bankLean;
       const targetId = sf.currentTargetId;
       const target = targetId ? this.sim.byId(targetId) : null;
       if (target && v.ko === 0) v.group.rotation.y = Math.atan2(target.x - x, target.z - z);
@@ -928,8 +976,8 @@ export class BattleView {
         if (rig.armR) rig.armR.rotation.z -= br * 0.035;
         if (rig.head) rig.head.rotation.y += Math.sin(v.bobPhase * 0.33) * 0.07;
       }
-      // Lean into melee lunges (and hit recoils) instead of gliding rigidly.
-      v.hero.group.rotation.x = lungeK * 0.16;
+      // Lean into melee lunges and travel instead of gliding rigidly.
+      v.hero.group.rotation.x = lungeK * 0.16 + pitchLean;
       if (v.hero.rig.hover && !this.motion.reducedMotion) v.hero.rig.hover.rotation.y += dt * 0.9;
 
       if (v.flash > 0) v.flash = Math.max(0, v.flash - dt * 5);
