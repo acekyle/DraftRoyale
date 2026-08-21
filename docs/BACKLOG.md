@@ -1,6 +1,6 @@
 # Backlog
 
-> Living document. Last updated: 2026-08-20. Phase-organized. A checked box means the work
+> Living document. Last updated: 2026-08-21. Phase-organized. A checked box means the work
 > is verifiable in this repository today; in-progress items say so explicitly. Labels:
 > **[founder-gate]** requires explicit Founder approval before starting/spending,
 > **[spike]** timeboxed investigation, **[risk]** known risk attached — see the item.
@@ -39,38 +39,42 @@
 
 Content + client (parallel workstreams, underway):
 
-- [~] Season 0 roster: 12 curated original fighters — **2 of 12 in repo** (Solaria, AEGIS-9)
-- [~] Season 0 wildcards: 8 templates — **2 of 8 in repo** (Total Eclipse, Aegis Beacon)
+- [x] Season 0 roster: 12 curated original fighters — all 12 in repo
+- [x] Season 0 wildcards: 8 templates — all 8 in repo
 - [x] Season 0 arena: Meridian Plaza (full pre-draft disclosures)
-- [ ] Run `npm run price` across final roster; lock S0 prices (current files carry
-      provisional prices pending the stamp)
-- [ ] Full-roster balance-harness pass; resolve win-rate outliers before Community Verified
-- [~] Desktop-web client (Vite + TS + Three.js): draft → prep → readout → wildcard →
-      battle → breakdown → champion → run-it-back; local vs-AI and hotseat; procedural
-      chassis placeholder rendering; localStorage persistence — **in progress, not yet
-      merged into this repo**
-- [ ] Integration tests over shipped content (see docs/QA_PLAN.md §6)
+- [x] `npm run price` stamped + season-locked (reviewer overrides D-013 orrin, D-027
+      grimspike)
+- [x] Full-roster balance-harness pass — systemic rebalance in ruleset 0.3.0 (D-027,
+      ADR-0010); residual outliers documented as AI-self-play blindness classes,
+      human-gate-decided
+- [x] Desktop-web client (Vite + TS + Three.js): full loop, local vs-AI, hotseat, online;
+      generated hero statues with procedural fallback (D-026)
+- [x] Integration tests over shipped content (182 unit/integration + 8 E2E)
 
-Phase 2 remainder (online layer — not started):
+Phase 2 remainder (online layer — landed 2026-08-19, ADR-0006/0007):
 
-- [ ] WebSocket control plane: rooms, challenge links, guest entry (no account), draft
-      orchestration, wildcard lock/reveal [risk: first networked trust boundary — apply
-      docs/SECURITY_AND_MODERATION.md §4 from day one]
-- [ ] Server-authoritative combat host (sim runs server-side; clients render event stream)
-- [ ] Spectators (event fan-out, join-in-progress catch-up)
-- [ ] Reconnect (manifest + event-log resume)
-- [ ] Signed manifests + append-only records store (immutable champions/prices/replays)
-- [ ] [spike] Free-tier hosting options survey — **produces a proposal only**;
-      any actual hosting spend is [founder-gate]
+- [x] WebSocket control plane: rooms, challenge links, guest entry (no account), draft
+      orchestration, wildcard lock/reveal (session-integrity hardening per
+      SECURITY_AND_MODERATION §4)
+- [x] Server-authoritative combat host (lockstep-deterministic clients with server hash
+      authority, ADR-0007)
+- [x] Spectators (20 per room, reactions, join-in-progress)
+- [x] Reconnect (guest session tokens)
+- [~] Records store: append-only JSONL persistence (matches/reports/audit). Manifest
+      SIGNING not yet implemented — becomes relevant with accounts/hosted records
+- [x] [spike] Hosting survey → infra/server/ (Dockerfile, fly.toml, render.yaml);
+      actual durable hosting spend remains [founder-gate]
 
-## Phase 3 — Character Creation (not started)
+## Phase 3 — Character Creation (in progress)
 
-- [ ] Creator workshop UI: author contract + DNA with live validation; correction passes
-      (semantic/visual counts); publish/remix/attribution controls
-- [ ] [founder-gate] LLM compiler adapters behind provider-neutral interfaces — interface
-      first, local/mock implementation free; any paid API key requires Founder approval
-- [ ] Compiler pipeline stages per docs/WILDCARD_SYSTEM.md §4 and
-      docs/CHARACTER_COMPILER.md §8 (90-second modular live-nomination target)
+- [~] Creator workshop: live custom nomination in local AND online drafts with
+      semantic/visual correction passes (ADR-0008 compilers). Full standalone
+      workshop UI with publish/remix/attribution controls not yet built
+- [x] [founder-gate] LLM compiler adapters behind provider-neutral interfaces —
+      rule-based fallback always available; Claude interpretation layer live behind
+      Gate 2 (D-016, ADR-0009)
+- [x] Compiler pipeline: deterministic assembler + validators, 15-family taxonomy,
+      IP/real-person transforms, unbounded-clause normalization (ADR-0008)
 - [ ] Prompt-injection red-team suite + schema-constrained outputs + post-generation
       validation/moderation [risk: T4/T5 in docs/SECURITY_AND_MODERATION.md]
 - [ ] Provenance graph tooling: render evidence→claim→mechanic chains; automated
@@ -222,3 +226,19 @@ wildcard factors, transcript) → champion record → run-it-back restart. Polis
 - [ ] [founder-gate] LLM API budget → semantic-fidelity upgrade for both compilers behind existing signatures
 - [ ] [founder-gate] 3D generation bake-off credits → real fighter models/preview
 - [ ] [founder-gate] Unity tooling → completes the deferred engine bake-off half (ADR-0001)
+
+## Production heroes + Season-0 rebalance wave — landed 2026-08-21 (fourth wave)
+
+- [x] [founder-gate] 3D bake-off EXECUTED (D-024→D-025): gate PASSED — Tripo 3/3
+      (identity/style winner), Meshy finish pipeline; ~$21 of the $100 ceiling
+- [x] [founder-gate] Season-0 hero production pass (D-026, $25 ceiling):
+      tools/heroforge — Tripo text-to-3D triangle GLBs at the 40k-tri web budget for
+      all 12 heroes; Meshy auto-rig captured for biped chassis while the paid month
+      lasts; promote tool → apps/web/public/heroes + manifest
+- [x] [frontend] Generated hero statues live in the pedestal inspect drawer with
+      async swap + procedural fallback (battle rendering stays procedural-rig —
+      GLB battle animation is a future craft pass)
+- [x] [engine] Ruleset 0.3.0 systemic rebalance (D-027, ADR-0010): approach
+      guard/surge, flight stamina duty cycles, hover reclassified melee-reachable,
+      stealth ambush payoff, grimspike telegraph + $45M override. Razorback
+      26.6→46.8%; decisions 21%→~10%; watch items recorded honestly

@@ -53,6 +53,14 @@
     zero-KO decisions ~27% cross-schedule. A residual ~1.6–2% floor remains and
     appears shield/evasion-driven (shields are deliberately not damped); that is
     a separate lever if human play surfaces it as a problem.
+12b. **Balance residuals are AI-self-play readings** (D-027, ADR-0010): after the
+    0.3.0 approach/flight rebalance, grimspike still aggregates ~72% and the
+    duelist/ambusher/protector archetypes (ember-ronin, sable-howl, AEGIS-9)
+    read low — but the bot AI cannot bait interruptible telegraphs, duel,
+    ambush-cycle, or peel, exactly the skills those kits reward or punish.
+    Tuning deliberately stopped; the human vertical-slice gate decides. If
+    humans confirm grimspike, the sketched next lever is a core-exposure
+    vulnerability window on stability break (provenance-reviewed content pass).
 
 ## Trust boundaries
 
@@ -63,7 +71,8 @@
     (3 mechanic-sweeping manifests, chromium+webkit E2E). Any future divergence
     on an unmeasured engine is still surfaced by the hash check and resolved in
     the server's favor, not silently wrong (ADR-0004/0007).
-15. **No moderation/reporting systems** — acceptable strictly while access is
-    private; hard gate before any public stage.
+15. **Moderation basics only** (D-021): in-room reporting, review queue, audit
+    log, client-side block/mute. Enforcement (kick/ban), person-level blocks,
+    and reviewer RBAC wait on accounts; hard gate before any public stage.
 16. **Persisted match records live in a JSONL file** on whatever machine ran the
     server; no backups, no queryable history service yet.
