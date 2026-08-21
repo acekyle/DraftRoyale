@@ -212,3 +212,24 @@ machines; the localhost numbers here isolate client boot cost, not network cost.
   (encodedBodySize) and the dist gzip table are the authoritative payload numbers.
 - JS heap is sampled without forced GC and only in Chromium (`performance.memory` does not
   exist in WebKit/Firefox).
+
+## 7. Re-run after the procedural hero pass (2026-08-20, D-023)
+
+Same machine, same protocol, after the hero-mesh/diorama/pedestal pass plus the
+60 fps render cap and frame-loop allocation cleanup:
+
+- **Frame rates unchanged**: mean 120 fps chromium / 60 fps webkit at both 720p
+  and 1080p; 0% dropped vs 30 fps, ≤0.1% vs 60 fps (webkit's single worst frame
+  44 ms vs 20 ms pre-pass — one-frame noise during heavier VFX, p5 lows steady).
+- **Bundle cost of the entire visual pass: +4.5 KB gzip** (242.3 vs 237.8 KB).
+  Payload 249.7 KB; home interactive 193 ms chromium / 50 ms webkit (noise-level
+  vs 171/50 before).
+- **JS heap +3–6 MB** (13.6 MB @720p, 17.1 MB @1080p vs ~10.8 MB) — hero
+  geometry and the plaza canvas texture; well inside budget.
+- Measurement caveat: mean FPS here samples rAF cadence, which still runs at
+  display rate — the new 60 fps render cap skips draw work inside `frame()`, so
+  its benefit (roughly halved render workload on 120 Hz displays) shows up as
+  power/GPU headroom, not in this table. No regression is the finding.
+
+Verdict: the collectible visual upgrade is performance-free on this hardware.
+The §5 low-end gate remains open, unchanged.
