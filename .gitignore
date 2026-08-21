@@ -13,3 +13,5 @@ coverage/
 *.tsbuildinfo
 /out/
 tools/heroforge/results/
+# Custom-nomination statues are per-machine playtest artifacts (D-029)
+apps/web/public/custom-heroes/

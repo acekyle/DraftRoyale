@@ -26,7 +26,8 @@
     "e2e": "playwright test",
     "perf": "PERF=1 playwright test --config=playwright.perf.config.ts",
     "heroforge": "tsx tools/heroforge/run.ts",
-    "heroforge:promote": "tsx tools/heroforge/promote.ts"
+    "heroforge:promote": "tsx tools/heroforge/promote.ts",
+    "heroforge:promote-anim": "tsx tools/heroforge/promote-anim.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

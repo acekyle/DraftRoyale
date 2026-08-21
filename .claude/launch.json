@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--workspace", "apps/web", "--", "--port", "5199", "--strictPort"],
       "port": 5199
+    },
+    {
+      "name": "web-alt2",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace", "apps/web", "--", "--port", "5321", "--strictPort"],
+      "port": 5321
     }
   ]
 }

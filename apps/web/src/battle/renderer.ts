@@ -11,6 +11,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { MatchEvent } from '@arena/contracts';
 import type { FighterRt, MatchSim } from '@arena/combat-sim';
 import { DNA_BY_ID, FILE_BY_ID } from '../content';
+import { loadAnimatedHero, type AnimatedHero } from '../heroAnim';
 import { loadSettings, type Settings } from '../settings';
 import {
   buildHeroMesh, poseForIntent, poseHeroMesh, type HeroMeshHandle, type HeroPose,
@@ -43,6 +44,12 @@ interface FighterVisual {
   /** Smoothed velocity for the athletic movement lean. */
   velX: number;
   velZ: number;
+  /**
+   * Clip-animated hero (Tier 3): when loaded, the procedural chassis hides
+   * and Meshy rig clips drive the figure. Null = procedural (the locked
+   * fallback and the only path for unrigged fighters).
+   */
+  anim: AnimatedHero | null;
   /** Heavy-hit knock-down: 0 = none, then 0→1 fall / floor / get-up arc. */
   knockdown: number;
   /** Landing/takeoff squash-and-spring (1 → 0). */
@@ -467,8 +474,21 @@ export class BattleView {
       bobPhase: Math.random() * Math.PI * 2,
       bobAmp: hero.bobAmp,
       pose: 'idle', poseT: 0,
+      anim: null,
       shudder: 0, lastX: f.x, lastZ: f.z, velX: 0, velZ: 0,
       knockdown: 0, squash: 0, lastAlt: f.alt, yawRate: 0, lastYaw: 0,
+    });
+
+    // Tier 3: swap in the clip-animated rig when its assets arrive. The
+    // procedural chassis stays mounted (hidden) as the instant fallback.
+    const pb = new THREE.Box3().setFromObject(hero.group);
+    void loadAnimatedHero(f.fighterId, Math.max(0.5, pb.max.y - pb.min.y)).then((anim) => {
+      const v = this.fighters.get(f.fighterId);
+      if (!anim) return;
+      if (!v || this.disposed) { anim.dispose(); return; }
+      v.anim = anim;
+      v.hero.group.visible = false;
+      v.group.add(anim.group);
     });
   }
 
@@ -588,9 +608,11 @@ export class BattleView {
           else this.scorch(cx, cz, energyColor.getHex(), Math.min(2, (ability.radius ?? 4) * 0.4));
           this.shake = Math.max(this.shake, 0.35);
         }
-        // Authored animation-intent grammar → procedural pose atom.
+        // Authored animation-intent grammar → procedural pose atom, and the
+        // same atom names drive the rigged clip set when one is mounted.
         actor.pose = poseForIntent(ability?.animationIntent, ability?.kind);
         actor.poseT = 1;
+        actor.anim?.trigger(actor.pose);
         this.focusOn(sf.x, sf.z, ability && ability.power >= 30 ? 24 : 10);
         break;
       }
@@ -608,6 +630,7 @@ export class BattleView {
           if (vf.status === 'active') {
             victim.pose = 'hit';
             victim.poseT = Math.min(1, 0.55 + amount * 0.012);
+            victim.anim?.trigger('hit');
             if (dtype === 'sonic') victim.shudder = 0.5;
             const attacker = this.sim.byId(String(e.data.attacker));
             if (attacker && dtype !== 'psychic' && !victim.lunge) {
@@ -620,6 +643,7 @@ export class BattleView {
             if (
               amount >= 28 && (dtype === 'kinetic' || dtype === 'thermal') &&
               !vf.guarding && vf.alt === 0 && victim.knockdown === 0 && victim.ko === 0 &&
+              !victim.anim && // clip heroes react through their hit clip instead
               !this.motion.reducedMotion
             ) {
               victim.knockdown = 0.001;
@@ -653,6 +677,7 @@ export class BattleView {
         if (victim && vf?.status === 'active') {
           victim.pose = 'stagger'; // doubled over — clearly worse than a hit
           victim.poseT = 1;
+          victim.anim?.trigger('hit');
           this.shake = Math.max(this.shake, 0.4);
         }
         break;
@@ -682,6 +707,7 @@ export class BattleView {
         const vf = this.sim.byId(fid);
         if (v && vf) {
           v.ko = 0.001;
+          v.anim?.trigger('dead');
           this.burst(vf.x, vf.z, 0xffffff, 18);
           this.focusOn(vf.x, vf.z, 40);
           this.shake = Math.max(this.shake, 0.9);
@@ -1006,12 +1032,16 @@ export class BattleView {
       if (v.ko > 0 && v.ko < 1) v.ko = Math.min(1, v.ko + dt * 1.6);
       // KO reads as a physical fall: a short launch hop, then an eased slump
       // (the old linear tip-over looked like a toy being laid down).
-      const koEase = v.ko * v.ko * (3 - 2 * v.ko);
-      const koHop = this.motion.reducedMotion ? 0 : Math.sin(Math.min(1, v.ko * 2.4) * Math.PI) * 0.5 * (1 - koEase);
+      // Clip heroes play their own dead clip: the procedural KO/knock-down
+      // body mechanics would double-animate them.
+      const heroRoot = v.anim ? v.anim.group : v.hero.group;
+      const clipDriven = v.anim !== null;
+      const koEase = clipDriven ? 0 : v.ko * v.ko * (3 - 2 * v.ko);
+      const koHop = this.motion.reducedMotion || clipDriven ? 0 : Math.sin(Math.min(1, v.ko * 2.4) * Math.PI) * 0.5 * (1 - v.ko * v.ko * (3 - 2 * v.ko));
       // Knock-down arc: fast fall onto the back, a beat on the floor, get up.
       const sstep = (t: number) => { const c = THREE.MathUtils.clamp(t, 0, 1); return c * c * (3 - 2 * c); };
       let kdFall = 0;
-      if (v.knockdown > 0 && v.ko === 0) {
+      if (v.knockdown > 0 && v.ko === 0 && !clipDriven) {
         v.knockdown = Math.min(1, v.knockdown + dt / 1.15);
         const kd = v.knockdown;
         kdFall = kd < 0.3 ? sstep(kd / 0.3) : kd < 0.55 ? 1 : 1 - sstep((kd - 0.55) / 0.45);
@@ -1036,7 +1066,10 @@ export class BattleView {
       v.lastAlt = alt;
       if (v.squash > 0) v.squash = Math.max(0, v.squash - dt * 2.2);
       const squashK = Math.sin(v.squash * Math.PI) * 0.14;
-      v.hero.group.scale.set(1 + squashK * 0.5, 1 - squashK, 1 + squashK * 0.5);
+      // Squash multiplies the root's own base scale (procedural roots carry
+      // the fighter's dna scale — overwriting it shrank the big chassis).
+      const rootS = clipDriven ? 1 : sf.dna.identity.scale;
+      heroRoot.scale.set(rootS * (1 + squashK * 0.5), rootS * (1 - squashK), rootS * (1 + squashK * 0.5));
 
       v.group.position.set(x + lx + sx, v.baseY + alt + bob + koHop - koEase * 0.6 - kdDrop, z + lz + sz);
       // Athletic movement lean: pitch into travel, bank into turns — fliers
@@ -1057,10 +1090,18 @@ export class BattleView {
         bankLean = THREE.MathUtils.clamp(-side * leanF * 0.8, -cap * 0.7, cap * 0.7);
       }
       // KO tilt lives on the hero root; the outer group (team ring) stays level.
-      v.hero.group.rotation.z = -koEase * Math.PI * 0.45 + bankLean;
+      heroRoot.rotation.z = -koEase * Math.PI * 0.45 + bankLean;
       const targetId = sf.currentTargetId;
       const target = targetId ? this.sim.byId(targetId) : null;
       if (target && v.ko === 0) v.group.rotation.y = Math.atan2(target.x - x, target.z - z);
+
+      // Clip-driven heroes (Tier 3): the mixer owns the skeleton — feed it
+      // locomotion + time; event triggers already queued their one-shots.
+      if (v.anim) {
+        if (v.ko > 0 && !v.anim.isDead()) v.anim.trigger('dead');
+        v.anim.setLocomotion(v.ko > 0 ? 0 : Math.hypot(v.velX, v.velZ));
+        v.anim.update(dt);
+      }
 
       // Procedural pose: ability intents ramp in/out; KO slumps the rig.
       // Anticipation curve (anti-stiffness pass 2026-08-21): a brief wind-back
@@ -1083,8 +1124,8 @@ export class BattleView {
             : Math.sin(Math.pow((u - 0.16) / 0.84, 0.75) * Math.PI); // fast in, slow settle
         }
       }
-      poseHeroMesh(v.hero.rig, poseK !== 0 ? pose : 'idle', poseK);
-      if (poseK === 0 && v.ko === 0 && !this.motion.reducedMotion) {
+      if (!clipDriven) poseHeroMesh(v.hero.rig, poseK !== 0 ? pose : 'idle', poseK);
+      if (!clipDriven && poseK === 0 && v.ko === 0 && !this.motion.reducedMotion) {
         // idle life: breathing torso, arm sway, a slow look-around
         const br = Math.sin(v.bobPhase * 0.9);
         const rig = v.hero.rig;
@@ -1101,7 +1142,7 @@ export class BattleView {
         dYaw = Math.atan2(Math.sin(dYaw), Math.cos(dYaw));
         v.lastYaw = yaw;
         v.yawRate += (dYaw / Math.max(dt, 1e-4) - v.yawRate) * Math.min(1, dt * 6);
-        if (v.ko === 0 && kdFall === 0 && !this.motion.reducedMotion) {
+        if (!clipDriven && v.ko === 0 && kdFall === 0 && !this.motion.reducedMotion) {
           const rig = v.hero.rig;
           const lag = THREE.MathUtils.clamp(v.yawRate * 0.1, -0.35, 0.35);
           if (rig.head) rig.head.rotation.y -= lag * 0.45;
@@ -1114,13 +1155,18 @@ export class BattleView {
       }
       // Lean into melee lunges and travel instead of gliding rigidly;
       // a knock-down rotation overrides the athletic lean while floored.
-      v.hero.group.rotation.x = kdFall > 0 ? kdRot : lungeK * 0.16 + pitchLean;
+      heroRoot.rotation.x = kdFall > 0 ? kdRot : (v.anim?.isDead() ? 0 : lungeK * 0.16 + pitchLean);
       if (v.hero.rig.hover && !this.motion.reducedMotion) v.hero.rig.hover.rotation.y += dt * 0.9;
 
       if (v.flash > 0) v.flash = Math.max(0, v.flash - dt * 5);
-      v.hero.setFlash(v.flash);
       const opacity = sf.stealthed ? 0.3 : 1;
-      v.hero.setGhost(opacity);
+      if (v.anim) {
+        v.anim.setFlash(v.flash);
+        v.anim.setGhost(opacity);
+      } else {
+        v.hero.setFlash(v.flash);
+        v.hero.setGhost(opacity);
+      }
       v.ringMat.opacity = 0.55 * opacity;
       if (sf.windup) {
         v.hero.setEnergyPulse(this.motion.reducedMotion ? 0.8 : 0.5 + Math.sin(v.bobPhase * 6) * 0.5);
@@ -1336,6 +1382,7 @@ export class BattleView {
   dispose() {
     this.disposed = true;
     window.removeEventListener('resize', this.onResize);
+    for (const v of this.fighters.values()) v.anim?.dispose();
     this.renderer.dispose();
     this.labelLayer.remove();
     this.renderer.domElement.remove();

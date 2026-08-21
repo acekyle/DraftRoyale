@@ -2,6 +2,8 @@ import { RULESET_S0, minRosterReserve, type FighterFile } from '@arena/contracts
 import { createRng, type Rng } from '@arena/combat-sim';
 import { compileFighterFromText, applySemanticCorrection, applyVisualCorrection } from '@arena/character-compiler';
 import { DNA_BY_ID, FIGHTERS, FILE_BY_ID, money, registerCustomFighter } from '../content';
+import { requestStatueForge, statueForgeStatus, watchStatueForge } from '../customStatueForge';
+import { hasHeroModel } from '../heroModels';
 import { aiDraftPick } from '../opponentAI';
 import { mountPedestal } from '../pedestalPreview';
 import { namePlate, roleColor, roleIcon } from '../roleTheme';
@@ -240,7 +242,7 @@ function fighterCard(f: FighterFile, taken: Set<string>, p: 'p1' | 'p2', isAITur
     <div class="portrait">
       ${silhouette(f)}
       <img class="card-portrait" alt="" loading="lazy" draggable="false"
-        src="${import.meta.env.BASE_URL ?? '/'}heroes/${esc(id)}.webp" onerror="this.remove()">
+        src="${import.meta.env.BASE_URL ?? '/'}${custom ? 'custom-heroes' : 'heroes'}/${esc(id)}.webp" onerror="this.remove()">
       <div class="pedestal"></div>
     </div>
     <div class="name">${esc(f.contract.identity.displayName)}</div>
@@ -339,6 +341,7 @@ function renderNominationPanel(root: HTMLElement, p: 'p1' | 'p2') {
           <button class="primary" id="nom-accept">Add to market at ${money(dna.balance.draftPrice)}</button>
           <button class="danger" id="nom-discard">Discard</button>
         </div>
+        <p class="muted small mt">Approving also forges this fighter's 3D statue on the spot (same pipeline as the season roster) when the local forge service is up — the procedural chassis stands in until it lands.</p>
       </div>`;
     slot.querySelector('#nom-sem-btn')?.addEventListener('click', () => {
       const instr = q<HTMLInputElement>(slot, '#nom-sem').value.trim();
@@ -366,6 +369,7 @@ function renderNominationPanel(root: HTMLElement, p: 'p1' | 'p2') {
       nom.used = true;
       nom.pending = null;
       track('fighter_approved', { fighterId: dna.identity.fighterId });
+      beginStatueForge(r.fighter);
       renderDraft();
     });
     q(slot, '#nom-discard').addEventListener('click', () => {
@@ -379,6 +383,22 @@ function renderNominationPanel(root: HTMLElement, p: 'p1' | 'p2') {
     });
   };
   render();
+}
+
+/**
+ * On-the-spot statue parity for custom nominations (D-029): kick the forge
+ * fire-and-forget. 'unavailable' (deployed build / no key / cap) is a normal
+ * quiet outcome — the procedural chassis is the designed fallback.
+ */
+function beginStatueForge(file: FighterFile) {
+  const fighterId = file.dna.identity.fighterId;
+  void requestStatueForge(file).then((reply) => {
+    track('custom_forge_requested', { fighterId, state: reply.state, reason: reply.reason ?? '' });
+    if (reply.state === 'running') {
+      watchStatueForge(fighterId, (settled) =>
+        track(settled.state === 'done' ? 'custom_forge_done' : 'custom_forge_failed', { fighterId }));
+    }
+  });
 }
 
 function openInspect(root: HTMLElement, fighterId: string, p: 'p1' | 'p2', isAITurn: boolean) {
@@ -419,6 +439,10 @@ function openInspect(root: HTMLElement, fighterId: string, p: 'p1' | 'p2', isAIT
       <span class="role-badge">${esc(dna.identity.chassis)}</span>
       <span class="role-badge">${esc(dna.identity.division)}</span>
     </div>
+    ${custom ? `<div class="row mt" style="gap:8px;align-items:center">
+      <button class="small" id="btn-forge">Forge 3D statue</button>
+      <span class="muted small" id="forge-note"></span>
+    </div>` : ''}
     <p class="muted small mt">${esc(f.contract.canon.summary)}</p>
 
     <h3 class="mt gold">Price — ${money(dna.balance.draftPrice)}</h3>
@@ -463,6 +487,33 @@ function openInspect(root: HTMLElement, fighterId: string, p: 'p1' | 'p2', isAIT
     closeDrawer();
     renderDraft();
   });
+  // D-029: manual forge control for custom fighters (covers customs approved
+  // before the forge existed, and retries after a failed forge).
+  const forgeBtn = drawer.querySelector<HTMLButtonElement>('#btn-forge');
+  if (forgeBtn && custom) {
+    const note = q<HTMLElement>(drawer, '#forge-note');
+    const show = (text: string, disable: boolean) => { note.textContent = text; forgeBtn.disabled = disable; };
+    const watchNote = () => watchStatueForge(fighterId, (settled) => {
+      track(settled.state === 'done' ? 'custom_forge_done' : 'custom_forge_failed', { fighterId });
+      show(settled.state === 'done' ? 'Statue ready — reopen to view it on the pedestal.' : 'Forge failed — you may retry.', settled.state === 'done');
+    });
+    void Promise.all([hasHeroModel(fighterId), statueForgeStatus(fighterId)]).then(([has, st]) => {
+      if (has || st.state === 'done') show('Statue live.', true);
+      else if (st.state === 'running') { show('Forging… statues land in ~2–3 minutes.', true); watchNote(); }
+      else if (st.state === 'failed') show('Last forge failed — you may retry.', false);
+      else if (st.state === 'unavailable') show('Forge service offline — procedural chassis stands.', true);
+    });
+    forgeBtn.addEventListener('click', () => {
+      show('Requesting…', true);
+      void requestStatueForge(custom.file).then((reply) => {
+        track('custom_forge_requested', { fighterId, state: reply.state, reason: reply.reason ?? '' });
+        if (reply.state === 'running') { show('Forging… statues land in ~2–3 minutes.', true); watchNote(); }
+        else if (reply.state === 'done') show('Statue live.', true);
+        else if (reply.reason === 'no-key') show('Forge disabled — TRIPO_API_KEY not set on the dev server.', false);
+        else show(`Forge unavailable (${reply.reason ?? reply.state}) — procedural chassis stands.`, false);
+      });
+    });
+  }
   slot.appendChild(drawer);
 
   // Live 3D pedestal turntable (shared renderer; falls back to the 2D

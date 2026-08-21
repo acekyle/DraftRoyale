@@ -101,7 +101,7 @@ interface SpendEntry {
   at: string;
   provider: 'tripo' | 'meshy';
   fighter: string;
-  action: 'generation' | 'rig' | 'artifact' | 'failed';
+  action: 'generation' | 'rig' | 'animate' | 'artifact' | 'failed';
   taskRef?: string;
   credits?: number | null;
   estimatedCredits?: string;
@@ -299,6 +299,41 @@ async function meshyRig(hero: Hero, glbPath: string, key: string, outDir: string
 }
 
 // ---------------------------------------------------------------------------
+// Meshy animate — apply a library clip to a completed rigging task
+// (docs.meshy.ai/en/api/animation, accessed 2026-08-21: POST/GET
+//  /openapi/v1/animations, payload {rig_task_id, action_id};
+//  result.animation_glb_url; 3 cr per clip)
+// ---------------------------------------------------------------------------
+
+const ANIMATE_ESTIMATE = '3 cr animation (docs.meshy.ai/en/api/pricing) — Pro-month credits, no new cash';
+const ANIMATE_CAP = 120; // clip budget backstop (~360 cr, inside the paid month)
+
+const loggedAnimations = () => spendEntries().filter((e) => e.action === 'animate').length;
+
+async function meshyAnimate(rigTaskId: string, actionId: number, key: string, outDir: string) {
+  const headers = { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+  const created = await oneShotJson(`${MESHY_BASE}/openapi/v1/animations`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ rig_task_id: rigTaskId, action_id: actionId }),
+  });
+  const animId: string = created.result;
+  if (!animId) throw new Error(`meshy animate create returned no id: ${JSON.stringify(created).slice(0, 300)}`);
+  const finalTask = await pollMeshyTask(`${MESHY_BASE}/openapi/v1/animations`, animId, headers);
+  const artifacts: string[] = [];
+  const result = finalTask.result ?? {};
+  if (result.animation_glb_url) {
+    const glb = join(outDir, `${rigTaskId}.anim${actionId}.glb`);
+    await downloadTo(result.animation_glb_url, glb);
+    artifacts.push(glb);
+  }
+  const metaPath = join(outDir, `${rigTaskId}.anim${actionId}.meta.json`);
+  writeFileSync(metaPath, JSON.stringify(finalTask, null, 2));
+  artifacts.push(metaPath);
+  return { taskRef: animId, credits: finalTask.consumed_credits ?? null, artifacts };
+}
+
+// ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
 
@@ -310,10 +345,11 @@ function parseArgs(argv: string[]) {
   };
   return {
     dryRun: has('--dry-run'),
-    action: (val('--action') ?? 'generate') as 'generate' | 'rig',
+    action: (val('--action') ?? 'generate') as 'generate' | 'rig' | 'animate',
     fighter: val('--fighter'),
     brief: val('--brief'),
     task: val('--task'),
+    animation: val('--animation'), // animate: Meshy library action_id (integer)
     forceNonBiped: has('--force-non-biped'),
   };
 }
@@ -355,6 +391,62 @@ async function main() {
   }
   const outDir = join(RESULTS_DIR, hero.fighter);
   mkdirSync(outDir, { recursive: true });
+
+  if (args.action === 'animate') {
+    const key = process.env.MESHY_API_KEY;
+    if (!key) {
+      console.error('[heroforge] MESHY_API_KEY not set — nothing was called, nothing was spent.');
+      process.exit(1);
+    }
+    const actionId = Number(args.animation);
+    if (!args.task || !Number.isInteger(actionId)) {
+      console.error('[heroforge] --action animate needs --task <rigTaskId> and --animation <library action_id>.');
+      process.exit(1);
+    }
+    if (loggedAnimations() >= ANIMATE_CAP) {
+      console.error(`[heroforge] REFUSING: animation cap ${ANIMATE_CAP} reached — new Founder gate required.`);
+      process.exit(1);
+    }
+    console.log(`[heroforge] ONE animation task: meshy × ${hero.fighter} rig ${args.task} action_id ${actionId}`);
+    appendSpend({
+      at: new Date().toISOString(),
+      provider: 'meshy',
+      fighter: hero.fighter,
+      action: 'animate',
+      taskRef: args.task,
+      estimatedCredits: ANIMATE_ESTIMATE,
+      credits: null,
+      artifactPath: null,
+      detail: `action_id ${actionId}`,
+    });
+    try {
+      const result = await meshyAnimate(args.task, actionId, key, outDir);
+      appendSpend({
+        at: new Date().toISOString(),
+        provider: 'meshy',
+        fighter: hero.fighter,
+        action: 'artifact',
+        taskRef: result.taskRef,
+        credits: result.credits,
+        artifactPath: result.artifacts[0] ?? null,
+        detail: `animate ${actionId} of ${args.task}: ${result.artifacts.length} file(s)`,
+      });
+      console.log(`[heroforge] DONE animate ${actionId} for ${hero.fighter} (task ${result.taskRef})`);
+      for (const a of result.artifacts) console.log(`[heroforge]   artifact: ${a}`);
+    } catch (err) {
+      appendSpend({
+        at: new Date().toISOString(),
+        provider: 'meshy',
+        fighter: hero.fighter,
+        action: 'failed',
+        taskRef: args.task,
+        detail: `animate ${actionId}: ${(err as Error).message.slice(0, 500)}`,
+      });
+      console.error(`[heroforge] FAILED (no auto-retry, by law): ${(err as Error).message}`);
+      process.exit(1);
+    }
+    return;
+  }
 
   if (args.action === 'rig') {
     const key = process.env.MESHY_API_KEY;

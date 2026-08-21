@@ -1,0 +1,29 @@
+{
+  "aegis-9": [
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "captain-meridian": [
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "ember-ronin": [
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ]
+}

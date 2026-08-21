@@ -29,11 +29,22 @@
 
 ## Presentation
 
-6. **Fighters are stylized procedural chassis**, not generated/sculpted models;
-   animation is procedural. The 3D pipeline is a Founder-gated bake-off. Custom
-   fighters get palette/scale/silhouette variation of the same chassis — the spec's
-   "rotatable 3D preview, polished and recognizable" bar for live nominations is
-   NOT met visually yet (mechanically and narratively it is).
+6. **Custom-fighter statues need the local forge service.** Season heroes ship
+   committed Tripo statues (D-026/D-028); custom nominations forge theirs on the
+   spot through the dev-server middleware (D-029) — so statues only appear when
+   the dev server runs with `TRIPO_API_KEY` set, land ~2–3 minutes after
+   approval (next mount picks them up; no mid-battle swap), are per-machine
+   (gitignored), and skip the rubric. On the deployed static build customs stay
+   procedural chassis with palette/scale/silhouette variation — the guaranteed
+   floor. Custom statues are unrigged (Meshy rig not wired for customs).
+6b. **Clip animation covers 3 of 12 heroes, in statue-register bodies** (D-030):
+   captain-meridian, AEGIS-9, and ember-ronin play real rigged clips in battle
+   (idle/walk/attack/cast/guard/hit/death) but wear their earlier
+   statue-register models — Meshy's rig pose-estimation rejects every
+   multiverse-register model (props/drones defeat the humanoid detector), so
+   their battle bodies differ in register (not identity/palette) from their
+   draft cards. The other 9 fighters use the procedural rig with the full
+   tier-1/2 motion language. Upgrade path: Blender/AccuRIG retarget pass.
 7. **Audio absent; commentary text-only** (per spec: text first). Commentary now
    has phrase memory; zero repetition findings in the variety analyzer.
 8. **One arena.** 9. **Camera director is simple** (action-weighted centroid,

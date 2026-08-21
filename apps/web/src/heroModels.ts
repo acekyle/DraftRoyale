@@ -8,22 +8,53 @@
  * hero first and swap when (and only when) the GLB arrives — the procedural
  * chassis remains the locked fallback (D-026: any fighter failing the rubric
  * ships procedural).
+ *
+ * D-029: custom-nomination statues live under `public/custom-heroes/` with
+ * their own manifest (per-machine, gitignored — written by the dev-server
+ * forge service). Resolution order: season statue, then custom statue, then
+ * null (procedural stands).
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-const base = `${import.meta.env.BASE_URL ?? '/'}heroes/`;
+const seasonBase = `${import.meta.env.BASE_URL ?? '/'}heroes/`;
+const customBase = `${import.meta.env.BASE_URL ?? '/'}custom-heroes/`;
 
-let manifest: Promise<Set<string>> | null = null;
+const manifests = new Map<string, Promise<Set<string>>>();
 const cache = new Map<string, Promise<THREE.Group | null>>();
 const loader = new GLTFLoader();
 
-function loadManifest(): Promise<Set<string>> {
-  manifest ??= fetch(`${base}manifest.json`)
-    .then((r) => (r.ok ? r.json() : []))
-    .then((ids: unknown) => new Set(Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string') : []))
-    .catch(() => new Set<string>());
-  return manifest;
+function loadManifest(base: string): Promise<Set<string>> {
+  let m = manifests.get(base);
+  if (!m) {
+    m = fetch(`${base}manifest.json`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((ids: unknown) => new Set(Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string') : []))
+      .catch(() => new Set<string>());
+    manifests.set(base, m);
+  }
+  return m;
+}
+
+async function resolveBase(fighterId: string): Promise<string | null> {
+  if ((await loadManifest(seasonBase)).has(fighterId)) return seasonBase;
+  if ((await loadManifest(customBase)).has(fighterId)) return customBase;
+  return null;
+}
+
+/** Whether a published statue (season or custom) exists for this fighter. */
+export function hasHeroModel(fighterId: string): Promise<boolean> {
+  return resolveBase(fighterId).then((b) => b !== null);
+}
+
+/**
+ * Forget a fighter's cached (absent) model and re-read the custom manifest —
+ * called when the forge service reports a statue just landed, so the next
+ * mount picks it up without a reload.
+ */
+export function invalidateHeroModel(fighterId: string): void {
+  cache.delete(fighterId);
+  manifests.delete(customBase);
 }
 
 /**
@@ -35,8 +66,8 @@ function loadManifest(): Promise<Set<string>> {
 export function loadHeroModel(fighterId: string): Promise<THREE.Group | null> {
   let p = cache.get(fighterId);
   if (!p) {
-    p = loadManifest().then(async (ids) => {
-      if (!ids.has(fighterId)) return null;
+    p = resolveBase(fighterId).then(async (base) => {
+      if (!base) return null;
       try {
         const gltf = await loader.loadAsync(`${base}${fighterId}.glb`);
         const scene = gltf.scene;

@@ -75,6 +75,12 @@ Phase 2 remainder (online layer — landed 2026-08-19, ADR-0006/0007):
       Gate 2 (D-016, ADR-0009)
 - [x] Compiler pipeline: deterministic assembler + validators, 15-family taxonomy,
       IP/real-person transforms, unbounded-clause normalization (ADR-0008)
+- [x] Custom-nomination statue parity (D-029): on-the-spot Tripo forge for compiled
+      customs via dev-server forge service — brief derived from the Character
+      Contract, D-028 realm register by fighter hash, capped 12 gens ≈ $2.40,
+      procedural floor everywhere else. Follow-ups (not started): forge trigger in
+      ONLINE drafts, mid-battle statue swap-in, Meshy rig for biped customs, a
+      deployable forge endpoint once a real backend exists
 - [ ] Prompt-injection red-team suite + schema-constrained outputs + post-generation
       validation/moderation [risk: T4/T5 in docs/SECURITY_AND_MODERATION.md]
 - [ ] Provenance graph tooling: render evidence→claim→mechanic chains; automated
@@ -263,13 +269,18 @@ crouch-spring for fliers on the 0.3.0 duty cycle, cloth-like lag on capes/
 tails (secondary motion springs on existing joints), weapon trails on melee
 swings. All still on the procedural rigs — no external tools, $0.
 
-**Tier 3 — rigged clip animation (craft-work gate):** the generated GLBs are
+**Tier 3 — rigged clip animation (PARTIALLY SHIPPED 2026-08-21, D-030 — no Blender needed):** the generated GLBs are
 statues; real keyframed movement needs skeletons + clips. Assets in hand:
 Meshy auto-rigs + free walk/run clips for captain-meridian, aegis-9,
 ember-ronin (tools/heroforge/results/). Path: retarget a shared clip set
 (idle/walk/attack/cast/hit/KO) onto auto-rigged bipeds via Blender/AccuRIG
 (≈2h/hero craft work), THREE.AnimationMixer playback keyed by the same
 animationIntent grammar, procedural rigs remain the fallback and the
-quadruped/floater answer until they get bespoke rigs. This is a time gate,
-not a money gate — schedule it when a human animator (or a Founder Blender
-session) is available.
+quadruped/floater answer until they get bespoke rigs. SHIPPED for captain-meridian /
+aegis-9 / ember-ronin via Meshy library clips (7 clips each, 3 cr/clip,
+sub credits; clip GLBs stripped to ~50KB animation-only via gltf-transform)
+playing through heroAnim.ts AnimationMixer heroes in battle. REMAINING:
+the other 9 fighters — Meshy pose-estimation deterministically rejects every
+multiverse-register model (weapons/props/drones defeat the humanoid
+detector), so extending coverage or upgrading the 3 to their multiverse
+bodies is the Blender/AccuRIG craft pass (~2h/hero), a time gate.
