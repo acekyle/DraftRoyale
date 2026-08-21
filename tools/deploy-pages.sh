@@ -14,7 +14,9 @@ touch "$TMP/.nojekyll"
 git -C "$TMP" add -A
 git -C "$TMP" -c user.email="aaronanderson.anderson@gmail.com" -c user.name="A.Anderson" \
   commit -q -m "Deploy client build $(git rev-parse --short HEAD)"
-git -C "$TMP" push -f https://github.com/acekyle/DraftRoyale.git gh-pages:gh-pages
+# Large postBuffer: image payloads (concept sheets, future art) trip the
+# default 1MB buffer with "RPC failed; HTTP 400" on smart-HTTP pushes.
+git -C "$TMP" -c http.postBuffer=157286400 push -f https://github.com/acekyle/DraftRoyale.git gh-pages:gh-pages
 rm -rf "$TMP"
 
 gh api -X POST repos/acekyle/DraftRoyale/pages/builds >/dev/null
