@@ -125,6 +125,28 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
     appendFileSync(join(dataDir, 'matches.jsonl'), `${JSON.stringify(record)}\n`, 'utf8');
   }
 
+  /** Append-only JSONL writer (moderation files). Never throws — moderation
+   *  persistence failure must never take a room down. */
+  function appendJsonl(file: string, record: unknown) {
+    try {
+      mkdirSync(dataDir, { recursive: true });
+      appendFileSync(join(dataDir, file), `${JSON.stringify(record)}\n`, 'utf8');
+    } catch (e) {
+      console.error(`[control-plane] failed to append ${file}:`, e);
+    }
+  }
+
+  /** One report per line, full room context (reviewed by tools/moderation-queue.ts). */
+  function persistReport(record: unknown) {
+    appendJsonl('reports.jsonl', record);
+  }
+
+  /** Moderation-relevant events (report_filed, draft_voided, room_closed).
+   *  Append-only by law: lines are never deleted or rewritten. */
+  function appendAudit(record: unknown) {
+    appendJsonl('audit.jsonl', record);
+  }
+
   // ---------------------------------------------------------------------------
   // Telemetry intake (POST /telemetry) — Stage 1 friend-group metrics pipeline.
   // Events are appended verbatim (plus a server receivedAt) to telemetry.jsonl;
@@ -193,7 +215,7 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
     });
   }
 
-  const roomDeps = { content, tickIntervalMs, send, persistMatch };
+  const roomDeps = { content, tickIntervalMs, send, persistMatch, persistReport, appendAudit };
 
   function newRoomCode(): string {
     for (;;) {
@@ -206,6 +228,16 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
   function destroyRoom(room: Room, reason: string) {
     room.dispose();
     rooms.delete(room.id);
+    // Room teardown is moderation-relevant context (e.g. host closed the
+    // lobby on someone) — it lands in the append-only audit log.
+    appendAudit({
+      at: new Date().toISOString(),
+      type: 'room_closed',
+      roomId: room.id,
+      phase: room.phase,
+      hostGuestId: room.hostGuestId,
+      reason,
+    });
     for (const p of room.participants) {
       const session = sessionsByGuest.get(p.guestId);
       if (session && session.roomId === room.id) session.roomId = null;
@@ -296,6 +328,7 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
       seat: 'p1',
       connected: true,
       lastReactionAt: 0,
+      reportsFiled: 0,
     };
     room.addParticipant(participant);
     rooms.set(room.id, room);
@@ -323,11 +356,11 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
           code: seat ? 'bad_phase' : 'room_full',
           message: seat ? 'the match already started — join as a spectator' : 'both player seats are taken',
         });
-      participant = { guestId: session.guestId, name: session.name, role: 'player', seat, connected: true, lastReactionAt: 0 };
+      participant = { guestId: session.guestId, name: session.name, role: 'player', seat, connected: true, lastReactionAt: 0, reportsFiled: 0 };
     } else {
       if (room.spectatorCount() >= MAX_SPECTATORS)
         return sendWs(ws, { t: 'error', code: 'room_full', message: `spectator limit (${MAX_SPECTATORS}) reached` });
-      participant = { guestId: session.guestId, name: session.name, role: 'spectator', seat: null, connected: true, lastReactionAt: 0 };
+      participant = { guestId: session.guestId, name: session.name, role: 'spectator', seat: null, connected: true, lastReactionAt: 0, reportsFiled: 0 };
     }
     room.addParticipant(participant);
     session.roomId = room.id;
@@ -385,7 +418,7 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
   const ROOM_SCOPED = new Set<ClientMessage['t']>([
     'start_draft', 'draft_pick', 'draft_pass', 'nominate_custom', 'custom_correction',
     'custom_resolve', 'submit_prep', 'lock_wildcard', 'custom_wildcard',
-    'battle_command', 'battle_wildcard', 'reaction', 'resync',
+    'battle_command', 'battle_wildcard', 'reaction', 'report', 'resync',
   ]);
 
   wss.on('connection', (ws) => {

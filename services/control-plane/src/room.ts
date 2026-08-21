@@ -11,8 +11,11 @@
  */
 import { randomBytes, randomUUID } from 'node:crypto';
 import {
+  MAX_REPORTS_PER_ROOM,
+  MAX_REPORT_NOTE_LEN,
   PROTOCOL_VERSION,
   REACTION_EMOTES,
+  REPORT_REASONS,
   RULESET_S0,
   hasErrors,
   minRosterReserve,
@@ -77,6 +80,8 @@ export interface Participant {
   seat: Seat | null;
   connected: boolean;
   lastReactionAt: number;
+  /** Moderation abuse guard: reports filed by this guest in this room. */
+  reportsFiled: number;
 }
 
 export interface RoomDeps {
@@ -84,6 +89,10 @@ export interface RoomDeps {
   tickIntervalMs: number;
   send(guestId: string, msg: ServerMessage): void;
   persistMatch(record: unknown): void;
+  /** Append one report to <dataDir>/reports.jsonl. Must never throw. */
+  persistReport(record: unknown): void;
+  /** Append one moderation-relevant event to <dataDir>/audit.jsonl. Must never throw. */
+  appendAudit(record: unknown): void;
 }
 
 interface DraftState {
@@ -301,6 +310,7 @@ export class Room {
       case 'battle_command': return this.onBattleCommand(p, msg.command, msg.targetFighterId);
       case 'battle_wildcard': return this.onBattleWildcard(p, msg.wildcardId, msg.x, msg.z);
       case 'reaction': return this.onReaction(p, msg.emote);
+      case 'report': return this.onReport(p, msg.targetGuestId, msg.reason, msg.note);
       case 'resync': return this.sendState(guestId);
       default:
         return this.err(guestId, 'bad_message', `message ${String((msg as { t?: unknown }).t)} not valid here`);
@@ -443,9 +453,55 @@ export class Room {
         d.turn++;
         continue;
       }
+      if (!anyAffordable && ps.roster.length < RULESET_S0.rosterMin) {
+        // Deadlock backstop: this seat can neither pick (cannot_afford) nor
+        // pass (pass_too_early). The cap-lock guard (minRosterReserve) makes
+        // this near-impossible for the base market, but custom-fighter
+        // compiled prices could theoretically still create it. If NOTHING in
+        // the market survives even the RAW budget check (price <= remaining
+        // cap, ignoring the reserve), the draft is unsalvageable — void it
+        // back to the lobby rather than hang the room forever.
+        const budget = RULESET_S0.salaryCap - this.spent(seat);
+        const anyRawAffordable = this.draftableEntries(seat).some(
+          (e) => !taken.has(e.id) && e.price <= budget,
+        );
+        if (!anyRawAffordable) {
+          this.voidDraft(seat);
+          return null;
+        }
+      }
       return seat;
     }
     return null;
+  }
+
+  /**
+   * Unsalvageable draft: a seat below rosterMin with nothing raw-affordable
+   * left. Void the whole draft — reuse the rematch reset (participants, seats,
+   * and room identity stay; every match-scoped structure clears; phase →
+   * lobby), tell everyone why with a dedicated 'draft_voided' notice, and land
+   * the event in the append-only audit log. The voided draft's picks were
+   * never a match — nothing immutable is erased (no manifest/outcome existed).
+   */
+  private voidDraft(stuckSeat: Seat) {
+    this.deps.appendAudit({
+      at: new Date().toISOString(),
+      type: 'draft_voided',
+      roomId: this.id,
+      stuckSeat,
+      rosterSize: this.draft?.picks[stuckSeat].roster.length ?? 0,
+      capRemaining: RULESET_S0.salaryCap - this.spent(stuckSeat),
+      detail: 'seat below minimum roster with no draftable fighter under the remaining cap',
+    });
+    this.broadcast({
+      t: 'error',
+      code: 'draft_voided',
+      message:
+        'Draft voided — a player could neither pick nor pass under the salary cap. ' +
+        'The room is back in the lobby; the host can start a fresh draft.',
+    });
+    this.resetForRematch();
+    // Callers of advanceDraft() broadcast the fresh lobby snapshot next.
   }
 
   private advanceDraft() {
@@ -987,5 +1043,52 @@ export class Room {
     if (now - p.lastReactionAt < 1000) return this.err(p.guestId, 'rate_limited', 'one reaction per second');
     p.lastReactionAt = now;
     this.broadcast({ t: 'reaction', from: p.guestId, name: p.name, emote });
+  }
+
+  // -------------------------------------------------------------------------
+  // Moderation basics — reports (docs/SECURITY_AND_MODERATION.md §5)
+  // -------------------------------------------------------------------------
+
+  private onReport(p: Participant, targetGuestId: unknown, reason: unknown, note: unknown) {
+    if (typeof targetGuestId !== 'string')
+      return this.err(p.guestId, 'bad_message', 'targetGuestId must be a string');
+    if (typeof reason !== 'string' || !(REPORT_REASONS as readonly string[]).includes(reason))
+      return this.err(p.guestId, 'bad_message', `reason must be one of ${REPORT_REASONS.join(', ')}`);
+    if (note !== undefined && (typeof note !== 'string' || note.length > MAX_REPORT_NOTE_LEN))
+      return this.err(p.guestId, 'bad_message', `note must be a string of at most ${MAX_REPORT_NOTE_LEN} characters`);
+    if (targetGuestId === p.guestId)
+      return this.err(p.guestId, 'bad_message', 'you cannot report yourself');
+    const target = this.findParticipant(targetGuestId);
+    if (!target)
+      return this.err(p.guestId, 'unknown_target', 'no such participant in this room');
+    if (p.reportsFiled >= MAX_REPORTS_PER_ROOM)
+      return this.err(p.guestId, 'report_limit', `at most ${MAX_REPORTS_PER_ROOM} reports per room`);
+
+    p.reportsFiled += 1;
+    const at = new Date().toISOString();
+    const trimmedNote = typeof note === 'string' && note.trim().length > 0 ? note.trim() : undefined;
+    // Full context, one JSONL line, append-only (history is never erased).
+    this.deps.persistReport({
+      at,
+      roomId: this.id,
+      phase: this.phase,
+      matchId: this.battle?.matchId ?? null,
+      reporterGuestId: p.guestId,
+      targetGuestId: target.guestId,
+      targetName: target.name,
+      targetRole: target.role,
+      reason,
+      ...(trimmedNote !== undefined ? { note: trimmedNote } : {}),
+    });
+    this.deps.appendAudit({
+      at,
+      type: 'report_filed',
+      roomId: this.id,
+      phase: this.phase,
+      reporterGuestId: p.guestId,
+      targetGuestId: target.guestId,
+      reason,
+    });
+    this.deps.send(p.guestId, { t: 'report_ack', targetGuestId: target.guestId });
   }
 }

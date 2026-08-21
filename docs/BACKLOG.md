@@ -94,8 +94,9 @@ Phase 2 remainder (online layer — not started):
       and in the report (D-018)
 - [x] Champion share + dethrone links end-to-end (champion card PNG, URL-fragment
       dethrone links, live-verified 2026-08-19)
-- [ ] Moderation basics live: reporting, blocking, queue, audit log (public-launch
-      requirement; acceptable to defer strictly while access is private)
+- [x] Moderation basics live (D-021): reporting + rate caps, client-side blocking,
+      `npm run moderation` review queue, append-only audit log. Deferred until accounts
+      exist: enforcement (kick/ban), person-level blocks, reviewer RBAC — see ledger
 - [ ] Performance baseline measured on reference hardware (720p30 integrated /
       1080p60 recommended; load budgets) — no performance claims before this
 - [x] Session-integrity hardening: room/guest tokens, rate limits, payload caps

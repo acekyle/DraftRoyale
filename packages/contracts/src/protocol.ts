@@ -20,9 +20,29 @@ import type {
   WildcardContract,
 } from './types';
 
-export const PROTOCOL_VERSION = '0.2.0';
+export const PROTOCOL_VERSION = '0.3.0';
 export const DEFAULT_SERVER_PORT = 8790;
 export const MAX_SPECTATORS = 20;
+
+// ---------------------------------------------------------------------------
+// Moderation basics (protocol 0.3.0) — alpha scope: guest sessions, no
+// accounts. Reports carry a closed reason enum + short optional note; the
+// server persists them with full room context (reports.jsonl + audit.jsonl).
+// ---------------------------------------------------------------------------
+
+export const REPORT_REASONS = [
+  'harassment',
+  'inappropriate_name',
+  'inappropriate_content',
+  'cheating_suspected',
+  'other',
+] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
+/** Optional free-text context on a report (chars, enforced server-side). */
+export const MAX_REPORT_NOTE_LEN = 280;
+/** Abuse guard: reports one guest session may file per room. */
+export const MAX_REPORTS_PER_ROOM = 5;
 
 export type RoomPhase =
   | 'lobby'
@@ -142,6 +162,8 @@ export type ClientMessage =
   /** `wildcardId` must be the wildcard this seat locked (future-proofs multi-wildcard rulesets). */
   | { t: 'battle_wildcard'; wildcardId: string; x: number; z: number }
   | { t: 'reaction'; emote: string }
+  /** Report another participant of the current room (moderation basics). */
+  | { t: 'report'; targetGuestId: string; reason: ReportReason; note?: string }
   | { t: 'resync' }
   | { t: 'ping' };
 
@@ -161,6 +183,8 @@ export type ServerMessage =
   | { t: 'tick_advance'; tick: number }
   | { t: 'battle_over'; outcome: MatchOutcome; eventHash: string; finalTick: number }
   | { t: 'reaction'; from: string; name: string; emote: string }
+  /** Private ack: the reporter's report was recorded in the moderation queue. */
+  | { t: 'report_ack'; targetGuestId: string }
   /** The room was destroyed (host left the lobby, everyone left, …) — leave gracefully. */
   | { t: 'room_closed'; reason: string }
   | { t: 'error'; code: string; message: string }

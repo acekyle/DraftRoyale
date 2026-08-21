@@ -27,14 +27,15 @@ describe('control plane — protocol rev-2', () => {
     await cp.close();
   });
 
-  it('handshake and snapshots carry protocol 0.2.0', async () => {
-    expect(PROTOCOL_VERSION).toBe('0.2.0');
+  it('handshake and snapshots carry protocol 0.3.0', async () => {
+    // 0.3.0 = rev-2 + moderation basics (report/report_ack, draft_voided).
+    expect(PROTOCOL_VERSION).toBe('0.3.0');
     const c = await TestClient.connect(cp.port);
     const w = await c.hello('Vera');
-    expect(w.protocolVersion).toBe('0.2.0');
+    expect(w.protocolVersion).toBe('0.3.0');
     c.send({ t: 'create_room', experimental: false });
     const snap = await c.waitState((s) => s.phase === 'lobby', 'room created');
-    expect(snap.protocolVersion).toBe('0.2.0');
+    expect(snap.protocolVersion).toBe('0.3.0');
     c.close();
   }, 30_000);
 

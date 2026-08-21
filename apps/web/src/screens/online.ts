@@ -1,14 +1,15 @@
 /** Online rooms — server-authoritative lobby → draft → prep → wildcard → battle. */
 import type {
   CompiledFighterResult, FighterFile, FormationId, ReinforcementTrigger,
-  RoomSnapshot, ServerMessage, WildcardContract,
+  ReportReason, RoomSnapshot, ServerMessage, WildcardContract,
 } from '@arena/contracts';
-import { RULESET_S0 } from '@arena/contracts';
+import { MAX_REPORT_NOTE_LEN, REPORT_REASONS, RULESET_S0 } from '@arena/contracts';
 import { computeTeamReadout } from '@arena/combat-sim';
 import {
   ARENA, DNA_BY_ID, FIGHTERS, FILE_BY_ID, ROLE_COLORS, WILDCARDS, WILDCARD_BY_ID,
   money, registerCustomFighter, registerCustomWildcard,
 } from '../content';
+import { REPORT_REASON_LABELS, isBlocked, setBlocked } from '../moderation';
 import { defaultServerUrl, net } from '../net';
 import { go, state, track } from '../state';
 import { el, esc, mount, q, qa, topbar } from '../ui';
@@ -24,6 +25,12 @@ let myWildcardChoice: string | null = null;
 let myCustomWildcards: WildcardContract[] = [];
 let pendingNomination: { fighter: FighterFile; notes: string[]; semanticLeft: number; visualLeft: number } | null = null;
 let lastPhase = '';
+/** Moderation UI: participant currently being reported (reason picker open). */
+let reportTarget: { guestId: string; name: string } | null = null;
+/** Targets this client already reported this room (confirmation state). */
+let reportedGuestIds = new Set<string>();
+/** Sticky notice shown in the lobby after the server voided a stuck draft. */
+let voidNotice = '';
 
 function resetMatchLocals() {
   battleResult = null;
@@ -32,11 +39,14 @@ function resetMatchLocals() {
   myWildcardChoice = null;
   myCustomWildcards = [];
   pendingNomination = null;
+  reportTarget = null;
 }
 
 function resetLocal() {
   resetMatchLocals();
   lastPhase = '';
+  reportedGuestIds = new Set();
+  voidNotice = '';
 }
 
 export function renderOnline() {
@@ -47,13 +57,16 @@ export function renderOnline() {
     if (snap.phase !== lastPhase) {
       // Run it back: a finished room resetting into a fresh draft clears all
       // match-scoped local state (prep, wildcard picks, nominations, result).
-      if ((lastPhase === 'finished' || lastPhase === 'battle') && (snap.phase === 'draft' || snap.phase === 'lobby')) {
+      // draft → lobby is the server voiding an unsalvageable draft — same
+      // match-scoped cleanup applies.
+      if ((lastPhase === 'finished' || lastPhase === 'battle' || lastPhase === 'draft') && (snap.phase === 'draft' || snap.phase === 'lobby')) {
         if (battleMount) {
           battleMount.dispose();
           battleMount = null;
         }
         resetMatchLocals();
       }
+      if (snap.phase === 'draft') voidNotice = '';
       // Funnel step 4: both seats report; the funnel report dedupes per room.
       if (lastPhase === 'draft' && snap.phase === 'prep' && net.mySeat()) {
         track('draft_completed', { online: true });
@@ -64,11 +77,19 @@ export function renderOnline() {
     if (snap.phase === 'battle' && !battleMount && state.screen === 'online') startBattle();
   };
   net.onMessage = (m: ServerMessage) => {
+    // Local block/mute: a blocked participant's reactions (the only social
+    // surface today) never render here — battle overlay included. Purely
+    // presentational; gameplay inputs are untouched (lockstep law).
+    if (m.t === 'reaction' && isBlocked(m.from)) return;
     if (battleMount && (m.t === 'battle_input' || m.t === 'tick_advance' || m.t === 'battle_over' || m.t === 'reaction')) {
       battleMount.handleMessage(m);
       return;
     }
-    if (m.t === 'nomination_result') {
+    if (m.t === 'report_ack') {
+      reportedGuestIds.add(m.targetGuestId);
+      reportTarget = null;
+      renderPhase();
+    } else if (m.t === 'nomination_result') {
       registerCustomFighter(m.fighter, false);
       pendingNomination = { fighter: m.fighter, notes: m.notes, semanticLeft: m.semanticLeft, visualLeft: m.visualLeft };
       renderPhase();
@@ -91,6 +112,13 @@ export function renderOnline() {
       go('home');
       alert(`Room closed — ${m.reason}`);
     } else if (m.t === 'error') {
+      if (m.code === 'draft_voided') {
+        // The room snapshot flips back to lobby right after this frame — keep
+        // the explanation visible there instead of the transient error bar.
+        voidNotice = m.message;
+        renderPhase();
+        return;
+      }
       const bar = document.getElementById('online-error');
       if (bar) {
         bar.textContent = m.message;
@@ -294,6 +322,11 @@ function renderLobby(snap: RoomSnapshot) {
   const players = snap.participants.filter((p) => p.seat);
   const spectators = snap.participants.filter((p) => p.role === 'spectator');
   const node = shell(`
+    ${voidNotice ? `
+    <div class="panel mb" style="border-color:var(--danger)">
+      <h3 style="color:var(--danger)">Draft voided</h3>
+      <p class="small muted">${esc(voidNotice)}</p>
+    </div>` : ''}
     <div class="grid cols-2">
       <div class="panel">
         <h3>Room code — share it</h3>
@@ -308,15 +341,56 @@ function renderLobby(snap: RoomSnapshot) {
       <div class="panel">
         <h3>In the room</h3>
         ${snap.participants.map((p) => `
-          <div class="participant-row ${p.connected ? '' : 'offline'}">
+          <div class="participant-row ${p.connected ? '' : 'offline'} ${isBlocked(p.guestId) ? 'blocked' : ''}">
             <span class="pdot"></span>
             <b>${esc(p.name)}</b>
             <span class="muted small">${p.role === 'host' ? '👑 host' : p.role}${p.seat ? ` · ${p.seat}` : ''}</span>
+            ${p.guestId !== net.guestId ? `
+            <span class="mod-actions">
+              ${reportedGuestIds.has(p.guestId)
+                ? '<span class="small muted">reported ✓</span>'
+                : `<button class="mod-btn" data-report="${esc(p.guestId)}" data-report-name="${esc(p.name)}" title="Report this player to moderation">⚑ report</button>`}
+              <button class="mod-btn" data-block="${esc(p.guestId)}" title="Hide this player's reactions on your screen only — gameplay is unaffected">${isBlocked(p.guestId) ? 'unblock' : 'block'}</button>
+            </span>` : ''}
           </div>`).join('')}
+        ${reportTarget ? `
+        <div class="report-panel mt" id="report-panel">
+          <b class="small">Report ${esc(reportTarget.name)}</b>
+          <select id="report-reason" class="mt">
+            ${REPORT_REASONS.map((r) => `<option value="${r}">${esc(REPORT_REASON_LABELS[r] ?? r)}</option>`).join('')}
+          </select>
+          <input type="text" id="report-note" maxlength="${MAX_REPORT_NOTE_LEN}" placeholder="Optional note (${MAX_REPORT_NOTE_LEN} chars max)" class="mt"/>
+          <div class="row mt">
+            <button class="small primary" id="report-send">Send report</button>
+            <button class="small" id="report-cancel">Cancel</button>
+          </div>
+          <p class="muted small mt">Reports go to the moderators with room context. Blocking is separate — it only hides reactions for you.</p>
+        </div>` : ''}
         <p class="muted small mt">${spectators.length}/20 spectator slots used</p>
         <div class="emote-bar mt" id="lobby-emotes"></div>
       </div>
     </div>`);
+  qa(node, '[data-report]').forEach((b) => b.addEventListener('click', () => {
+    reportTarget = { guestId: b.dataset.report!, name: b.dataset.reportName ?? 'player' };
+    renderPhase();
+  }));
+  qa(node, '[data-block]').forEach((b) => b.addEventListener('click', () => {
+    const id = b.dataset.block!;
+    setBlocked(id, !isBlocked(id));
+    renderPhase();
+  }));
+  node.querySelector('#report-send')?.addEventListener('click', () => {
+    if (!reportTarget) return;
+    const reason = q<HTMLSelectElement>(node, '#report-reason').value as ReportReason;
+    const note = q<HTMLInputElement>(node, '#report-note').value.trim().slice(0, MAX_REPORT_NOTE_LEN);
+    net.send({ t: 'report', targetGuestId: reportTarget.guestId, reason, ...(note ? { note } : {}) });
+    // Telemetry carries the reason only — never the target's identity.
+    track('report_filed', { reason });
+  });
+  node.querySelector('#report-cancel')?.addEventListener('click', () => {
+    reportTarget = null;
+    renderPhase();
+  });
   node.querySelector('#btn-start')?.addEventListener('click', () => net.send({ t: 'start_draft' }));
   node.querySelector('#btn-copy-join')?.addEventListener('click', async () => {
     const url = savedServerUrl();

@@ -304,3 +304,14 @@ input[type='text']:focus { border-color: var(--gold); }
 .conn-pill { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line-bright); }
 .conn-pill.ok { color: var(--green); border-color: var(--green); }
 .conn-pill.bad { color: var(--danger); border-color: var(--danger); }
+
+/* ---- Moderation (report + local block) ---- */
+.participant-row .mod-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.participant-row.blocked b { opacity: 0.45; text-decoration: line-through; }
+.mod-btn { font-size: 11px; padding: 2px 7px; background: transparent; border: 1px solid var(--line-bright); color: var(--text-dim); border-radius: 3px; cursor: pointer; }
+.mod-btn:hover { color: var(--danger); border-color: var(--danger); }
+.report-panel { border: 1px solid var(--danger); border-radius: 6px; padding: 12px; background: #2a121233; }
+.report-panel select, .report-panel input[type='text'] {
+  width: 100%; background: var(--bg-panel); border: 1px solid var(--line-bright); color: var(--text);
+  border-radius: 4px; padding: 7px 10px; font-family: var(--font-body); font-size: 13px;
+}
