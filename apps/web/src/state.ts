@@ -10,6 +10,7 @@ import type {
   FormationId,
   ReinforcementTrigger,
 } from '@arena/contracts';
+import { queueTelemetry, telemetryClientId, telemetryGroupKey, telemetrySource } from './telemetry';
 
 export type Screen = 'home' | 'reveal' | 'draft' | 'prep' | 'wildcard' | 'battle' | 'breakdown' | 'online' | 'bracket';
 
@@ -183,17 +184,28 @@ export function saveChampion(c: ChampionRecord) {
 }
 
 // ---------------------------------------------------------------------------
-// Analytics funnel (local only — real player data collection needs the
-// deployed alpha + disclosure; synthetic and QA data must stay separated)
+// Analytics funnel — local ring buffer + outbound queue (telemetry.ts ships it
+// to the self-hosted control plane when a server URL is configured).
+// source is stamped by hostname: 'alpha' only on a deployed origin,
+// 'local-dev' on localhost/Playwright — synthetic and human data must stay
+// separated (docs/LAUNCH_PLAN.md §5, locked).
 // ---------------------------------------------------------------------------
 
 export function track(event: string, props: Record<string, string | number | boolean> = {}) {
-  const entry = { event, props, at: new Date().toISOString(), source: 'local-dev' };
+  const entry = {
+    event,
+    props,
+    at: new Date().toISOString(),
+    source: telemetrySource(),
+    clientId: telemetryClientId(),
+    groupKey: telemetryGroupKey(),
+  };
   try {
     const buf = JSON.parse(localStorage.getItem(K.telemetry) ?? '[]');
     buf.push(entry);
     localStorage.setItem(K.telemetry, JSON.stringify(buf.slice(-500)));
   } catch { /* quota */ }
+  queueTelemetry(entry);
   // eslint-disable-next-line no-console
   console.debug('[telemetry]', event, props);
 }

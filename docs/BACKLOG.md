@@ -1,6 +1,6 @@
 # Backlog
 
-> Living document. Last updated: 2026-08-19. Phase-organized. A checked box means the work
+> Living document. Last updated: 2026-08-20. Phase-organized. A checked box means the work
 > is verifiable in this repository today; in-progress items say so explicitly. Labels:
 > **[founder-gate]** requires explicit Founder approval before starting/spending,
 > **[spike]** timeboxed investigation, **[risk]** known risk attached — see the item.
@@ -83,19 +83,23 @@ Phase 2 remainder (online layer — not started):
 - [ ] Moderation pipeline for user content: pending-by-default, review queue, upload
       scanning
 
-## Phase 4 — Social Vertical Slice (not started)
+## Phase 4 — Social Vertical Slice (in progress)
 
-- [ ] [founder-gate] Deployment (hosting, domain, TLS) — **REQUIRES Founder approval**;
-      includes exposure review (docs/PROJECT_CONSTITUTION.md §5, gate #6)
-- [ ] Crash reporting (self-hosted/free tier unless approved otherwise)
-- [ ] Analytics wiring: the 12-event funnel + Run-It-Back Rate
-      (docs/LAUNCH_PLAN.md §3–4); synthetic/real separation enforced in the pipeline
-- [ ] Champion share + dethrone links end-to-end
+- [x] [founder-gate] Deployment — Gate 1 APPROVED and live (GitHub Pages client +
+      self-hosted tunnel server; docs/DEPLOY.md, D-015)
+- [x] Crash reporting — self-hosted: local ring buffer + `client_crash` telemetry events
+      to our own control plane (no third-party service)
+- [x] Analytics wiring: the 12-event funnel + Run-It-Back Rate
+      (docs/LAUNCH_PLAN.md §3–4); synthetic/real separation enforced at the source
+      and in the report (D-018)
+- [x] Champion share + dethrone links end-to-end (champion card PNG, URL-fragment
+      dethrone links, live-verified 2026-08-19)
 - [ ] Moderation basics live: reporting, blocking, queue, audit log (public-launch
-      requirement)
+      requirement; acceptable to defer strictly while access is private)
 - [ ] Performance baseline measured on reference hardware (720p30 integrated /
       1080p60 recommended; load budgets) — no performance claims before this
-- [ ] Session-integrity hardening: room/guest tokens, rate limits
+- [x] Session-integrity hardening: room/guest tokens, rate limits, payload caps
+      (ADR-0006)
 
 ## Phase 5 — Closed Alpha & Launch Validation (not started)
 
@@ -126,18 +130,17 @@ focus command, enemy counterplay destroyed the Nullstone Shard, escalation flag,
 verdict) → causal breakdown (draft value, weakness exploitation, turning point, command +
 wildcard factors, transcript) → champion record → run-it-back restart. Polish items observed:
 
-- [ ] [qa] E2E coverage for `ally_below_35` relay swap — a 4-roster match saw the reserve
-      never enter despite heavy damage on an active (heals may have kept everyone above the
-      threshold at check time; needs a deterministic test either way)
-- [ ] [gameplay] Sustain-heavy comps can carry a full match to the 4:30 decision with zero
-      KOs — consider escalation also damping healing, or a shrinking-zone pressure
-- [ ] [gameplay] AI wildcard selection is random — should score wildcards against both
-      drafts (it picked anti-solar Nullstone while fielding Solaria)
-- [ ] [frontend] Team Readout axis bars render near-empty for mid values — display scaling
-- [ ] [frontend] Fights can drift into arena corners — add soft centering pressure or
-      camera framing bias
-- [ ] [frontend] Inspect-drawer clicks can land on re-flowed cards after background scroll —
-      lock body scroll while the drawer is open
+- [x] [qa] `ally_below_35` relay swap — deterministic unit test added 2026-08-20: swap
+      fires the same tick a fighter is <35% at check time, holds at exactly 35%. The E2E
+      observation was heals keeping everyone above threshold at check time (engine correct)
+- [x] [gameplay] Sustain-heavy zero-KO decisions — escalation now damps healing
+      symmetrically (D-017, ruleset 0.2.0; residual shield-driven floor recorded in
+      KNOWN_LIMITATIONS §12)
+- [x] [gameplay] AI wildcard selection scores against both drafts (landed 2026-08-19 wave)
+- [x] [frontend] Team Readout axis bars — sqrt display curve + numeric value beside each bar
+- [x] [frontend] Corner drift — render-only camera framing bias toward arena center
+      (up to 30% pull at the wall; sim untouched)
+- [x] [frontend] Inspect-drawer body scroll-lock (landed 2026-08-19 wave)
 
 ---
 
@@ -152,12 +155,49 @@ wildcard factors, transcript) → champion record → run-it-back restart. Polis
 - [x] [frontend] Champion card PNG export, accessibility settings, crash capture, challenge-under-current-rules, drawer scroll-lock
 - [x] Governance: CODEOWNERS, protected main with required CI check
 
-### Next free work (no gates)
-- [ ] [multiplayer] Online rematch/run-it-back within a finished room; dedicated room_closed signal; protocol rev-2 items from ADR-0006
-- [ ] [gameplay] Basic 4-player bracket (local room sequencing first)
-- [ ] [gameplay] AI opponent wildcard selection should score against both drafts
-- [ ] [qa] Safari/JavaScriptCore lockstep divergence trial (two-browser matrix)
-- [ ] [frontend] Team Readout axis bar scaling; camera corner-drift bias; escalation-vs-sustain tuning experiment (healing damp)
+### Next free work (no gates) — all landed
+- [x] [multiplayer] Online rematch/run-it-back within a finished room (2026-08-19 wave)
+- [x] [gameplay] Basic 4-player bracket — Bracket Night (2026-08-19 wave)
+- [x] [gameplay] AI opponent wildcard selection scores against both drafts (2026-08-19 wave)
+- [x] [qa] Safari/JavaScriptCore lockstep divergence trial — measured EQUAL, 3 manifests,
+      chromium+webkit (2026-08-19 wave)
+- [x] [frontend] Team Readout bar scaling; camera corner-drift bias; escalation healing
+      damp (D-017) — this wave
+
+## Telemetry wave — landed 2026-08-20
+
+- [x] [analytics] Control-plane `POST /telemetry` (CORS for the Pages origin, size caps,
+      per-event validation, JSONL) + client uploader (20 s flush + sendBeacon on hide,
+      offline-tolerant outbox) — D-018
+- [x] [analytics] Real-vs-synthetic separation enforced at the source: deployed
+      origin stamps `alpha`, localhost stamps `local-dev`; anonymous client id; room-or-device
+      group key (LAUNCH_PLAN §5)
+- [x] [analytics] Crash capture ships `client_crash` events → crash-free gate computable
+- [x] [analytics] One-tap comprehension prompt on breakdown → winner-explanation gate
+      computable
+- [x] [analytics] `npm run funnel` — 12-step funnel, Run-It-Back Rate, gate table vs
+      LAUNCH_PLAN §2 with PASS/FAIL/NO DATA and written metric definitions
+- [x] [engine] Escalation healing damp 0.15 in ruleset 0.2.0 + version-keyed ruleset
+      registry: 0.1.0 manifests replay to their original hashes forever (D-017)
+
+### Instrumentation gaps (found while wiring the funnel)
+- [x] [analytics] Online `draft_completed` emitted at the draft→prep transition (both
+      seats report; funnel dedupes per room)
+- [x] [analytics] Online nominations emit `custom_correction`/`fighter_approved`
+
+### Rev-2 + cap-lock wave — landed 2026-08-20 (same day, second wave)
+- [x] [multiplayer] Protocol rev-2 (0.2.0): typed `room_closed`, `battle_wildcard` carries
+      a validated `wildcardId`, declined nominations keep the nomination right (D-019)
+- [x] [gameplay] **Cap-lock guard** (D-020): live repro found the AI (and any player)
+      could be priced out of a legal minimum roster when the opponent drained the cheap
+      market — the draft then dead-ended. `minRosterReserve` (worst-case snipe bound) now
+      gates picks in solo AI, local UI, and the server; voided-draft recovery screen added
+      as backstop
+- [x] [frontend] Readout axes: two-column grid collapsed bar tracks to 0px inside the prep
+      panel — single column + honest numeric values (the actual cause of the "near-empty
+      bars" finding)
+- [x] [frontend] Comprehension prompt survives breakdown re-renders; one RESPONSE per
+      match, not one showing
 
 ### Founder-gated (spend/accounts — the current stop-line)
 - [ ] [founder-gate] Alpha hosting/deployment (static client + room server) → unlocks Stage 1 friend-group testing

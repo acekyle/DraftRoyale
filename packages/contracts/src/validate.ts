@@ -206,3 +206,31 @@ export function validateTeamSetup(
 }
 
 export const hasErrors = (issues: ValidationIssue[]) => issues.some((i) => i.severity === 'error');
+
+/**
+ * Cap-lock guard for drafts: the budget a player must keep in reserve to be
+ * GUARANTEED able to finish a minimum-legal roster from what the market can
+ * still offer.
+ *
+ * A price floor (PRICE_MIN) is not enough — the opponent can drain the cheap
+ * end of a finite market (this soft-locked a live draft on 2026-08-20). Under
+ * ABBA the opponent takes at most 2 fighters between any two of your turns
+ * (and never more than their own remaining roster capacity), so at most
+ * min(2×need, opponentCapacity) of the remaining fighters can disappear before
+ * you finish your minimum. Reserve = the sum of the `need` cheapest prices
+ * after discarding that many cheapest as potentially sniped. Returns Infinity
+ * when the market cannot guarantee covering the need.
+ *
+ * @param availablePrices prices of fighters still draftable by this player,
+ *   excluding the candidate pick being evaluated
+ * @param need picks still required AFTER the candidate to reach rosterMin
+ * @param opponentCapacity picks the opponent can still make (0 if passed/full)
+ */
+export function minRosterReserve(availablePrices: number[], need: number, opponentCapacity: number): number {
+  if (need <= 0) return 0;
+  const sorted = [...availablePrices].sort((a, b) => a - b);
+  const snipes = Math.min(2 * need, Math.max(0, opponentCapacity));
+  const survivors = sorted.slice(snipes);
+  if (survivors.length < need) return Infinity;
+  return survivors.slice(0, need).reduce((s, v) => s + v, 0);
+}

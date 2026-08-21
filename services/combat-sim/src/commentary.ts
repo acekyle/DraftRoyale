@@ -108,7 +108,13 @@ const T: Partial<Record<MatchEvent['type'], TemplateSet>> = {
   ESCALATION: {
     priority: 7,
     cooldownTicks: 0,
-    variants: [(e) => `Escalation protocol — damage is climbing to ${Math.round((Number(e.data.damageMult) - 1) * 100)}% bonus. No hiding now.`],
+    variants: [(e) => {
+      const dmgPct = Math.round((Number(e.data.damageMult) - 1) * 100);
+      const healMult = e.data.healingMult === undefined ? 1 : Number(e.data.healingMult);
+      return healMult < 1
+        ? `Escalation protocol — damage is climbing to ${dmgPct}% bonus and healing is damped to ${Math.round(healMult * 100)}%. No hiding now.`
+        : `Escalation protocol — damage is climbing to ${dmgPct}% bonus. No hiding now.`;
+    }],
   },
   FIGHTER_KNOCKED_OUT: {
     priority: 10,

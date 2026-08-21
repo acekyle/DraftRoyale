@@ -67,7 +67,7 @@ describe('control plane — spectators', () => {
     // Cannot command or deploy.
     spec.send({ t: 'battle_command', command: 'press_attack' });
     await spec.waitError('not_a_player');
-    spec.send({ t: 'battle_wildcard', x: 0, z: 0 });
+    spec.send({ t: 'battle_wildcard', wildcardId: 'aegis-beacon', x: 0, z: 0 });
     await spec.waitError('not_a_player');
 
     // Reactions are for everyone — valid emote relayed with the sender's name…

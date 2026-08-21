@@ -11,7 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomInt, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { createServer as createHttpServer } from 'node:http';
+import { createServer as createHttpServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { WebSocketServer, WebSocket } from 'ws';
 import {
@@ -26,6 +26,12 @@ import { loadContent, type LoadedContent } from '../../../tools/load-content';
 import { Room, type Participant, type Seat } from './room';
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;
+const TELEMETRY_MAX_BODY_BYTES = 256 * 1024;
+const TELEMETRY_MAX_EVENTS = 500;
+// CORS: the alpha client is served from GitHub Pages while telemetry lands on
+// this self-hosted server (Cloudflare tunnel) — cross-origin, no credentials,
+// no cookies, so a wildcard origin is safe here.
+const CORS_HEADERS = { 'access-control-allow-origin': '*' } as const;
 const RATE_CAPACITY = 40; // burst
 const RATE_REFILL_PER_SEC = 20; // sustained ~20 msg/sec
 const ROOM_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
@@ -73,10 +79,27 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
   const conns = new Map<WebSocket, ConnState>();
   const socketByGuest = new Map<string, WebSocket>();
 
-  // HTTP wrapper: /health for PaaS health checks and tunnel probes; WS upgrades ride the same port.
+  // HTTP wrapper: /health for PaaS health checks and tunnel probes, /telemetry
+  // for the Stage 1 metrics pipeline; WS upgrades ride the same port.
   const httpServer = createHttpServer((req, res) => {
-    if (req.url === '/health' || req.url === '/') {
-      res.writeHead(200, { 'content-type': 'application/json' });
+    const path = (req.url ?? '').split('?')[0];
+    if (req.method === 'OPTIONS') {
+      // CORS preflight — the alpha client POSTs JSON from another origin.
+      res.writeHead(204, {
+        ...CORS_HEADERS,
+        'access-control-allow-methods': 'GET, POST, OPTIONS',
+        'access-control-allow-headers': 'content-type',
+        'access-control-max-age': '86400',
+      });
+      res.end();
+      return;
+    }
+    if (req.method === 'POST' && path === '/telemetry') {
+      onTelemetryPost(req, res);
+      return;
+    }
+    if (path === '/health' || path === '/') {
+      res.writeHead(200, { 'content-type': 'application/json', ...CORS_HEADERS });
       res.end(JSON.stringify({ ok: true, service: 'infinite-arena-control-plane', rooms: rooms.size }));
     } else {
       res.writeHead(404);
@@ -102,6 +125,74 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
     appendFileSync(join(dataDir, 'matches.jsonl'), `${JSON.stringify(record)}\n`, 'utf8');
   }
 
+  // ---------------------------------------------------------------------------
+  // Telemetry intake (POST /telemetry) — Stage 1 friend-group metrics pipeline.
+  // Events are appended verbatim (plus a server receivedAt) to telemetry.jsonl;
+  // aggregation lives in tools/funnel-report.ts. Malformed events are dropped
+  // individually rather than failing the whole batch.
+  // ---------------------------------------------------------------------------
+
+  function isTelemetryEvent(e: unknown): e is Record<string, unknown> {
+    if (typeof e !== 'object' || e === null || Array.isArray(e)) return false;
+    const ev = e as Record<string, unknown>;
+    if (typeof ev.event !== 'string' || ev.event.length === 0 || ev.event.length > 200) return false;
+    if (typeof ev.at !== 'string') return false;
+    if (typeof ev.source !== 'string') return false;
+    if (ev.props !== undefined && (typeof ev.props !== 'object' || ev.props === null || Array.isArray(ev.props))) return false;
+    if (ev.clientId !== undefined && typeof ev.clientId !== 'string') return false;
+    if (ev.groupKey !== undefined && typeof ev.groupKey !== 'string') return false;
+    return true;
+  }
+
+  function persistTelemetry(events: Record<string, unknown>[]) {
+    mkdirSync(dataDir, { recursive: true });
+    const receivedAt = new Date().toISOString();
+    const lines = events.map((e) => `${JSON.stringify({ ...e, receivedAt })}\n`).join('');
+    appendFileSync(join(dataDir, 'telemetry.jsonl'), lines, 'utf8');
+  }
+
+  function respondJson(res: ServerResponse, status: number, body: unknown) {
+    res.writeHead(status, { 'content-type': 'application/json', ...CORS_HEADERS });
+    res.end(JSON.stringify(body));
+  }
+
+  function onTelemetryPost(req: IncomingMessage, res: ServerResponse) {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    let rejected = false;
+    req.on('data', (chunk: Buffer) => {
+      if (rejected) return;
+      size += chunk.length;
+      if (size > TELEMETRY_MAX_BODY_BYTES) {
+        // Answer 413 immediately and drain the rest so the client still gets
+        // the status instead of a reset connection.
+        rejected = true;
+        chunks.length = 0;
+        respondJson(res, 413, { ok: false, error: 'body_too_large' });
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      if (rejected) return;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      } catch {
+        return respondJson(res, 400, { ok: false, error: 'bad_json' });
+      }
+      const events = (parsed as { events?: unknown } | null)?.events;
+      if (!Array.isArray(events)) return respondJson(res, 400, { ok: false, error: 'events_must_be_array' });
+      if (events.length > TELEMETRY_MAX_EVENTS) return respondJson(res, 413, { ok: false, error: 'too_many_events' });
+      const accepted = events.filter(isTelemetryEvent);
+      if (accepted.length > 0) persistTelemetry(accepted);
+      respondJson(res, 200, { ok: true, accepted: accepted.length });
+    });
+    req.on('error', () => {
+      /* client went away mid-upload; nothing to do */
+    });
+  }
+
   const roomDeps = { content, tickIntervalMs, send, persistMatch };
 
   function newRoomCode(): string {
@@ -118,7 +209,7 @@ export async function createControlPlane(opts: ControlPlaneOptions = {}): Promis
     for (const p of room.participants) {
       const session = sessionsByGuest.get(p.guestId);
       if (session && session.roomId === room.id) session.roomId = null;
-      if (p.connected) send(p.guestId, { t: 'error', code: 'room_closed', message: reason });
+      if (p.connected) send(p.guestId, { t: 'room_closed', reason });
     }
     room.participants = [];
   }

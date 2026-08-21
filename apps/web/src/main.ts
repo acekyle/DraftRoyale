@@ -1,5 +1,6 @@
 import './styles.css';
 import { applySettings, installCrashCapture } from './settings';
+import { initTelemetry } from './telemetry';
 import { bindRenderer, go, track, type Screen } from './state';
 import { renderHome } from './screens/home';
 import { renderReveal } from './screens/reveal';
@@ -25,6 +26,7 @@ const screens: Record<Screen, () => void> = {
 
 installCrashCapture();
 applySettings();
+initTelemetry();
 bindRenderer((screen) => screens[screen]());
 track('web_shell_loaded', {});
 // Join links land straight in the online flow (constitution §11 Step 1).

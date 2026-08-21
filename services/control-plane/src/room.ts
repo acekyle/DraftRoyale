@@ -12,10 +12,10 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import {
   PROTOCOL_VERSION,
-  PRICE_MIN,
   REACTION_EMOTES,
   RULESET_S0,
   hasErrors,
+  minRosterReserve,
   validateTeamSetup,
   type BattleInput,
   type ClientMessage,
@@ -299,7 +299,7 @@ export class Room {
       case 'lock_wildcard': return this.onLockWildcard(p, msg.wildcardId);
       case 'custom_wildcard': return this.onCustomWildcard(p, msg.description);
       case 'battle_command': return this.onBattleCommand(p, msg.command, msg.targetFighterId);
-      case 'battle_wildcard': return this.onBattleWildcard(p, msg.x, msg.z);
+      case 'battle_wildcard': return this.onBattleWildcard(p, msg.wildcardId, msg.x, msg.z);
       case 'reaction': return this.onReaction(p, msg.emote);
       case 'resync': return this.sendState(guestId);
       default:
@@ -404,11 +404,20 @@ export class Room {
     return out;
   }
 
-  private canAfford(seat: Seat, price: number): boolean {
+  private canAfford(seat: Seat, price: number, candidateId: string): boolean {
     const roster = this.draft!.picks[seat].roster;
     const budget = RULESET_S0.salaryCap - this.spent(seat);
     const need = Math.max(0, RULESET_S0.rosterMin - roster.length - 1);
-    return price <= budget - need * PRICE_MIN;
+    // Reserve against the LIVE market minus what the opponent can still snipe
+    // — a static PRICE_MIN floor let a seat cap-lock below the minimum roster.
+    const other: Seat = seat === 'p1' ? 'p2' : 'p1';
+    const op = this.draft!.picks[other];
+    const oppCapacity = op.passed ? 0 : RULESET_S0.rosterMax - op.roster.length;
+    const taken = this.takenIds();
+    const remaining = this.draftableEntries(seat)
+      .filter((e) => e.id !== candidateId && !taken.has(e.id))
+      .map((e) => e.price);
+    return price <= budget - minRosterReserve(remaining, need, oppCapacity);
   }
 
   /**
@@ -427,7 +436,7 @@ export class Room {
       }
       const taken = this.takenIds();
       const anyAffordable = this.draftableEntries(seat).some(
-        (e) => !taken.has(e.id) && this.canAfford(seat, e.price),
+        (e) => !taken.has(e.id) && this.canAfford(seat, e.price, e.id),
       );
       if (!anyAffordable && ps.roster.length >= RULESET_S0.rosterMin) {
         ps.passed = true;
@@ -465,7 +474,7 @@ export class Room {
     if (this.takenIds().has(fighterId)) return this.err(p.guestId, 'fighter_taken', `${fighterId} is already drafted`);
     if (this.draft!.picks[seat].roster.length >= RULESET_S0.rosterMax)
       return this.err(p.guestId, 'roster_full', 'roster is full');
-    if (!this.canAfford(seat, entry.price))
+    if (!this.canAfford(seat, entry.price, fighterId))
       return this.err(p.guestId, 'cannot_afford', `cannot afford ${fighterId} under the min-roster budget rule`);
 
     // The price is ALWAYS the locked content price — clients cannot set it.
@@ -508,8 +517,13 @@ export class Room {
     if (nom.used) return this.err(p.guestId, 'nomination_used', 'you already used your custom nomination');
 
     // Reserve the nomination right BEFORE the (possibly LLM-async) compile so a
-    // second request during the in-flight call cannot double-spend it.
+    // second request during the in-flight call cannot double-spend it. The
+    // right is only truly consumed on APPROVAL (custom_resolve accept:true);
+    // a decline or a failed compile hands it back. Correction budgets are
+    // per-nomination, so a fresh nomination starts with a fresh budget.
     nom.used = true;
+    nom.semanticCorrections = 0;
+    nom.visualCorrections = 0;
     this.broadcastState();
     void (async () => {
       let result: CompiledFighterResult;
@@ -588,12 +602,21 @@ export class Room {
     const pending = this.pendingNominations[seat];
     if (!pending) return this.err(p.guestId, 'no_nomination', 'no pending custom fighter to resolve');
     this.pendingNominations[seat] = null;
+    const nom = this.draft!.nominations[seat];
     if (accept) {
       const id = pending.fighter.dna.identity.fighterId;
-      if (this.marketEntry(seat, id) !== null && !this.customOwners.has(id))
+      if (this.marketEntry(seat, id) !== null && !this.customOwners.has(id)) {
+        // Not resolved into the draft — the nomination right stays available.
+        nom.used = false;
+        this.broadcastState();
         return this.err(p.guestId, 'invalid_fighter', `custom fighter id collides with market fighter ${id}`);
+      }
       this.draft!.customFighters.push(pending.fighter);
       this.customOwners.set(id, seat);
+    } else {
+      // Rev-2: a declined nomination no longer consumes the one-per-player
+      // right — the player may nominate again in the same draft.
+      nom.used = false;
     }
     this.broadcastState();
   }
@@ -885,17 +908,25 @@ export class Room {
     this.queueInput(input);
   }
 
-  private onBattleWildcard(p: Participant, x: unknown, z: unknown) {
+  private onBattleWildcard(p: Participant, wildcardId: unknown, x: unknown, z: unknown) {
     const seat = this.requireSeat(p);
     if (!seat) return;
     if (this.phase !== 'battle' || !this.battle)
       return this.err(p.guestId, 'bad_phase', `cannot deploy during ${this.phase}`);
     const b = this.battle;
     if (b.sim.over) return this.err(p.guestId, 'bad_phase', 'the match is over');
+    if (typeof wildcardId !== 'string')
+      return this.err(p.guestId, 'bad_message', 'wildcardId must be a string');
     if (typeof x !== 'number' || typeof z !== 'number' || !Number.isFinite(x) || !Number.isFinite(z))
       return this.err(p.guestId, 'bad_message', 'x and z must be finite numbers');
     const team = b.teams.find((t) => t.playerId === seat)!;
     if (!team.wildcardId) return this.err(p.guestId, 'no_wildcard', 'you locked no wildcard for this match');
+    // Rev-2: the client names the wildcard it deploys. Under wildcardsPerPlayer: 1
+    // the only id this seat has available is the one it locked (a standard
+    // contract or its own custom) — anything else is rejected before it can
+    // reach the lockstep relay.
+    if (wildcardId !== team.wildcardId)
+      return this.err(p.guestId, 'unknown_wildcard', `${wildcardId} is not a wildcard you have available this match`);
     if (!b.sim.wildcardAvailable(seat) || b.queuedWildcard[seat])
       return this.err(p.guestId, 'wildcard_used', 'your wildcard was already deployed');
 

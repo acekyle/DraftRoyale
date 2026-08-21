@@ -20,7 +20,7 @@ import type {
   WildcardContract,
 } from './types';
 
-export const PROTOCOL_VERSION = '0.1.0';
+export const PROTOCOL_VERSION = '0.2.0';
 export const DEFAULT_SERVER_PORT = 8790;
 export const MAX_SPECTATORS = 20;
 
@@ -99,7 +99,16 @@ export interface RoomSnapshot {
   rev: number;
 }
 
-/** A validated battle input relayed to all clients for lockstep application. */
+/**
+ * A validated battle input relayed to all clients for lockstep application.
+ *
+ * Wire convention (deliberate, rev-2 reviewed): `issuedTick` is the PRE-STEP
+ * tick — the input is applied when the sim is about to step from
+ * `issuedTick - 1` to `issuedTick`, i.e. apply while `sim.tick === issuedTick - 1`,
+ * then step. Manifest timelines instead store the APPLICATION tick
+ * (`issuedTick - 1`); the server converts when recording. Kept as-is to avoid
+ * lockstep regression risk (ADR-0006).
+ */
 export type BattleInput =
   | { kind: 'command'; playerId: string; command: TacticalCommandKind; targetFighterId?: string; issuedTick: number }
   | { kind: 'wildcard'; playerId: string; wildcardId: string; x: number; z: number; issuedTick: number };
@@ -130,7 +139,8 @@ export type ClientMessage =
   | { t: 'lock_wildcard'; wildcardId: string | null }
   | { t: 'custom_wildcard'; description: string } // experimental rooms only
   | { t: 'battle_command'; command: TacticalCommandKind; targetFighterId?: string }
-  | { t: 'battle_wildcard'; x: number; z: number }
+  /** `wildcardId` must be the wildcard this seat locked (future-proofs multi-wildcard rulesets). */
+  | { t: 'battle_wildcard'; wildcardId: string; x: number; z: number }
   | { t: 'reaction'; emote: string }
   | { t: 'resync' }
   | { t: 'ping' };
@@ -151,6 +161,8 @@ export type ServerMessage =
   | { t: 'tick_advance'; tick: number }
   | { t: 'battle_over'; outcome: MatchOutcome; eventHash: string; finalTick: number }
   | { t: 'reaction'; from: string; name: string; emote: string }
+  /** The room was destroyed (host left the lobby, everyone left, …) — leave gracefully. */
+  | { t: 'room_closed'; reason: string }
   | { t: 'error'; code: string; message: string }
   | { t: 'pong' };
 

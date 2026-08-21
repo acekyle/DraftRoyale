@@ -38,9 +38,18 @@ evaluated against real load numbers.
 
 ## Protocol frictions recorded for the next revision
 
-Wire `issuedTick` is the pre-step convention while manifest timelines store the
-application tick (off-by-one, handled server-side and proven by replay tests);
-`battle_wildcard` omits `wildcardId` (assumes `wildcardsPerPlayer: 1`); custom
-fighters are publicly visible but nominator-draftable (required for lockstep
-content anyway); no dedicated `room_closed` message; a declined nomination still
-consumes the one-per-player right.
+> **Rev-2 (protocol 0.2.0, 2026-08-20, D-019) closed three of these:** dedicated
+> `room_closed` message; `battle_wildcard` now carries a server-validated
+> `wildcardId`; a declined nomination no longer consumes the nomination right
+> (local and online agree). Deliberately kept: the `issuedTick` pre-step wire
+> convention (documented at the type; changing it risks lockstep regressions
+> for zero user value) and nominator-draftable custom visibility (required for
+> lockstep content).
+
+Original list: wire `issuedTick` is the pre-step convention while manifest
+timelines store the application tick (off-by-one, handled server-side and
+proven by replay tests); `battle_wildcard` omits `wildcardId` (assumes
+`wildcardsPerPlayer: 1`); custom fighters are publicly visible but
+nominator-draftable (required for lockstep content anyway); no dedicated
+`room_closed` message; a declined nomination still consumes the one-per-player
+right.

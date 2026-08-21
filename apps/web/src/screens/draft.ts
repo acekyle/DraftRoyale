@@ -1,4 +1,4 @@
-import { RULESET_S0, type FighterFile } from '@arena/contracts';
+import { RULESET_S0, minRosterReserve, type FighterFile } from '@arena/contracts';
 import { createRng, type Rng } from '@arena/combat-sim';
 import { compileFighterFromText, applySemanticCorrection, applyVisualCorrection } from '@arena/character-compiler';
 import { DNA_BY_ID, FIGHTERS, FILE_BY_ID, ROLE_COLORS, money, registerCustomFighter } from '../content';
@@ -6,7 +6,6 @@ import { aiDraftPick } from '../opponentAI';
 import { go, state, track } from '../state';
 import { el, esc, mount, q, qa, topbar } from '../ui';
 
-const MIN_PRICE = 8_000_000;
 let aiRng: Rng | null = null;
 let aiTimer: number | null = null;
 
@@ -44,10 +43,31 @@ const spent = (p: 'p1' | 'p2') => state.draft!.picks[p].roster.reduce((s, r) => 
 const budget = (p: 'p1' | 'p2') => RULESET_S0.salaryCap - spent(p);
 const takenIds = () => new Set([...state.draft!.picks.p1.roster, ...state.draft!.picks.p2.roster].map((r) => r.fighterId));
 
+function opponentCapacity(p: 'p1' | 'p2'): number {
+  const opp = state.draft!.picks[p === 'p1' ? 'p2' : 'p1'];
+  return opp.passed ? 0 : RULESET_S0.rosterMax - opp.roster.length;
+}
+
+/** Prices of fighters p could still draft, excluding taken ones and `excludeId`. */
+function remainingPricesFor(p: 'p1' | 'p2', excludeId: string): number[] {
+  const taken = takenIds();
+  return marketFiles()
+    .filter((f) => {
+      const id = f.dna.identity.fighterId;
+      if (id === excludeId || taken.has(id)) return false;
+      const custom = state.draft!.customFighters.find((c) => c.file === f);
+      return !custom || custom.nominator === p; // nominator-exclusive right
+    })
+    .map((f) => f.dna.balance.draftPrice);
+}
+
 function canAfford(p: 'p1' | 'p2', fighterId: string): boolean {
   const price = DNA_BY_ID.get(fighterId)!.balance.draftPrice;
   const need = Math.max(0, RULESET_S0.rosterMin - state.draft!.picks[p].roster.length - 1);
-  return price <= budget(p) - need * MIN_PRICE;
+  // Live-market reserve: a static price floor let the opponent drain the cheap
+  // end of the market and cap-lock a roster below the minimum (2026-08-20).
+  const reserve = minRosterReserve(remainingPricesFor(p, fighterId), need, opponentCapacity(p));
+  return price <= budget(p) - reserve;
 }
 
 function currentPlayer(): 'p1' | 'p2' | null {
@@ -95,6 +115,17 @@ export function renderDraft() {
 
   const p = currentPlayer();
   if (p === null) {
+    // Backstop: a draft that ends with any roster below the minimum cannot
+    // produce a legal match — offer a clean restart instead of letting the
+    // prep/wildcard legality check bounce the player forever.
+    const short = (['p1', 'p2'] as const).find(
+      (id) => state.draft!.picks[id].roster.length < RULESET_S0.rosterMin,
+    );
+    if (short) {
+      track('draft_voided', { shortSeat: short, size: state.draft!.picks[short].roster.length });
+      renderVoidDraft(short);
+      return;
+    }
     track('draft_completed', {
       p1Spent: spent('p1'),
       p2Spent: spent('p2'),
@@ -154,12 +185,38 @@ export function renderDraft() {
   if (isAITurn) {
     aiTimer = window.setTimeout(() => {
       const available = FIGHTERS.map((f) => f.dna.identity.fighterId).filter((id) => !taken.has(id));
-      const choice = aiDraftPick(available, budget(p), state.draft!.picks[p].roster.map((r) => r.fighterId), aiRng!);
+      const choice = aiDraftPick(
+        available, budget(p), state.draft!.picks[p].roster.map((r) => r.fighterId), aiRng!, opponentCapacity(p),
+      );
       if (choice === 'pass') pass(p);
       else pick(p, choice);
       renderDraft();
     }, 900);
   }
+}
+
+function renderVoidDraft(short: 'p1' | 'p2') {
+  const name = state.players[short === 'p1' ? 0 : 1].name;
+  const node = el(`
+  <div>
+    ${topbar('Market Draft — draft voided')}
+    <div class="screen">
+      <div class="panel" style="max-width:560px;margin:40px auto">
+        <h3>Draft voided — cap-locked roster</h3>
+        <p class="small">${esc(name)} ended the draft with fewer than ${RULESET_S0.rosterMin} fighters
+        and no affordable fighter left on the market, so no legal match can start.
+        No result is recorded.</p>
+        <button class="primary mt" id="btn-redraft" style="width:100%">Run a fresh draft</button>
+      </div>
+    </div>
+  </div>`);
+  q(node, '#btn-redraft').addEventListener('click', () => {
+    state.seed = (state.seed ^ 0x9e3779b9) >>> 0;
+    state.draft = null;
+    state.prep = null;
+    renderDraft();
+  });
+  mount(node);
 }
 
 function fighterCard(f: FighterFile, taken: Set<string>, p: 'p1' | 'p2', isAITurn: boolean): string {
@@ -305,8 +362,12 @@ function renderNominationPanel(root: HTMLElement, p: 'p1' | 'p2') {
       renderDraft();
     });
     q(slot, '#nom-discard').addEventListener('click', () => {
-      nom.used = true; // the one nomination right is spent
+      // Rev-2 (parity with online): a declined nomination does NOT spend the
+      // one-per-player right — only approval does. Correction budgets are
+      // per-nomination, so the next nomination starts fresh.
       nom.pending = null;
+      nom.semanticLeft = 1;
+      nom.visualLeft = 1;
       render();
     });
   };

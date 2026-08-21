@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { RULESET_S0 } from '@arena/contracts';
+import { RULESET_S0, RULESET_S0_V010, type Ruleset } from '@arena/contracts';
 import { MatchSim, buildManifest, runManifest, verifyReplay, buildBreakdown, generateCommentary, type SimContent } from '../src';
-import { makeDna, makeTeam, testArena, testWildcard } from './fixtures';
+import { ability, makeDna, makeTeam, testArena, testWildcard } from './fixtures';
 
 function content(ids: string[], wildcards = [testWildcard()]): SimContent {
   return {
@@ -169,6 +169,164 @@ describe('wildcards', () => {
     expect(after).toBeLessThanOrEqual(before); // no regen (and possibly spending) under eclipse
     expect(sim.matchContext.has('daylight')).toBe(false);
     expect(sim.matchContext.has('darkness')).toBe(true);
+  });
+});
+
+describe('escalation healing damp', () => {
+  // Pacifist kits (all power 0) so the ONLY vitality change is a1's regen
+  // passive — a deterministic probe of the healing pathway across escalation.
+  function pacifistContent(): SimContent {
+    const zeroKit = {
+      capabilities: {
+        foundational: [] as ReturnType<typeof ability>[],
+        signature: [] as ReturnType<typeof ability>[],
+        contextual: [] as ReturnType<typeof ability>[],
+        passives: [] as never[],
+      },
+    };
+    const dnas = new Map([...A, ...B].map((id) => [
+      id,
+      makeDna(id, {
+        capabilities: {
+          ...zeroKit.capabilities,
+          foundational: [ability({ id: `${id}-tap`, kind: 'melee', range: 3, power: 0, cooldownTicks: 8 })],
+          escalation: ability({ id: `${id}-ult`, power: 0, cooldownTicks: 400, windupTicks: 0 }),
+        },
+      }),
+    ]));
+    dnas.get('a1')!.capabilities.passives = [
+      { id: 'a1-regen', name: 'test regen', kind: 'regen', magnitude: 4, tags: [], description: 'test' },
+    ];
+    return { fighters: dnas, wildcards: new Map(), arena: testArena() };
+  }
+
+  const fastEscalation: Ruleset = {
+    ...RULESET_S0,
+    softLimitTicks: 40,
+    escalationIntervalTicks: 40,
+    hardLimitTicks: 400,
+    escalationHealingDamp: 0.25,
+  };
+
+  it('reduces healing after escalation, leaves it unchanged before, and surfaces the damp on the ESCALATION event', () => {
+    const sim = new MatchSim(
+      { matchId: 'heal-damp', seed: 5, ruleset: fastEscalation, teams: [makeTeam('A', A), makeTeam('B', B)] },
+      pacifistContent(),
+    );
+    const a1 = sim.byId('a1')!;
+
+    // Before escalation: regen heals at full strength.
+    for (let i = 0; i < 10; i++) sim.step();
+    expect(sim.events.some((e) => e.type === 'ESCALATION')).toBe(false);
+    a1.vitality = 100;
+    sim.step();
+    expect(a1.vitality).toBeCloseTo(104, 6);
+
+    // Cross into escalation stage 1.
+    while (!sim.events.some((e) => e.type === 'ESCALATION')) sim.step();
+    const esc = sim.events.find((e) => e.type === 'ESCALATION')!;
+    expect(esc.data.damageMult).toBe(1.15);
+    expect(esc.data.healingMult).toBe(0.8); // 1 / (1 + 1 * 0.25)
+
+    // Same regen tick now heals 4 / 1.25 = 3.2.
+    a1.vitality = 100;
+    sim.step();
+    expect(a1.vitality).toBeCloseTo(103.2, 6);
+  });
+
+  it('is inert at the neutral value (damp 0): healing identical before and during escalation', () => {
+    const neutral: Ruleset = { ...fastEscalation, escalationHealingDamp: 0 };
+    const sim = new MatchSim(
+      { matchId: 'heal-neutral', seed: 5, ruleset: neutral, teams: [makeTeam('A', A), makeTeam('B', B)] },
+      pacifistContent(),
+    );
+    const a1 = sim.byId('a1')!;
+    while (!sim.events.some((e) => e.type === 'ESCALATION')) sim.step();
+    // At damp 0 the field is absent entirely — 0.1.0-era event payloads must
+    // stay byte-identical so archived manifests replay to their original hashes.
+    expect('healingMult' in sim.events.find((e) => e.type === 'ESCALATION')!.data).toBe(false);
+    a1.vitality = 100;
+    sim.step();
+    expect(a1.vitality).toBeCloseTo(104, 6);
+  });
+
+  it('replays a 0.1.0 manifest with the archived ruleset: undamped healing, legacy event shape, stable hash', () => {
+    const c = pacifistContent();
+    const manifest = buildManifest({
+      matchId: 'legacy-replay',
+      roomId: 'test',
+      createdAt: '2026-01-01T00:00:00Z',
+      ruleset: RULESET_S0_V010,
+      arenaId: 'test-arena',
+      arenaVersion: '1.0.0',
+      seed: 5,
+      teams: [makeTeam('A', A), makeTeam('B', B)],
+      content: c,
+    });
+    expect(manifest.rulesetVersion).toBe('0.1.0');
+
+    // Pacifist kits force the match to the decision, so escalation fires.
+    const r1 = runManifest(manifest, c);
+    const r2 = runManifest(manifest, c);
+    expect(r1.hash).toBe(r2.hash);
+    const escalations = r1.events.filter((e) => e.type === 'ESCALATION');
+    expect(escalations.length).toBeGreaterThan(0);
+    for (const e of escalations) expect('healingMult' in e.data).toBe(false);
+
+    // Under 0.2.0 the same seed+teams produce a different, damped run.
+    const current = buildManifest({
+      matchId: 'legacy-replay',
+      roomId: 'test',
+      createdAt: '2026-01-01T00:00:00Z',
+      ruleset: RULESET_S0,
+      arenaId: 'test-arena',
+      arenaVersion: '1.0.0',
+      seed: 5,
+      teams: [makeTeam('A', A), makeTeam('B', B)],
+      content: c,
+    });
+    expect(current.rulesetVersion).toBe('0.2.0');
+    const r3 = runManifest(current, c);
+    expect(r3.events.filter((e) => e.type === 'ESCALATION').every((e) => 'healingMult' in e.data)).toBe(true);
+  });
+
+  it('refuses to replay a manifest naming an unknown ruleset version', () => {
+    const c = content([...A, ...B]);
+    const manifest = { ...simpleManifest(3, c), rulesetVersion: '9.9.9' };
+    expect(() => runManifest(manifest, c)).toThrow(/unknown ruleset version/);
+  });
+});
+
+describe('ally_below_35 relay swap', () => {
+  it('swaps a sub-35% active for the reserve; never fires while everyone holds 35%+', () => {
+    const A4 = ['a1', 'a2', 'a3', 'a4'];
+    const c = content([...A4, ...B]);
+    const teamA = makeTeam('A', A4, {
+      reinforcementPlan: { trigger: 'ally_below_35', description: 'rotate early' },
+    });
+    const sim = new MatchSim(
+      { matchId: 'rotate-early', seed: 11, ruleset: RULESET_S0, teams: [teamA, makeTeam('B', B)] },
+      c,
+    );
+    const a1 = sim.byId('a1')!;
+    const a4 = sim.byId('a4')!;
+    expect(a4.status).toBe('reserve');
+
+    // At exactly 35% the trigger must NOT fire (strict less-than).
+    a1.vitality = a1.dna.resources.vitality * 0.35;
+    sim.step();
+    expect(a4.status).toBe('reserve');
+    expect(sim.events.some((e) => e.type === 'RESERVE_ENTERED')).toBe(false);
+
+    // Below the threshold at check time, the swap fires the same tick.
+    a1.vitality = a1.dna.resources.vitality * 0.34;
+    sim.step();
+    const entered = sim.events.find((e) => e.type === 'RESERVE_ENTERED');
+    expect(entered).toBeDefined();
+    expect(entered!.data.fighterId).toBe('a4');
+    expect(entered!.data.reason).toBe('tactical retreat at low vitality');
+    expect(a1.status).toBe('retired');
+    expect(a4.status).toBe('active');
   });
 });
 

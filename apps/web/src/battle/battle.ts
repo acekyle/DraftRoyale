@@ -279,7 +279,8 @@ export function renderBattle() {
         playedAt: new Date().toISOString(),
       });
       updateChampion(outcome.winnerPlayerId, manifest);
-      track('match_completed', { winner: winnerTeam.displayName, reason: outcome.reason, ticks: outcome.finalTick });
+      // Telemetry carries the seat, not the display name (no PII beyond need).
+      track('match_completed', { winner: outcome.winnerPlayerId, reason: outcome.reason, ticks: outcome.finalTick });
     }
     window.setTimeout(() => {
       if (!stopped) {
@@ -379,5 +380,5 @@ function updateChampion(winnerPid: string, manifest: MatchManifest) {
     defended: sameHolder ? prev!.defended : 0,
   };
   saveChampion(record);
-  track('champion_crowned', { player: winnerCfg.name, streak: record.winStreak });
+  track('champion_crowned', { streak: record.winStreak });
 }

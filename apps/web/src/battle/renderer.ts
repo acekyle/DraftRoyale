@@ -644,8 +644,17 @@ export class BattleView {
       spread = Math.max(...active.map((f) => Math.hypot(f.x - cx, f.z - cz)), 8);
     }
     const focusMix = Math.min(1, this.focusHold / 20);
-    const tx = cx * (1 - focusMix) + this.focus.x * focusMix;
-    const tz = cz * (1 - focusMix) + this.focus.z * focusMix;
+    let tx = cx * (1 - focusMix) + this.focus.x * focusMix;
+    let tz = cz * (1 - focusMix) + this.focus.z * focusMix;
+
+    // Framing bias for corner fights: pull the camera target softly toward
+    // arena center so the walls never fill the frame (render-only).
+    const hx = this.sim.arena.sizeX / 2;
+    const hz = this.sim.arena.sizeZ / 2;
+    const edge = Math.min(1, Math.max(Math.abs(tx) / hx, Math.abs(tz) / hz));
+    const pull = 0.3 * edge * edge;
+    tx *= 1 - pull;
+    tz *= 1 - pull;
 
     let desired: THREE.Vector3;
     let look: THREE.Vector3;

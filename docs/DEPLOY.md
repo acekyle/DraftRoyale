@@ -59,3 +59,21 @@ on push) after server changes. Match records persist to the server's
 `services/control-plane/data/matches.jsonl` — on PaaS free tiers this is
 ephemeral disk; back it up before instance recycles or attach a volume when
 history durability starts to matter (pre-Stage-2 task).
+
+## Stage-1 telemetry
+
+Once a player connects to any online room, the client remembers the server URL
+and from then on posts its funnel events (all modes, including solo/hotseat) to
+that server's `POST /telemetry`, which appends to
+`services/control-plane/data/telemetry.jsonl` beside the match records. Events
+from the deployed origin are stamped `source: "alpha"` (real humans); anything
+from localhost is `local-dev` and can never pollute human metrics. Evaluate the
+vertical-slice acceptance gate any time with:
+
+```
+npm run funnel
+```
+
+(reads the server's `telemetry.jsonl` by default; pass one or more file paths to
+aggregate exports). The same ephemeral-disk caveat as `matches.jsonl` applies —
+copy `telemetry.jsonl` off the host between sessions.

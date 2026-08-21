@@ -41,23 +41,28 @@
 
 ## Competitive systems
 
-10. **Season 0 = Enhanced division only; no ranked/ratings/brackets/tournaments**
-    (deliberate, per launch plan; bracket is next after online rematch).
+10. **Season 0 = Enhanced division only; no ranked/ratings/tournaments**
+    (deliberate, per launch plan; local Bracket Night is a party mode, not a
+    competitive system).
 11. **Balance is AI-self-play only.** Cross-schedule harness (6 schedules × seeds)
     shows no fighter outside 32–68% aggregate with every remaining flag
     schedule-dependent; Orrin priced via bounded reviewer override (D-013).
     Human play remains the real gate.
-12. **Escalation vs sustain**: heal-heavy comps can reach the 4:30 decision with
-    few KOs (~25% of harness matches end by decision).
+12. **Escalation vs sustain — damped, not eliminated** (D-017): ruleset 0.2.0
+    ramps healing down at the same rate escalation ramps damage up, cutting
+    zero-KO decisions ~27% cross-schedule. A residual ~1.6–2% floor remains and
+    appears shield/evasion-driven (shields are deliberately not damped); that is
+    a separate lever if human play surfaces it as a problem.
 
 ## Trust boundaries
 
 13. **Server-authoritative online, but LAN-scope security**: bearer session tokens
     without expiry/origin checks/TLS; no accounts. Local modes remain client-side
     and honest-but-not-tamper-proof.
-14. **Cross-engine float determinism unproven** (V8 verified server↔Chrome/Node;
-    Safari/JavaScriptCore divergence would be surfaced by the hash check and
-    resolved in the server's favor, not silently wrong — ADR-0004/0007).
+14. **Cross-engine float determinism measured equal on V8 and JavaScriptCore**
+    (3 mechanic-sweeping manifests, chromium+webkit E2E). Any future divergence
+    on an unmeasured engine is still surfaced by the hash check and resolved in
+    the server's favor, not silently wrong (ADR-0004/0007).
 15. **No moderation/reporting systems** — acceptable strictly while access is
     private; hard gate before any public stage.
 16. **Persisted match records live in a JSONL file** on whatever machine ran the

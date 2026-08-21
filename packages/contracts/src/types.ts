@@ -544,6 +544,13 @@ export interface Ruleset {
   hardLimitTicks: number;
   escalationIntervalTicks: number;
   escalationDamageBonus: number;
+  /**
+   * Escalation-vs-sustain damp, mirroring escalationDamageBonus. After N
+   * escalation stages, damage dealt is multiplied by (1 + N * escalationDamageBonus)
+   * and healing received is multiplied by 1 / (1 + N * escalationHealingDamp).
+   * 0 = damp off (healing unaffected by escalation).
+   */
+  escalationHealingDamp: number;
   division: Division;
 }
 

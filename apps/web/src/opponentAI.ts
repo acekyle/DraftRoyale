@@ -4,31 +4,37 @@
  * (commands + wildcard deployment are recorded into the manifest timelines).
  */
 import type { TeamSetup, WildcardContract } from '@arena/contracts';
-import { RULESET_S0 } from '@arena/contracts';
+import { RULESET_S0, minRosterReserve } from '@arena/contracts';
 import { createRng, type MatchSim, type Rng } from '@arena/combat-sim';
 import { DNA_BY_ID, WILDCARDS } from './content';
 import type { PrepState } from './state';
-
-const MIN_PRICE = 8_000_000;
 
 export function aiDraftPick(
   availableIds: string[],
   budget: number,
   myRoster: string[],
   rng: Rng,
+  /** Picks the human opponent can still make (bounds how many fighters they can snipe). */
+  opponentCapacity: number = RULESET_S0.rosterMax,
 ): string | 'pass' {
   const picksMade = myRoster.length;
   const mustPick = picksMade < RULESET_S0.rosterMin;
   const affordable = availableIds.filter((id) => {
     const price = DNA_BY_ID.get(id)!.balance.draftPrice;
     const picksStillNeeded = Math.max(0, RULESET_S0.rosterMin - picksMade - 1);
-    return price <= budget - picksStillNeeded * MIN_PRICE;
+    // Reserve against the LIVE market minus what the opponent can still snipe
+    // — a static price floor cap-locked the AI at 2 fighters (2026-08-20).
+    const remaining = availableIds
+      .filter((o) => o !== id)
+      .map((o) => DNA_BY_ID.get(o)!.balance.draftPrice);
+    return price <= budget - minRosterReserve(remaining, picksStillNeeded, opponentCapacity);
   });
   if (affordable.length === 0) {
     if (!mustPick) return 'pass';
-    // Never pass below the minimum roster: the feasibility reserve assumed a
-    // MIN_PRICE floor that the real market may not offer. Take the cheapest
-    // fighter that fits the raw budget instead of soft-locking the draft.
+    // Never pass below the minimum roster: the sniping bound is worst-case,
+    // so if it leaves nothing, take the cheapest fighter that fits the raw
+    // budget instead of soft-locking the draft. If even that fails, the
+    // market truly cannot complete this roster and the caller voids the draft.
     const fallback = availableIds
       .filter((id) => DNA_BY_ID.get(id)!.balance.draftPrice <= budget)
       .sort((a, b) => DNA_BY_ID.get(a)!.balance.draftPrice - DNA_BY_ID.get(b)!.balance.draftPrice)[0];

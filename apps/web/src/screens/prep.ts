@@ -19,6 +19,16 @@ export const TRIGGERS: { id: ReinforcementTrigger; label: string }[] = [
   { id: 'one_enemy_remains', label: 'Hold the closer — keep the reserve until one enemy remains' },
 ];
 
+/**
+ * Perceptual bar width for a 0-100 readout axis. Several axes normalize
+ * against theoretical maxima, so honest mid values cluster low; a sqrt curve
+ * keeps ordering while making them visible. The true value renders beside
+ * the bar.
+ */
+function axisWidth(v: number): number {
+  return v <= 0 ? 0 : Math.max(4, Math.round(Math.sqrt(v / 100) * 100));
+}
+
 function defaultPrep(p: 'p1' | 'p2'): PrepState {
   const roster = state.draft!.picks[p].roster.map((r) => r.fighterId);
   return {
@@ -127,7 +137,7 @@ function renderFor(pid: 'p1' | 'p2') {
       <p class="muted small mt">${esc(r.tagline)}</p>
       <div class="readout-axes mt">
         ${Object.entries(r.axes).map(([k, v]) => `
-          <div class="stat-bar"><span class="label">${esc(k.replace(/([A-Z])/g, ' $1'))}</span><span class="track"><i style="width:${v}%"></i></span></div>`).join('')}
+          <div class="stat-bar"><span class="label">${esc(k.replace(/([A-Z])/g, ' $1'))}</span><span class="track"><i style="width:${axisWidth(v)}%"></i></span><span class="val">${v}</span></div>`).join('')}
       </div>
       ${r.notes.length ? `<h3 class="mt">Arena notes</h3>${r.notes.map((n) => `<p class="small muted">· ${esc(n)}</p>`).join('')}` : ''}
       <p class="small muted mt">The Readout explains your own team. It never predicts a win probability and never analyzes the opponent's draft for you.</p>`;

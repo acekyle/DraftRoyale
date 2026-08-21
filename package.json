@@ -17,6 +17,7 @@
     "draft-order": "tsx tools/draft-order.ts",
     "validate": "tsx tools/validate-content.ts",
     "server": "tsx services/control-plane/src/main.ts",
+    "funnel": "tsx tools/funnel-report.ts",
     "variety": "tsx tools/variety.ts",
     "compiler:smoke": "tsx tools/llm-smoke.ts",
     "e2e": "playwright test"

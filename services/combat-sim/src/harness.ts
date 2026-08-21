@@ -93,10 +93,9 @@ export function hashRun(events: MatchEvent[], outcome: MatchOutcome): string {
   return fnv1a(payload);
 }
 
-import { RULESET_S0 } from '@arena/contracts';
+import { RULESETS_BY_VERSION } from '@arena/contracts';
 function rulesetFor(manifest: MatchManifest): Ruleset {
-  // Single ruleset in Season 0; versioned lookup grows with the ruleset registry.
-  if (manifest.rulesetVersion !== RULESET_S0.version)
-    throw new Error(`unknown ruleset version ${manifest.rulesetVersion}`);
-  return RULESET_S0;
+  const ruleset = RULESETS_BY_VERSION[manifest.rulesetVersion];
+  if (!ruleset) throw new Error(`unknown ruleset version ${manifest.rulesetVersion}`);
+  return ruleset;
 }

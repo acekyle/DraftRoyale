@@ -13,7 +13,7 @@ export function renderHome() {
   const dethrone = decodeDethroneHash();
   const history = loadHistory();
   const settings = loadSettings();
-  if (dethrone) track('challenge_link_opened', { champion: dethrone.playerName });
+  if (dethrone) track('challenge_link_opened', {});
 
   const node = el(`
   <div>

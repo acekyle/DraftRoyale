@@ -49,7 +49,7 @@ describe('control plane — Replay Original with custom compiled content', () =>
 
     // Deploy the custom wildcard mid-battle so its effects are in the event stream.
     await p2.waitType('tick_advance', 15_000);
-    p2.send({ t: 'battle_wildcard', x: 0, z: 0 });
+    p2.send({ t: 'battle_wildcard', wildcardId: customId, x: 0, z: 0 });
     const over = (await p2.waitType('battle_over', 60_000)) as Extract<ServerMessage, { t: 'battle_over' }>;
 
     // Replay purely from the persisted record.

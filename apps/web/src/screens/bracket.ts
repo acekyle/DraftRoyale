@@ -25,7 +25,7 @@ export function recordBracketResult(slot: BracketSlot, winnerName: string) {
   if (!b) return;
   b.winners[slot] = winnerName;
   saveBracket(b);
-  track('bracket_match_recorded', { slot, winner: winnerName });
+  track('bracket_match_recorded', { slot });
 }
 
 export function renderBracket() {

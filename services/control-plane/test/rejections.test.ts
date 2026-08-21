@@ -59,14 +59,30 @@ describe('control plane — server-side rejection of illegal actions', () => {
       // …a second is refused.
       host.send({ t: 'custom_correction', kind: 'semantic', instruction: 'even less heat' });
       await host.waitError('correction_limit');
-      // Decline: nothing enters the market, and the one nomination is spent.
+      // Rev-2: declining puts nothing in the market AND hands the nomination
+      // right back. (drain() so stale pre-nomination snapshots with
+      // used === false cannot satisfy the wait.)
+      host.drain();
       host.send({ t: 'custom_resolve', accept: false });
-      host.send({ t: 'nominate_custom', description: 'second bite at the apple' });
-      await host.waitError('nomination_used');
-      host.send({ t: 'resync' });
-      const afterNom = await host.waitState((s) => s.phase === 'draft', 'resync');
-      expect(afterNom.draft!.customFighters).toEqual([]);
-      expect(afterNom.draft!.nominations.p1.used).toBe(true);
+      const afterDecline = await host.waitState(
+        (s) => s.phase === 'draft' && s.draft!.nominations.p1.used === false,
+        'decline frees the nomination right',
+      );
+      expect(afterDecline.draft!.customFighters).toEqual([]);
+      // Second bite at the apple now succeeds — with a fresh per-nomination
+      // correction budget…
+      host.send({ t: 'nominate_custom', description: 'second bite at the apple: a chalk-dust duelist' });
+      const second = await host.waitType('nomination_result');
+      expect(second.semanticLeft).toBe(1);
+      // …and we decline again so the market stays untouched for the rest of
+      // this suite (custom entries would perturb the affordability endgame).
+      host.drain();
+      host.send({ t: 'custom_resolve', accept: false });
+      const clean = await host.waitState(
+        (s) => s.phase === 'draft' && s.draft!.nominations.p1.used === false,
+        'second decline',
+      );
+      expect(clean.draft!.customFighters).toEqual([]);
     } else {
       host.send({ t: 'resync' });
       const afterNom = await host.waitState((s) => s.phase === 'draft', 'resync');
@@ -92,13 +108,15 @@ describe('control plane — server-side rejection of illegal actions', () => {
     await p2.waitError('pass_too_early');
 
     await pickAndWait(p2, 'p2', 'cinder-wisp', 2); // turn 2
-    await pickAndWait(host, 'p1', 'grimspike', 2); // turn 3
 
-    // Over-cap pick under the min-roster budget rule:
-    // spent 77M of 100M, ember-ronin at 37.5M > 23M remaining.
-    host.send({ t: 'draft_pick', fighterId: 'ember-ronin' });
+    // Cap-lock guard (min-roster budget rule against the LIVE market):
+    // grimspike after captain-meridian would leave $24M while the opponent can
+    // still snipe both remaining cheap fighters — the exact soft-lock that hit
+    // a live draft on 2026-08-20. The server must reject the gamble.
+    host.send({ t: 'draft_pick', fighterId: 'grimspike' });
     await host.waitError('cannot_afford');
-    await pickAndWait(host, 'p1', 'whisper', 3); // turn 4 — affordable
+    await pickAndWait(host, 'p1', 'whisper', 2); // turn 3 — reserve satisfied
+    await pickAndWait(host, 'p1', 'grimspike', 3); // turn 4 — min roster reached, raw budget applies
 
     // Duplicate fighter.
     p2.send({ t: 'draft_pick', fighterId: 'captain-meridian' });
@@ -203,14 +221,24 @@ describe('control plane — server-side rejection of illegal actions', () => {
     p2.send({ t: 'battle_command', command: 'focus_target', targetFighterId: 'ghost-fighter' });
     await p2.waitError('unknown_fighter');
 
-    // Second wildcard deployment (host locked emp-spire).
-    host.send({ t: 'battle_wildcard', x: 0, z: 0 });
-    await host.waitFor((m) => m.t === 'battle_input' && m.input.kind === 'wildcard', 'wildcard deploy');
-    host.send({ t: 'battle_wildcard', x: 10, z: 10 });
+    // Rev-2: battle_wildcard names the wildcard. A foreign/unknown id (host
+    // locked emp-spire) is rejected without consuming anything…
+    host.send({ t: 'battle_wildcard', wildcardId: 'gravity-well', x: 0, z: 0 });
+    await host.waitError('unknown_wildcard');
+    // …and an id-less legacy frame is malformed.
+    host.sendRaw({ t: 'battle_wildcard', x: 0, z: 0 });
+    await host.waitError('bad_message');
+
+    // The correct id deploys exactly as before; a second deployment is refused.
+    host.send({ t: 'battle_wildcard', wildcardId: 'emp-spire', x: 0, z: 0 });
+    const deployed = await host.waitFor((m) => m.t === 'battle_input' && m.input.kind === 'wildcard', 'wildcard deploy');
+    if (deployed.t === 'battle_input' && deployed.input.kind === 'wildcard')
+      expect(deployed.input.wildcardId).toBe('emp-spire');
+    host.send({ t: 'battle_wildcard', wildcardId: 'emp-spire', x: 10, z: 10 });
     await host.waitError('wildcard_used');
 
-    // p2 locked null — no wildcard to deploy at all.
-    p2.send({ t: 'battle_wildcard', x: 0, z: 0 });
+    // p2 locked null — no wildcard to deploy at all, whatever id it names.
+    p2.send({ t: 'battle_wildcard', wildcardId: 'eclipse', x: 0, z: 0 });
     await p2.waitError('no_wildcard');
   }, 60_000);
 
@@ -241,6 +269,11 @@ describe('control plane — server-side rejection of illegal actions', () => {
     h.send({ t: 'custom_resolve', accept: true });
     const withCustom = await h.waitState((s) => (s.draft?.customFighters.length ?? 0) === 1, 'custom in market');
     expect(withCustom.draft!.customFighters[0].dna.identity.fighterId).toBe(customId);
+    expect(withCustom.draft!.nominations.p1.used).toBe(true);
+
+    // Approval consumed the one-per-player right — a second nomination is refused.
+    h.send({ t: 'nominate_custom', description: 'a second custom the same draft' });
+    await h.waitError('nomination_used');
 
     // Non-nominator cannot draft it (on their own turn).
     await pickAndWait(h, 'p1', 'whisper', 1); // turn 0

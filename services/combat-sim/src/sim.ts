@@ -168,6 +168,9 @@ export class MatchSim {
   private rng: Rng;
   private seq = 0;
   private escalationMult = 1;
+  private escalationStages = 0;
+  /** Healing received is multiplied by this during escalation (1 = no damp). */
+  private escalationHealMult = 1;
   private nextEscalationTick: number;
   private tokensLeft: Record<string, number> = {};
   private wildcardUsed: Record<string, boolean> = {};
@@ -526,7 +529,7 @@ export class MatchSim {
             this.dealRawDamage(f, dmg, e.damageType ?? 'energy', `wildcard:${inst.contract.wildcardId}`);
             inst.damageDone += dmg;
           } else {
-            const heal = Math.min(e.magnitude ?? 0, f.dna.resources.vitality - f.vitality);
+            const heal = Math.min((e.magnitude ?? 0) * this.escalationHealMult, f.dna.resources.vitality - f.vitality);
             if (heal > 0) {
               f.vitality += heal;
               inst.healingDone += heal;
@@ -548,7 +551,7 @@ export class MatchSim {
         if (f.status !== 'active') continue;
         if (dist2(f.x, f.z, d.x, d.z) > d.radius ** 2) continue;
         if (d.healPerTick > 0 && f.teamId === d.teamId) {
-          const heal = Math.min(d.healPerTick, f.dna.resources.vitality - f.vitality);
+          const heal = Math.min(d.healPerTick * this.escalationHealMult, f.dna.resources.vitality - f.vitality);
           if (heal > 0) {
             f.vitality += heal;
             const owner = this.byId(d.ownerFighterId);
@@ -568,7 +571,7 @@ export class MatchSim {
       for (const c of f.conditions) {
         if (c.kind === 'burn' || c.kind === 'corrode')
           this.dealRawDamage(f, c.magnitude, c.kind === 'burn' ? 'thermal' : 'toxic', `condition:${c.kind}`);
-        if (c.kind === 'regen') f.vitality = Math.min(f.dna.resources.vitality, f.vitality + c.magnitude);
+        if (c.kind === 'regen') f.vitality = Math.min(f.dna.resources.vitality, f.vitality + c.magnitude * this.escalationHealMult);
         if (c.kind === 'drain' && f.primary) f.primary.value = Math.max(0, f.primary.value - c.magnitude);
         c.remainingTicks -= 1;
         if (c.remainingTicks > 0) keep.push(c);
@@ -602,7 +605,7 @@ export class MatchSim {
       for (const p of f.dna.capabilities.passives) {
         if (this.passiveSuppressed(f, p.tags)) continue;
         if (p.kind === 'regen') {
-          f.vitality = Math.min(f.dna.resources.vitality, f.vitality + p.magnitude);
+          f.vitality = Math.min(f.dna.resources.vitality, f.vitality + p.magnitude * this.escalationHealMult);
         } else if (p.kind === 'ally_aura_shield' || p.kind === 'ally_aura_empower') {
           const radius = p.radius ?? 8;
           for (const ally of this.activeOf(f.teamId)) {
@@ -639,9 +642,17 @@ export class MatchSim {
 
   private tickEscalation() {
     if (this.tick >= this.nextEscalationTick && this.tick >= this.ruleset.softLimitTicks) {
+      this.escalationStages += 1;
       this.escalationMult += this.ruleset.escalationDamageBonus;
+      // Symmetric sustain damp: healing is divided by the same kind of ramp
+      // damage is multiplied by, so escalation pressures sustain comps too.
+      this.escalationHealMult = 1 / (1 + this.escalationStages * this.ruleset.escalationHealingDamp);
       this.nextEscalationTick = this.tick + this.ruleset.escalationIntervalTicks;
-      this.emit('ESCALATION', { damageMult: round2(this.escalationMult) });
+      // healingMult only exists when the damp is on — 0.1.0 manifests must
+      // replay to byte-identical events (and therefore their original hashes).
+      this.emit('ESCALATION', this.ruleset.escalationHealingDamp > 0
+        ? { damageMult: round2(this.escalationMult), healingMult: round2(this.escalationHealMult) }
+        : { damageMult: round2(this.escalationMult) });
     }
   }
 
@@ -1101,7 +1112,7 @@ export class MatchSim {
       let healed = 0;
       const shieldSpec = (a.effects ?? []).find((e) => e.kind === 'shield');
       if (!shieldSpec || a.power > 0) {
-        healed = Math.min(a.power, target.dna.resources.vitality - target.vitality);
+        healed = Math.min(a.power * this.escalationHealMult, target.dna.resources.vitality - target.vitality);
         target.vitality += healed;
         f.healingDone += healed;
       }

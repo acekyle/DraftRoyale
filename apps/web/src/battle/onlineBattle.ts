@@ -115,7 +115,7 @@ export function mountOnlineBattle(
       if (btn.hasAttribute('data-wildcard')) {
         const contract = wc!;
         if (contract.deployment === 'global') {
-          netClient.send({ t: 'battle_wildcard', x: 0, z: 0 });
+          netClient.send({ t: 'battle_wildcard', wildcardId: team.wildcardId!, x: 0, z: 0 });
         } else {
           placing = true;
           view.setPlacing(true);
@@ -147,7 +147,7 @@ export function mountOnlineBattle(
       placing = false;
       view.setPlacing(false);
       q(node, '#placing-hint').style.display = 'none';
-      netClient.send({ t: 'battle_wildcard', x, z });
+      netClient.send({ t: 'battle_wildcard', wildcardId: team.wildcardId!, x, z });
     };
   }
 

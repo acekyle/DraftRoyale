@@ -170,6 +170,7 @@ input[type='text']:focus { border-color: var(--gold); }
 .stat-bar .label { width: 120px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; font-size: 10.5px; }
 .stat-bar .track { flex: 1; height: 7px; background: #0d1120; border-radius: 4px; overflow: hidden; }
 .stat-bar .track i { display: block; height: 100%; background: linear-gradient(90deg, var(--blue), var(--teal)); }
+.stat-bar .val { width: 24px; text-align: right; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .ability-row { padding: 8px 10px; background: #ffffff07; border-left: 3px solid var(--accent, var(--gold)); border-radius: 3px; margin: 6px 0; }
 .ability-row .head { display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 600; }
 .tagchip { display: inline-block; background: #ffffff10; border-radius: 3px; padding: 0 6px; font-size: 10.5px; margin-right: 4px; color: var(--text-dim); }
@@ -183,7 +184,10 @@ input[type='text']:focus { border-color: var(--gold); }
 .wildcard-card h4 { margin: 4px 0 6px; font-size: 16px; }
 
 /* ---- Readout ---- */
-.readout-axes { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 18px; }
+/* Two columns squeeze each row to ~160px while the label alone is 120px — the
+   track collapsed to 0px and the bars vanished. One column keeps real bars. */
+.readout-axes { display: grid; grid-template-columns: 1fr; gap: 2px; }
+.readout-axes .label { width: 108px; }
 
 /* ---- Battle ---- */
 .battle-root { position: fixed; inset: 0; background: #05070d; }

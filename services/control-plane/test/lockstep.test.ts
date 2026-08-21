@@ -100,7 +100,7 @@ describe('control plane — lockstep determinism', () => {
       if (!sentEarly && m.tick >= 4) {
         sentEarly = true;
         host.send({ t: 'battle_command', command: 'press_attack' });
-        p2.send({ t: 'battle_wildcard', x: 5, z: -3 });
+        p2.send({ t: 'battle_wildcard', wildcardId: 'eclipse', x: 5, z: -3 });
       }
       if (!sentFocus && m.tick >= 24) {
         sentFocus = true;

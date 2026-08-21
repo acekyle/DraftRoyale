@@ -1,4 +1,7 @@
 /** Player settings (accessibility first — constitution §45) + crash capture. */
+// Import direction: settings → state → telemetry → net; state.ts never imports
+// settings.ts, so pulling track() in here creates no cycle.
+import { track } from './state';
 
 export interface Settings {
   reducedMotion: boolean;
@@ -42,6 +45,11 @@ export function installCrashCapture() {
       buf.push({ kind, message, stack: (stack ?? '').slice(0, 2000), at: new Date().toISOString(), url: location.hash });
       localStorage.setItem('ia_crashes', JSON.stringify(buf.slice(-25)));
     } catch { /* quota */ }
+    try {
+      // Ships with the telemetry pipeline so crash-free % is computable
+      // server-side (LAUNCH_PLAN §2). Truncated: no stacks, no PII.
+      track('client_crash', { kind, message: message.slice(0, 200) });
+    } catch { /* crash capture must never amplify a crash */ }
   };
   window.addEventListener('error', (e) => record('error', String(e.message), e.error?.stack));
   window.addEventListener('unhandledrejection', (e) =>

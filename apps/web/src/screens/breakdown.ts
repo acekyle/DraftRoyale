@@ -16,6 +16,10 @@ const FACTOR_ICONS: Record<string, string> = {
   decisive_swing: '📈',
 };
 
+/** Comprehension check (LAUNCH_PLAN §2 "can articulate why the winner won"):
+ *  asked at most once per match — keyed on matchId so re-renders never re-ask. */
+let comprehensionAskedForMatch: string | null = null;
+
 export function renderBreakdown() {
   const outcome = state.lastOutcome;
   const breakdown = state.lastBreakdown;
@@ -96,6 +100,15 @@ export function renderBreakdown() {
         <p class="small muted">The champion lineup is frozen as an immutable challenge. Fresh drafts only from here.</p>
       </div>` : ''}
 
+      ${comprehensionAskedForMatch !== manifest.matchId ? `
+      <div class="panel mb" id="comprehension-card">
+        <h3>Quick check: could you explain to a friend why the winner won?</h3>
+        <div class="row mt">
+          <button class="small" id="btn-comp-yes">Yes</button>
+          <button class="small" id="btn-comp-no">Not sure</button>
+        </div>
+      </div>` : ''}
+
       <div class="row wrap center" style="justify-content:center">
         ${state.bracketMatch ? `<button class="primary" id="btn-bracket" style="font-size:17px">🏆 Record result & return to bracket</button>` : ''}
         <button class="${state.bracketMatch ? '' : 'primary'}" id="btn-runback" ${state.bracketMatch ? '' : 'style="font-size:17px"'}>🔁 Run it back</button>
@@ -108,6 +121,20 @@ export function renderBreakdown() {
       <p class="center muted small mt" id="note"></p>
     </div>
   </div>`);
+
+  const compCard = node.querySelector('#comprehension-card');
+  if (compCard) {
+    const answer = (understood: boolean) => {
+      // Marked answered only on a click — the breakdown can render more than
+      // once per match (verdict overlay + direct navigation), and an unanswered
+      // card must survive re-renders. One RESPONSE per match, not one showing.
+      comprehensionAskedForMatch = manifest.matchId;
+      track('comprehension_response', { understood });
+      compCard.remove();
+    };
+    q(node, '#btn-comp-yes').addEventListener('click', () => answer(true));
+    q(node, '#btn-comp-no').addEventListener('click', () => answer(false));
+  }
 
   node.querySelector('#btn-bracket')?.addEventListener('click', () => {
     const slot = state.bracketMatch!;

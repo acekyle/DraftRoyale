@@ -11,7 +11,10 @@
  * each fighter's cross-schedule spread (min/max per-schedule win rate) so
  * slate-driven artifacts are visible instead of hidden.
  *
- * Usage: npm run simulate [-- --seeds 8 --schedules 6]
+ * Usage: npm run simulate [-- --seeds 8 --schedules 6 --healdamp 0.15]
+ *
+ * --healdamp overrides RULESET_S0.escalationHealingDamp for this process only
+ * (A/B lever for the escalation-vs-sustain experiment; 0 = damp off).
  */
 import { RULESET_S0, type TeamSetup } from '@arena/contracts';
 import { buildManifest, runManifest, verifyReplay, type SimContent } from '@arena/combat-sim';
@@ -22,8 +25,15 @@ function intArg(flag: string, fallback: number): number {
   const v = i > -1 ? Number(process.argv[i + 1]) : NaN;
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
 }
+function floatArg(flag: string, fallback: number): number {
+  const i = process.argv.indexOf(flag);
+  const v = i > -1 ? Number(process.argv[i + 1]) : NaN;
+  return Number.isFinite(v) && v >= 0 ? v : fallback;
+}
 const SEEDS = intArg('--seeds', 8); // seeds per matchup
 const SCHEDULES = intArg('--schedules', 6); // distinct deterministic schedules
+const HEAL_DAMP = floatArg('--healdamp', RULESET_S0.escalationHealingDamp);
+RULESET_S0.escalationHealingDamp = HEAL_DAMP; // in-process override; replay path reads the same object
 
 const content = loadContent();
 const arena = content.arenas.get('meridian-plaza')!;
@@ -109,17 +119,28 @@ function buildSchedule(k: number): [string[], string[]][] {
 // Run all schedules, aggregating globally and per schedule.
 // ---------------------------------------------------------------------------
 
+interface ScheduleStats {
+  wins: Record<string, number>;
+  games: Record<string, number>;
+  matches: number;
+  decisions: number;
+  zeroKoDecisions: number;
+  ticks: number;
+}
+
 const wins: Record<string, number> = {};
 const games: Record<string, number> = {};
-const perSchedule: { wins: Record<string, number>; games: Record<string, number> }[] = [];
+const perSchedule: ScheduleStats[] = [];
 let stalemates = 0, decisions = 0, eliminations = 0, totalTicks = 0, matches = 0, determinismFailures = 0;
+let zeroKoDecisions = 0; // matches that reached the hard decision with zero KOs — the sustain-stall signal
 const durations: number[] = [];
 
 for (let k = 0; k < SCHEDULES; k++) {
   const schedule = buildSchedule(k);
   const sw: Record<string, number> = {};
   const sg: Record<string, number> = {};
-  perSchedule.push({ wins: sw, games: sg });
+  const stats: ScheduleStats = { wins: sw, games: sg, matches: 0, decisions: 0, zeroKoDecisions: 0, ticks: 0 };
+  perSchedule.push(stats);
 
   for (const [m, [a, b]] of schedule.entries()) {
     for (let s = 0; s < SEEDS; s++) {
@@ -142,8 +163,16 @@ for (let k = 0; k < SCHEDULES; k++) {
       matches++;
       totalTicks += run.outcome.finalTick;
       durations.push(run.outcome.finalTick);
-      if (run.outcome.reason === 'decision') decisions++;
-      else eliminations++;
+      stats.matches++;
+      stats.ticks += run.outcome.finalTick;
+      if (run.outcome.reason === 'decision') {
+        decisions++;
+        stats.decisions++;
+        if (!run.events.some((e) => e.type === 'FIGHTER_KNOCKED_OUT')) {
+          zeroKoDecisions++;
+          stats.zeroKoDecisions++;
+        }
+      } else eliminations++;
       if (run.outcome.finalTick >= RULESET_S0.hardLimitTicks) stalemates++;
       const winnerRoster = run.outcome.winnerPlayerId === 'A' ? a : b;
       const loserRoster = run.outcome.winnerPlayerId === 'A' ? b : a;
@@ -165,12 +194,17 @@ for (let k = 0; k < SCHEDULES; k++) {
 
 durations.sort((x, y) => x - y);
 const median = durations[Math.floor(durations.length / 2)] ?? 0;
-console.log(`\n=== Balance harness: ${matches} matches (${SCHEDULES} schedules × ${SEEDS} seeds/matchup) ===`);
-console.log(`avg duration ${(totalTicks / matches / 4).toFixed(0)}s | median ${(median / 4).toFixed(0)}s | eliminations ${eliminations} | decisions ${decisions} | hard-limit stalemates ${stalemates}`);
-console.log(`determinism failures: ${determinismFailures}\n`);
-console.log(`fighter win rates (aggregate across ${SCHEDULES} schedules ± cross-schedule spread):`);
-
 const pct = (r: number) => (r * 100).toFixed(1);
+console.log(`\n=== Balance harness: ${matches} matches (${SCHEDULES} schedules × ${SEEDS} seeds/matchup) | escalationHealingDamp=${HEAL_DAMP} ===`);
+console.log(`avg duration ${(totalTicks / matches / 4).toFixed(0)}s | median ${(median / 4).toFixed(0)}s | eliminations ${eliminations} | decisions ${decisions} (${pct(decisions / matches)}%) | zero-KO decisions ${zeroKoDecisions} (${pct(zeroKoDecisions / matches)}%) | hard-limit stalemates ${stalemates}`);
+console.log(`determinism failures: ${determinismFailures}\n`);
+console.log('per schedule:');
+for (const [k, s] of perSchedule.entries()) {
+  console.log(
+    `  schedule ${k}: ${s.matches} matches | decisions ${pct(s.decisions / s.matches)}% | zero-KO decisions ${pct(s.zeroKoDecisions / s.matches)}% | avg ${(s.ticks / s.matches / 4).toFixed(1)}s`,
+  );
+}
+console.log(`\nfighter win rates (aggregate across ${SCHEDULES} schedules ± cross-schedule spread):`);
 for (const id of ids) {
   const g = games[id] ?? 0;
   const w = wins[id] ?? 0;
@@ -189,8 +223,11 @@ for (const id of ids) {
   if (min > 0.62) flag = '  <-- OUTLIER (every schedule >62%)';
   else if (max < 0.38) flag = '  <-- OUTLIER (every schedule <38%)';
   else if (rate > 0.62 || rate < 0.38) flag = '  <-- aggregate outlier (schedule-dependent)';
+  const perScheduleStr = perSchedule
+    .map(({ wins: sw, games: sg }) => ((sg[id] ?? 0) > 0 ? pct((sw[id] ?? 0) / sg[id]!) : ' n/a'))
+    .join(' ');
   console.log(
-    `  ${id.padEnd(18)} ${pct(rate).padStart(5)}%  [${pct(min).padStart(5)}–${pct(max).padStart(5)}% across schedules]  (${g} games, $${price.toFixed(1)}M)${flag}`,
+    `  ${id.padEnd(18)} ${pct(rate).padStart(5)}%  [${pct(min).padStart(5)}–${pct(max).padStart(5)}% across schedules]  per-schedule: ${perScheduleStr}  (${g} games, $${price.toFixed(1)}M)${flag}`,
   );
 }
 if (determinismFailures > 0) process.exit(1);

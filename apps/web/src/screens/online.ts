@@ -54,6 +54,10 @@ export function renderOnline() {
         }
         resetMatchLocals();
       }
+      // Funnel step 4: both seats report; the funnel report dedupes per room.
+      if (lastPhase === 'draft' && snap.phase === 'prep' && net.mySeat()) {
+        track('draft_completed', { online: true });
+      }
       lastPhase = snap.phase;
     }
     if (state.screen === 'online' && snap.phase !== 'battle') renderPhase();
@@ -74,6 +78,18 @@ export function renderOnline() {
       renderPhase();
     } else if (m.t === 'reaction') {
       spawnEmote(m.emote);
+    } else if (m.t === 'room_closed') {
+      // The room was destroyed server-side (host left the lobby, everyone
+      // left, …) — leave the online screen gracefully, same path as the
+      // Leave button, with the server's reason shown.
+      if (battleMount) {
+        battleMount.dispose();
+        battleMount = null;
+      }
+      net.close();
+      resetLocal();
+      go('home');
+      alert(`Room closed — ${m.reason}`);
     } else if (m.t === 'error') {
       const bar = document.getElementById('online-error');
       if (bar) {
@@ -408,14 +424,21 @@ function renderOnlineDraft(snap: RoomSnapshot) {
         </div>`;
       slot.querySelector('#nom-sem-btn')?.addEventListener('click', () => {
         const v = q<HTMLInputElement>(slot, '#nom-sem').value.trim();
-        if (v) net.send({ t: 'custom_correction', kind: 'semantic', instruction: v });
+        if (v) {
+          net.send({ t: 'custom_correction', kind: 'semantic', instruction: v });
+          track('custom_correction', { kind: 'semantic', online: true });
+        }
       });
       slot.querySelector('#nom-vis-btn')?.addEventListener('click', () => {
         const v = q<HTMLInputElement>(slot, '#nom-vis').value.trim();
-        if (v) net.send({ t: 'custom_correction', kind: 'visual', instruction: v });
+        if (v) {
+          net.send({ t: 'custom_correction', kind: 'visual', instruction: v });
+          track('custom_correction', { kind: 'visual', online: true });
+        }
       });
       slot.querySelector('#nom-accept')?.addEventListener('click', () => {
         net.send({ t: 'custom_resolve', accept: true });
+        track('fighter_approved', { fighterId: f.dna.identity.fighterId, online: true });
         pendingNomination = null;
       });
       slot.querySelector('#nom-reject')?.addEventListener('click', () => {
