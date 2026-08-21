@@ -889,9 +889,13 @@ export class BattleView {
         }
       }
       if (v.ko > 0 && v.ko < 1) v.ko = Math.min(1, v.ko + dt * 1.6);
-      v.group.position.set(x + lx, v.baseY + alt + bob - v.ko * 0.6, z + lz);
+      // KO reads as a physical fall: a short launch hop, then an eased slump
+      // (the old linear tip-over looked like a toy being laid down).
+      const koEase = v.ko * v.ko * (3 - 2 * v.ko);
+      const koHop = this.motion.reducedMotion ? 0 : Math.sin(Math.min(1, v.ko * 2.4) * Math.PI) * 0.5 * (1 - koEase);
+      v.group.position.set(x + lx, v.baseY + alt + bob + koHop - koEase * 0.6, z + lz);
       // KO tilt lives on the hero root; the outer group (team ring) stays level.
-      v.hero.group.rotation.z = -v.ko * Math.PI * 0.45;
+      v.hero.group.rotation.z = -koEase * Math.PI * 0.45;
       const targetId = sf.currentTargetId;
       const target = targetId ? this.sim.byId(targetId) : null;
       if (target && v.ko === 0) v.group.rotation.y = Math.atan2(target.x - x, target.z - z);

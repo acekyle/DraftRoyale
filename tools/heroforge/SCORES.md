@@ -45,3 +45,27 @@ facing/pose constraints on the Tripo output). Consistent with the bake-off
 verdict: auto-rigging remains the open craft problem; the external
 Blender/AccuRIG path is the fallback, and nothing in the shipped game needs
 these rigs today (battle animates procedural chassis; draft shows statues).
+
+## Multiverse re-pass (D-028, 2026-08-21 — same session, Founder pivot)
+
+The statue register "slipped" from the agreed multiverse feel (Founder).
+Per-realm registers re-generated the roster (13 further generations incl.
+solaria v2 and two failed orrin attempts; running total 30 gens ≈ $6.00):
+
+| Fighter | Realm | Task | Tris | Verdict |
+|---|---|---|---|---|
+| captain-meridian | comic | ad784ce6 | 39,464 | PASS — promoted (probe winner) |
+| ember-ronin | anime | a943ffeb | 38,656 | PASS — promoted (probe winner) |
+| vex | cinematic | 739f2b75 | 37,600 | PASS — promoted (probe winner) |
+| solaria | comic | 6cf2cd6e → **v2 1524cfb6** | 38,004 | v1 FAIL (chrome blob, fused legs); v2 PASS — promoted (corona disc + ribbons) |
+| razorback | comic | 0b995a4c | 39,402 | PASS — promoted |
+| cinder-wisp | animated | 1bc2d840 | 39,860 | PASS — promoted (minor stray wisp geometry off left arm, acceptable) |
+| whisper | animated | d9e8d5e9 | 38,624 | PASS — promoted (storybook register; drones detached with faces) |
+| sable-howl | anime | 1aaff8e1 | 37,632 | PASS — promoted |
+| aegis-9 | cinematic | 06fec058 | 39,760 | PASS — promoted (best of re-pass) |
+| grimspike | cinematic | a23e0017 | 39,782 | PASS — promoted |
+| riptide | cinematic | 2498480f | 39,173 | PASS — promoted (smooth water ribbons fix the v1 note) |
+| orrin | anime attempted ×2 (03660c49, 3f7f5c77) | — | — | BOTH grew legs/feet (4 feet incidents total) — **statue v3 7607bfb9 stands**: text-to-3D resists legless+dynamic anime; robed monk reads register-neutral in the lineup |
+
+Statue-register originals remain in results/ and re-promote by task id if the
+Founder wants any of them back.

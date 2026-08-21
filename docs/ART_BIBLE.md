@@ -15,11 +15,18 @@ The blend, by visual weight:
   illuminated pedestals in draft/selection contexts, arenas as detailed miniature dioramas.
 - **20% — High-energy comic-book interface.** Bold role colors, angular panels, readable
   power icons, energetic typography. The UI is loud; the characters stay premium.
-- **10% — Controlled multiverse contrast.** Many realms — comic, anime, fantasy, horror,
-  cosmic, mythic, cyberpunk — but **one rendering universe**. Realm identity is expressed
-  through costume, materials, and effects, never through incompatible AI style soup.
+- **10% — Controlled multiverse contrast — REVISED 2026-08-21 (D-028, Founder direction).**
+  Realm identity is now expressed through **per-realm rendering registers** — each fighter
+  belongs to a realm (comic / animated / anime / cinematic) and is modeled in that realm's
+  style, the way a versus-multiverse key art mixes a comic hero, an animated heroine, a
+  cinematic gunslinger, and an anime duelist in one frame. What stays unified: the shared
+  lighting/material pipeline (stylized PBR, one light rig), the black-profile silhouette
+  law, the DNA palette contract, and the pedestal/diorama presentation. What varies by
+  realm: proportions, surface finish, and detail density. The earlier "one rendering
+  universe" rule (miniature-toy statue register for every fighter) is retired — it
+  flattened the multiverse fantasy (Founder review of the first full statue pass).
 
-Motto: **"Different worlds, one collectible universe."**
+Motto: **"Many worlds, one arena."**
 
 ## 2. Reference images (canonical descriptions)
 
@@ -76,8 +83,12 @@ animation intents) — Implemented and populated in the shipped content files.
 - Heroic proportions, stylized PBR — no photorealism, no flat toon shading.
 - Pedestal presentation in draft/collection contexts; battle poses come from the authored
   animation-intent grammar (`animationIntent` per ability, `animationIntents` per fighter).
-- Realm flavor lives in costume, materials, and VFX color — never in a different rendering
-  style per character.
+- Realm register (D-028): each fighter's realm (comic / animated / anime / cinematic,
+  recorded in its heroforge brief) sets its modeling register — proportions, finish,
+  detail density. Silhouette law, DNA palette contract, and the shared lighting/material
+  pipeline still bind every realm; "different rendering style" means register, never
+  incompatible pipelines (no photoreal drift outside the cinematic realm, no flat toon
+  anywhere).
 
 ## 6. Violence envelope (locked)
 
