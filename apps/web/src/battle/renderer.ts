@@ -1105,7 +1105,21 @@ export class BattleView {
       heroRoot.rotation.z = -koEase * Math.PI * 0.45 + bankLean;
       const targetId = sf.currentTargetId;
       const target = targetId ? this.sim.byId(targetId) : null;
-      if (target && v.ko === 0) v.group.rotation.y = Math.atan2(target.x - x, target.z - z);
+      // Facing: while actually traveling, face the direction of MOTION (a
+      // trot cycle sliding sideways at a target reads broken — quadrupeds
+      // can't strafe); face the target only when planted. Turns are smoothed,
+      // never snapped (instant re-facing flapped fighters side to side).
+      if (v.ko === 0) {
+        const speedMag = Math.hypot(v.velX, v.velZ);
+        let desiredYaw: number | null = null;
+        if (speedMag > 3.2) desiredYaw = Math.atan2(v.velX, v.velZ);
+        else if (target) desiredYaw = Math.atan2(target.x - x, target.z - z);
+        if (desiredYaw !== null) {
+          let dy = desiredYaw - v.group.rotation.y;
+          dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+          v.group.rotation.y += dy * Math.min(1, dt * 9);
+        }
+      }
 
       // Clip-driven heroes (Tier 3): the mixer owns the skeleton — feed it
       // locomotion + time; event triggers already queued their one-shots.
