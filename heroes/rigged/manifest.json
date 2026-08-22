@@ -1,0 +1,100 @@
+{
+  "aegis-9": [
+    "Armature|clip0|baselayer",
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "captain-meridian": [
+    "Armature|clip0|baselayer",
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "ember-ronin": [
+    "Armature|clip0|baselayer",
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "grimspike": [
+    "Armature|clip0|baselayer",
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "razorback": [
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "riptide": [
+    "Armature|clip0|baselayer",
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "sable-howl": [
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "solaria": [
+    "Armature|clip0|baselayer",
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "vex": [
+    "Armature|clip0|baselayer",
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ],
+  "whisper": [
+    "Armature|clip0|baselayer",
+    "attack",
+    "cast",
+    "dead",
+    "guard",
+    "hit",
+    "idle",
+    "walk"
+  ]
+}
