@@ -269,18 +269,19 @@ crouch-spring for fliers on the 0.3.0 duty cycle, cloth-like lag on capes/
 tails (secondary motion springs on existing joints), weapon trails on melee
 swings. All still on the procedural rigs — no external tools, $0.
 
-**Tier 3 — rigged clip animation (PARTIALLY SHIPPED 2026-08-21, D-030 — no Blender needed):** the generated GLBs are
+**Tier 3 — rigged clip animation (FULLY SHIPPED 2026-08-21, D-030 + D-031 headless Blender pass):** the generated GLBs are
 statues; real keyframed movement needs skeletons + clips. Assets in hand:
 Meshy auto-rigs + free walk/run clips for captain-meridian, aegis-9,
 ember-ronin (tools/heroforge/results/). Path: retarget a shared clip set
 (idle/walk/attack/cast/hit/KO) onto auto-rigged bipeds via Blender/AccuRIG
 (≈2h/hero craft work), THREE.AnimationMixer playback keyed by the same
 animationIntent grammar, procedural rigs remain the fallback and the
-quadruped/floater answer until they get bespoke rigs. SHIPPED for captain-meridian /
-aegis-9 / ember-ronin via Meshy library clips (7 clips each, 3 cr/clip,
-sub credits; clip GLBs stripped to ~50KB animation-only via gltf-transform)
-playing through heroAnim.ts AnimationMixer heroes in battle. REMAINING:
-the other 9 fighters — Meshy pose-estimation deterministically rejects every
-multiverse-register model (weapons/props/drones defeat the humanoid
-detector), so extending coverage or upgrading the 3 to their multiverse
-bodies is the Blender/AccuRIG craft pass (~2h/hero), a time gate.
+quadruped/floater answer until they get bespoke rigs. All 12 fighters
+now wear their multiverse bodies in battle: 8 bipeds on Meshy clip sets
+(skeleton transfer via headless blender-transfer.py — donor armature +
+bone-heat weights, clips embedded in-export to keep units self-consistent),
+2 quadrupeds on scripted procedural rigs with authored clips
+(blender-quadruped.py), 2 floaters as statue bodies with hover motion.
+Remaining polish is artist-grade only: solaria ribbon weights, grimspike
+weight refinement, bespoke quadruped gaits — a human Blender session,
+purely cosmetic.

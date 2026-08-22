@@ -58,17 +58,20 @@ function loadAssets(fighterId: string) {
           if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).frustumCulled = false;
         });
         const clips = new Map<string, THREE.AnimationClip>();
+        // Quadruped rigs embed their authored clips in the model file itself;
+        // biped clips ride separate per-clip GLBs sharing the rig bone names.
+        for (const a of gltf.animations) if (clipNames.includes(a.name)) clips.set(a.name, a);
         await Promise.all(
-          clipNames.map(async (name) => {
-            try {
-              const cg = await loader.loadAsync(`${base}${fighterId}.${name}.glb`);
-              // Clips ride separate GLBs that share the rig's bone names —
-              // the mixer binds them onto the rigged scene by name.
-              if (cg.animations[0]) clips.set(name, cg.animations[0]);
-            } catch {
-              /* missing clip — the hero just won't play it */
-            }
-          }),
+          clipNames
+            .filter((name) => !clips.has(name))
+            .map(async (name) => {
+              try {
+                const cg = await loader.loadAsync(`${base}${fighterId}.${name}.glb`);
+                if (cg.animations[0]) clips.set(name, cg.animations[0]);
+              } catch {
+                /* missing clip — the hero just won't play it */
+              }
+            }),
         );
         if (!clips.has('idle')) return null; // idle is the contract minimum
         return { scene: gltf.scene, clips };
@@ -79,6 +82,59 @@ function loadAssets(fighterId: string) {
     cache.set(fighterId, p);
   }
   return p;
+}
+
+/**
+ * Wrap a static statue (floating chassis — hover IS their locomotion) in the
+ * AnimatedHero interface: no clips, group-level KO tip-over, material hooks.
+ * Lets the renderer treat statue-bodied floaters exactly like clip heroes.
+ */
+export function staticHero(model: THREE.Group, targetHeight: number): AnimatedHero {
+  const bounds = new THREE.Box3().setFromObject(model);
+  const size = bounds.getSize(new THREE.Vector3());
+  const fit = targetHeight / Math.max(0.001, size.y);
+  const group = new THREE.Group();
+  model.scale.setScalar(fit);
+  model.position.y = -bounds.min.y * fit;
+  group.add(model);
+  const mats: THREE.MeshStandardMaterial[] = [];
+  model.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (mesh.isMesh) {
+      const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const m of list) if ((m as THREE.MeshStandardMaterial).isMeshStandardMaterial) mats.push(m as THREE.MeshStandardMaterial);
+    }
+  });
+  let dead = false;
+  let deadT = 0;
+  const baseModelY = model.position.y;
+  return {
+    group,
+    setLocomotion() {},
+    trigger(name: string) {
+      if (name === 'dead' || name === 'ko') dead = true;
+    },
+    isDead: () => dead,
+    update(dt: number) {
+      if (dead && deadT < 1) {
+        deadT = Math.min(1, deadT + dt * 1.4);
+        const e = deadT * deadT * (3 - 2 * deadT);
+        // Tip the inner model — the renderer owns the outer group transforms.
+        model.rotation.z = -e * Math.PI * 0.45;
+        model.position.y = baseModelY - e * targetHeight * 0.2;
+      }
+    },
+    setGhost(opacity: number) {
+      for (const m of mats) {
+        m.transparent = opacity < 1;
+        m.opacity = opacity;
+      }
+    },
+    setFlash(k: number) {
+      for (const m of mats) m.emissive.setScalar(k * 0.85);
+    },
+    dispose() {},
+  };
 }
 
 /**

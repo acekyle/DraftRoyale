@@ -37,14 +37,16 @@
    (gitignored), and skip the rubric. On the deployed static build customs stay
    procedural chassis with palette/scale/silhouette variation — the guaranteed
    floor. Custom statues are unrigged (Meshy rig not wired for customs).
-6b. **Clip animation covers 3 of 12 heroes, in statue-register bodies** (D-030):
-   captain-meridian, AEGIS-9, and ember-ronin play real rigged clips in battle
-   (idle/walk/attack/cast/guard/hit/death) but wear their earlier
-   statue-register models — Meshy's rig pose-estimation rejects every
-   multiverse-register model (props/drones defeat the humanoid detector), so
-   their battle bodies differ in register (not identity/palette) from their
-   draft cards. The other 9 fighters use the procedural rig with the full
-   tier-1/2 motion language. Upgrade path: Blender/AccuRIG retarget pass.
+6b. **Battle animation quality varies by rig source** (D-030/D-031): all 12
+   fighters wear their real multiverse bodies in battle — 8 bipeds on
+   Meshy-clip sets via Blender skeleton transfer, 2 quadrupeds on scripted
+   rigs with authored clips (functional, not artist-grade — trot/lunge/
+   collapse), 2 floaters as statue bodies with group-level hover motion (no
+   joint gestures). Known blemishes: solaria's light ribbons deform with her
+   arms (reads as wings), grimspike uses proximity-transferred weights from
+   the AEGIS-9 mech (coarse on his slabs), whisper's drone ring rides her
+   shoulder bones. The procedural chassis remains the instant fallback while
+   assets load and for customs. Artist-grade polish = a human Blender pass.
 7. **Audio absent; commentary text-only** (per spec: text first). Commentary now
    has phrase memory; zero repetition findings in the variety analyzer.
 8. **One arena.** 9. **Camera director is simple** (action-weighted centroid,

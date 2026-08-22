@@ -10,7 +10,7 @@
  * the library-id map below, then rebuilds rigged/manifest.json
  * (fighterId → clip names) from the directory contents.
  */
-import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -70,16 +70,29 @@ if (fighter && model && rig) {
   process.exit(1);
 }
 
-// Rebuild manifest from directory contents.
+// Rebuild manifest from directory contents. Clip names come from per-clip
+// files (bipeds) or from animations embedded in the base GLB (quadrupeds).
+
+function embeddedClips(path: string): string[] {
+  const buf = readFileSync(path);
+  if (buf.readUInt32LE(0) !== 0x46546c67) return [];
+  const json = JSON.parse(buf.subarray(20, 20 + buf.readUInt32LE(12)).toString('utf8'));
+  return ((json.animations ?? []) as { name?: string }[]).map((a) => a.name ?? '').filter(Boolean);
+}
+
 const manifest: Record<string, string[]> = {};
 for (const name of readdirSync(OUT)) {
-  const m = name.match(/^(.+?)\.([a-z]+)\.glb$/);
-  if (m) (manifest[m[1]] ??= []).push(m[2]);
+  const clip = name.match(/^(.+?)\.([a-z]+)\.glb$/);
+  if (clip) (manifest[clip[1]] ??= []).push(clip[2]);
+  else if (name.endsWith('.glb')) {
+    const id = name.replace(/\.glb$/, '');
+    for (const c of embeddedClips(join(OUT, name))) (manifest[id] ??= []).push(c);
+  }
 }
 // Only fighters whose base rigged model exists count.
 for (const id of Object.keys(manifest)) {
   if (!existsSync(join(OUT, `${id}.glb`))) delete manifest[id];
-  else manifest[id].sort();
+  else manifest[id] = [...new Set(manifest[id])].sort();
 }
 writeFileSync(join(OUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(`[promote-anim] manifest: ${Object.entries(manifest).map(([k, v]) => `${k}(${v.length})`).join(', ') || '(none)'}`);

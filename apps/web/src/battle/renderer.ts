@@ -11,7 +11,8 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { MatchEvent } from '@arena/contracts';
 import type { FighterRt, MatchSim } from '@arena/combat-sim';
 import { DNA_BY_ID, FILE_BY_ID } from '../content';
-import { loadAnimatedHero, type AnimatedHero } from '../heroAnim';
+import { loadAnimatedHero, staticHero, type AnimatedHero } from '../heroAnim';
+import { loadHeroModel } from '../heroModels';
 import { loadSettings, type Settings } from '../settings';
 import {
   buildHeroMesh, poseForIntent, poseHeroMesh, type HeroMeshHandle, type HeroPose,
@@ -481,15 +482,26 @@ export class BattleView {
 
     // Tier 3: swap in the clip-animated rig when its assets arrive. The
     // procedural chassis stays mounted (hidden) as the instant fallback.
+    // Floaters have no rig by design — hover IS their locomotion — so they
+    // get their statue body in a static wrapper instead (group-level motion).
     const pb = new THREE.Box3().setFromObject(hero.group);
-    void loadAnimatedHero(f.fighterId, Math.max(0.5, pb.max.y - pb.min.y)).then((anim) => {
-      const v = this.fighters.get(f.fighterId);
-      if (!anim) return;
-      if (!v || this.disposed) { anim.dispose(); return; }
-      v.anim = anim;
-      v.hero.group.visible = false;
-      v.group.add(anim.group);
-    });
+    const targetHeight = Math.max(0.5, pb.max.y - pb.min.y);
+    void loadAnimatedHero(f.fighterId, targetHeight)
+      .then(async (anim) => {
+        if (!anim && dna.identity.chassis === 'floating') {
+          const statue = await loadHeroModel(f.fighterId);
+          if (statue) return staticHero(statue, targetHeight);
+        }
+        return anim;
+      })
+      .then((anim) => {
+        const v = this.fighters.get(f.fighterId);
+        if (!anim) return;
+        if (!v || this.disposed) { anim.dispose(); return; }
+        v.anim = anim;
+        v.hero.group.visible = false;
+        v.group.add(anim.group);
+      });
   }
 
   // -------------------------------------------------------------------------
